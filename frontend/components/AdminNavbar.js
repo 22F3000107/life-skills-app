@@ -1,38 +1,63 @@
-// export default {
-// 	template: `<div><nav class="navbar navbar-expand-lg bg-body-tertiary navbar bg-dark border-bottom border-body" data-bs-theme="dark">
-//  			<div class="container-fluid">
+export default {
+  name: "AdminNavbar",
+  template: `
+    <div class="sidebar d-flex flex-column bg-dark text-white vh-100 shadow-sm" style="width: 220px;">
+      
+      <!-- Logo + Admin Title -->
+      <div class="p-3 border-bottom text-center">
+        <img src="./images/lifeskills-logo.png" alt="Life Skills Logo" height="50" class="mb-2" />
+        <h6 class="fw-bold">Admin Panel</h6>
+      </div>
 
-//     			<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
-//       			<span class="navbar-toggler-icon"></span></button>
-//     			<div class="collapse navbar-collapse" id="navbarNavDropdown">
-//       				<ul class="navbar-nav">
-//         				<li class="nav-item">
-//           					<a class="nav-link active" aria-current="page" href="/" >Home</a>
-//         				</li>
-//         				<li class="nav-item">
-//           					<a class="nav-link" href="/#/quiz" >Quiz</a>
-//         				</li>
-// 					<li class="nav-item">
-// 						<a class="nav-link" href="/#/create/subject" v-show="this.$route.name=='Home'" >Create Subject</a>
-// 					</li>
-// 					<li class="nav-item">
-// 						<a class="nav-link" href="/#/create/quiz" v-show="this.$route.name=='Quiz'">Create Quiz</a>
-// 					</li>
-//         				<li class="nav-item">
-//           					<a class="nav-link" href="/#/asummary">Summary</a>
-//        					</li>
-// 					<li class="nav-item">
-//           					<a class="nav-link" href="/" @click="logout">Logout</a>
-//         				</li>
-//       				</ul>
-//     			</div>
-// 			<div class="d-flex"><h1 class="navbar-brand --bs-info" >Welcome Admin</h1></div>
-//   			</div>
-// 			</nav></div>`,
-// 	methods:{
-// 		logout(){
-// 			localStorage.removeItem('auth-token')
-// 			localStorage.removeItem('role')
-// 			}
-// 		},
-// }
+      <!-- Navigation Links -->
+      <nav class="flex-grow-1 nav flex-column p-2">
+        <router-link to="/admin" exact-active-class="router-link-exact-active" class="nav-link text-white">
+          📊 Dashboard
+        </router-link>
+        <router-link to="/admin/users" exact-active-class="router-link-exact-active" class="nav-link text-white">
+          👥 Manage Users
+        </router-link>
+        <router-link to="/admin/stories" exact-active-class="router-link-exact-active" class="nav-link text-white">
+          📚 Manage Stories
+        </router-link>
+        <router-link to="/admin/quizzes" exact-active-class="router-link-exact-active" class="nav-link text-white">
+          🧠 Manage Quizzes
+        </router-link>
+        <router-link to="/admin/flags" exact-active-class="router-link-exact-active" class="nav-link text-white">
+          🚩 Flagged Content
+        </router-link>
+        <router-link to="/admin/reports" exact-active-class="router-link-exact-active" class="nav-link text-white">
+          📈 Reports & Analytics
+        </router-link>
+        <router-link to="/admin/reminders" exact-active-class="router-link-exact-active" class="nav-link text-white">
+          🔔 Reminder Settings
+        </router-link>
+        <router-link to="/admin/settings" exact-active-class="router-link-exact-active" class="nav-link text-white">
+          ⚙️ Settings
+        </router-link>
+      </nav>
+
+      <!-- Logout -->
+      <div class="p-3 border-top">
+        <button class="btn btn-outline-light btn-sm w-100" @click="logout">🚪 Logout</button>
+      </div>
+    </div>
+  `,
+  methods: {
+    logout() {
+      localStorage.removeItem('auth-token');
+      localStorage.removeItem('role');
+      this.$router.push('/login');
+    }
+  }
+};
+
+// This code defines an Admin Navbar component for a Vue.js application.
+// It provides a sidebar navigation menu for admin users with links to various admin functionalities.
+// The navbar includes links to the admin dashboard, user management, story management, quiz management,
+// flagged content, reports, reminder settings, and general settings.
+// It also includes a logout button that clears local storage and redirects to the login page.
+// The component uses Bootstrap classes for styling and Vue Router for navigation.
+// The navbar is designed to be responsive and fits within a vertical layout, making it suitable for admin interfaces.
+// The `exact-active-class` ensures that the active link is highlighted when the user is on the corresponding route.
+// The component is structured to be easily expandable with additional admin features in the future
