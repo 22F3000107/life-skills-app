@@ -1,5 +1,5 @@
 // Import router and components
-import router from "../../software-engg/src/utils/router.js";
+import router from "../utils/router.js";
 import AdminNavbar from "../components/admin/AdminNavbar.js";
 import UserNavbar from "../components/user/UserNavbar.js";
 import PublicNavbar from "../components/common/PublicNavbar.js";

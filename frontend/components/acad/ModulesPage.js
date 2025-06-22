@@ -1,4 +1,4 @@
-import { fetchModules } from "../../../../frontend/services/moduleService";
+import { fetchModules } from "../../services/moduleService.js";
 
 export default {
   name: "ModulesPage",
@@ -170,7 +170,6 @@ export default {
           </button>
         </div>
       </div>
-      </div>
       <!-- Create Module Popup -->
 <div v-if="showCreatePopup" class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
   <div class="modal-dialog">
@@ -196,6 +195,7 @@ export default {
     </div>
   </div>
 </div>
+      </div>
 
   `,
 };
