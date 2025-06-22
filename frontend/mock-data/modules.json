@@ -1,0 +1,26 @@
+[
+  {
+    "mcode": "M1240",
+    "name": "Time Management",
+    "approved_count": 12,
+    "rejected_count": 4,
+    "review_count": 5,
+    "concepts_count": 3
+  },
+  {
+    "mcode": "M1241",
+    "name": "Stress Control",
+    "approved_count": 7,
+    "rejected_count": 2,
+    "review_count": 6,
+    "concepts_count": 2
+  },
+  {
+    "mcode": "M1242",
+    "name": "Communication",
+    "approved_count": 10,
+    "rejected_count": 3,
+    "review_count": 8,
+    "concepts_count": 4
+  }
+]

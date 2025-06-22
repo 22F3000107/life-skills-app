@@ -1,0 +1,16 @@
+/* Limit active style to navs inside sidebars */
+.sidebar .router-link-exact-active {
+  font-weight: bold;
+  background-color: rgba(13, 110, 253, 0.15); /* Light blue background */
+  border-radius: 5px;
+  padding: 6px 12px;
+  color: #0d6efd !important;
+}
+
+
+/* Hover effect for nav links */
+.nav-link:hover {
+  background-color: rgba(13, 110, 253, 0.08);
+  border-radius: 5px;
+}
+
