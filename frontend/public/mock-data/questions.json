@@ -1,0 +1,85 @@
+[
+  {
+    "qcode": "Q1234",
+    "question_text": "What is the most effective time management technique?",
+    "question_type": "MCQ",
+    "module_name": "Time Management",
+    "age_groups": ["12-14", "15-18"],
+    "options": [
+      { "text": "Pomodoro Technique", "correct": true },
+      { "text": "Multitasking", "correct": false },
+      { "text": "Procrastination", "correct": false },
+      { "text": "Doing everything at once", "correct": false }
+    ],
+    "match_pairs": null,
+    "image_url": "https://example.com/images/q1234.jpg",
+    "audio_url": "https://example.com/audio/q1234.mp3",
+    "status": "Pending"
+  },
+  {
+    "qcode": "Q1235",
+    "question_text": "Which of the following are effective stress management techniques? (Select all that apply)",
+    "question_type": "MSQ",
+    "module_name": "Stress Management",
+    "age_groups": ["15-18"],
+    "options": [
+      { "text": "Deep breathing exercises", "correct": true },
+      { "text": "Regular exercise", "correct": true },
+      { "text": "Meditation", "correct": true },
+      { "text": "Avoiding sleep", "correct": false },
+      { "text": "Skipping meals", "correct": false }
+    ],
+    "match_pairs": null,
+    "image_url": null,
+    "audio_url": null,
+    "status": "Approved"
+  },
+  {
+    "qcode": "Q1236",
+    "question_text": "The Pomodoro Technique involves working for 25 minutes followed by a short break.",
+    "question_type": "True/False",
+    "module_name": "Time Management",
+    "age_groups": ["12-14", "15-18"],
+    "options": [
+      { "text": "True", "correct": true },
+      { "text": "False", "correct": false }
+    ],
+    "match_pairs": null,
+    "image_url": null,
+    "audio_url": null,
+    "status": "Approved"
+  },
+  {
+    "qcode": "Q1237",
+    "question_text": "Match the communication type with its correct description:",
+    "question_type": "Matching",
+    "module_name": "Communication",
+    "age_groups": ["12-14", "15-18"],
+    "options": null,
+    "match_pairs": [
+      {
+        "left": "Verbal Communication",
+        "right": "Using spoken words to convey message",
+        "correct": true
+      },
+      {
+        "left": "Non-verbal Communication",
+        "right": "Using body language and gestures",
+        "correct": true
+      },
+      {
+        "left": "Written Communication",
+        "right": "Using written words in emails or letters",
+        "correct": true
+      },
+      {
+        "left": "Visual Communication",
+        "right": "Using images and graphs to share information",
+        "correct": true
+      }
+    ],
+    "image_url": null,
+    "audio_url": null,
+    "status": "Pending"
+  }
+]

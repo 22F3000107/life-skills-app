@@ -1,3 +1,5 @@
+import { createQuestion } from "../../services/questionService.js";
+
 export default {
   name: "QuestionCreatePage",
   data() {
@@ -92,11 +94,32 @@ export default {
       }
       this.showSaveConfirm = true;
     },
-    confirmSave() {
-      this.showSaveConfirm = false;
-      const randomQCode = "Q" + Math.floor(Math.random() * 1000 + 100);
-      this.generatedQCode = randomQCode;
-      this.showSuccessPopup = true;
+    async confirmSave() {
+      try {
+        const payload = {
+          qcode: "Q" + Math.floor(Math.random() * 1000 + 100), // Replace with server-generated ID if needed
+          question_text: this.questionText,
+          question_type: this.questionType,
+          module_name: this.selectedModule,
+          age_groups: this.selectedAges,
+          options: ["MCQ", "MSQ"].includes(this.questionType)
+            ? this.options
+            : null,
+          match_pairs:
+            this.questionType === "Matching" ? this.matchPairs : null,
+          image_url: this.selectedImage,
+          audio_url: this.audioUrl,
+          status: "Pending",
+        };
+
+        const result = await createQuestion(payload);
+        this.generatedQCode = result.qcode || payload.qcode;
+        this.showSuccessPopup = true;
+      } catch (err) {
+        alert("Failed to save question: " + err.message);
+      } finally {
+        this.showSaveConfirm = false;
+      }
     },
     closeSuccessPopup() {
       this.showSuccessPopup = false;

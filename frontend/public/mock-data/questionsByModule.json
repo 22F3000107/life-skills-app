@@ -1,0 +1,137 @@
+[
+  {
+    "qcode": "Q101",
+    "question": "How do you plan your day?",
+    "type": "MCQ",
+    "age": "6-8",
+    "module": "Time Management",
+    "mcode": "M1244",
+    "status": "Approved"
+  },
+  {
+    "qcode": "Q102",
+    "question": "Why is it important to be on time?",
+    "type": "MSQ",
+    "age": "9-11",
+    "module": "Time Management",
+    "mcode": "M1244",
+    "status": "Pending"
+  },
+  {
+    "qcode": "Q103",
+    "question": "True or False: Time management helps reduce stress.",
+    "type": "True/False",
+    "age": "12-14",
+    "module": "Time Management",
+    "mcode": "M1244",
+    "status": "Rejected"
+  },
+  {
+    "qcode": "Q104",
+    "question": "What tools can help manage time?",
+    "type": "MCQ",
+    "age": "15-18",
+    "module": "Time Management",
+    "mcode": "M1244",
+    "status": "Approved"
+  },
+  {
+    "qcode": "Q201",
+    "question": "What is a budget?",
+    "type": "MCQ",
+    "age": "12-14",
+    "module": "Financial Literacy",
+    "mcode": "M1245",
+    "status": "Approved"
+  },
+  {
+    "qcode": "Q301",
+    "question": "Which of these are good communication skills?",
+    "type": "MSQ",
+    "age": "9-11",
+    "module": "Communication",
+    "mcode": "M1242",
+    "status": "Approved"
+  },
+  {
+    "qcode": "Q302",
+    "question": "True or False: Active listening means waiting for your turn to speak.",
+    "type": "True/False",
+    "age": "12-14",
+    "module": "Communication",
+    "mcode": "M1242",
+    "status": "Pending"
+  },
+  {
+    "qcode": "Q401",
+    "question": "What makes a good leader?",
+    "type": "MCQ",
+    "age": "15-18",
+    "module": "Leadership Skills",
+    "mcode": "M1243",
+    "status": "Approved"
+  },
+  {
+    "qcode": "Q402",
+    "question": "How do you handle conflicts in a team?",
+    "type": "MSQ",
+    "age": "15-18",
+    "module": "Leadership Skills",
+    "mcode": "M1243",
+    "status": "Pending"
+  },
+  {
+    "qcode": "Q501",
+    "question": "What are the steps to solve a problem?",
+    "type": "MCQ",
+    "age": "9-11",
+    "module": "Problem Solving",
+    "mcode": "M1246",
+    "status": "Approved"
+  },
+  {
+    "qcode": "Q502",
+    "question": "True or False: The first solution you think of is always the best.",
+    "type": "True/False",
+    "age": "6-8",
+    "module": "Problem Solving",
+    "mcode": "M1246",
+    "status": "Rejected"
+  },
+  {
+    "qcode": "Q601",
+    "question": "What are healthy ways to deal with stress?",
+    "type": "MSQ",
+    "age": "12-14",
+    "module": "Stress Control",
+    "mcode": "M1241",
+    "status": "Approved"
+  },
+  {
+    "qcode": "Q602",
+    "question": "How do you recognize signs of stress?",
+    "type": "MCQ",
+    "age": "15-18",
+    "module": "Stress Control",
+    "mcode": "M1241",
+    "status": "Pending"
+  },
+  {
+    "qcode": "Q701",
+    "question": "What makes a good team player?",
+    "type": "MCQ",
+    "age": "9-11",
+    "module": "Team Building",
+    "mcode": "M1245",
+    "status": "Approved"
+  },
+  {
+    "qcode": "Q702",
+    "question": "True or False: Teams work better when one person makes all the decisions.",
+    "type": "True/False",
+    "age": "12-14",
+    "module": "Team Building",
+    "mcode": "M1245",
+    "status": "Rejected"
+  }
+]

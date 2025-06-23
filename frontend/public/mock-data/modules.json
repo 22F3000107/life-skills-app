@@ -22,5 +22,101 @@
     "rejected_count": 3,
     "review_count": 8,
     "concepts_count": 4
+  },
+  {
+    "mcode": "M1243",
+    "name": "Leadership Skills",
+    "approved_count": 15,
+    "rejected_count": 5,
+    "review_count": 7,
+    "concepts_count": 6
+  },
+  {
+    "mcode": "M1244",
+    "name": "Project Management",
+    "approved_count": 20,
+    "rejected_count": 6,
+    "review_count": 4,
+    "concepts_count": 8
+  },
+  {
+    "mcode": "M1245",
+    "name": "Team Building",
+    "approved_count": 9,
+    "rejected_count": 3,
+    "review_count": 5,
+    "concepts_count": 4
+  },
+  {
+    "mcode": "M1246",
+    "name": "Problem Solving",
+    "approved_count": 14,
+    "rejected_count": 4,
+    "review_count": 6,
+    "concepts_count": 5
+  },
+  {
+    "mcode": "M1247",
+    "name": "Critical Thinking",
+    "approved_count": 18,
+    "rejected_count": 5,
+    "review_count": 7,
+    "concepts_count": 6
+  },
+  {
+    "mcode": "M1248",
+    "name": "Decision Making",
+    "approved_count": 16,
+    "rejected_count": 4,
+    "review_count": 5,
+    "concepts_count": 5
+  },
+  {
+    "mcode": "M1249",
+    "name": "Conflict Resolution",
+    "approved_count": 11,
+    "rejected_count": 3,
+    "review_count": 4,
+    "concepts_count": 4
+  },
+  {
+    "mcode": "M1250",
+    "name": "Emotional Intelligence",
+    "approved_count": 13,
+    "rejected_count": 4,
+    "review_count": 6,
+    "concepts_count": 5
+  },
+  {
+    "mcode": "M1251",
+    "name": "Strategic Planning",
+    "approved_count": 17,
+    "rejected_count": 5,
+    "review_count": 8,
+    "concepts_count": 7
+  },
+  {
+    "mcode": "M1252",
+    "name": "Risk Management",
+    "approved_count": 19,
+    "rejected_count": 6,
+    "review_count": 7,
+    "concepts_count": 6
+  },
+  {
+    "mcode": "M1253",
+    "name": "Change Management",
+    "approved_count": 15,
+    "rejected_count": 4,
+    "review_count": 5,
+    "concepts_count": 5
+  },
+  {
+    "mcode": "M1254",
+    "name": "Negotiation Skills",
+    "approved_count": 12,
+    "rejected_count": 3,
+    "review_count": 6,
+    "concepts_count": 4
   }
 ]

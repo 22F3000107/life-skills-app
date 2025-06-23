@@ -1,3 +1,8 @@
+import {
+  fetchAllQuestions,
+  archiveQuestion,
+} from "../../services/questionService.js";
+
 export default {
   name: "QuestionBankPage",
   data() {
@@ -10,17 +15,10 @@ export default {
       questionTypes: ["MCQ", "MSQ", "True/False"],
       moduleOptions: ["Time Management", "Stress Control", "Communication"],
       ageGroups: ["6-8", "9-11", "12-14", "15-18"],
-      statusOptions: ["Approved", "Rejected", "Pending"],
+      statusOptions: ["Approved", "Rejected", "Pending", "Archived"],
       currentPage: 1,
       questionsPerPage: 10,
-      questions: Array.from({ length: 200 }, (_, i) => ({
-        qcode: `Q${1000 + i}`,
-        question: `Sample question number ${i + 1}?`,
-        type: ["MCQ", "MSQ", "True/False"][i % 3],
-        age: ["6-8", "9-11", "12-14", "15-18"][i % 4],
-        module: ["Time Management", "Stress Control", "Communication"][i % 3],
-        status: ["Approved", "Rejected", "Pending"][i % 3],
-      })),
+      questions: [],
     };
   },
   computed: {
@@ -29,11 +27,11 @@ export default {
         (q) =>
           q.qcode.toLowerCase().includes(this.searchQuery.toLowerCase()) &&
           (this.selectedTypes.length === 0 ||
-            this.selectedTypes.includes(q.type)) &&
+            this.selectedTypes.includes(q.question_type)) &&
           (this.selectedModules.length === 0 ||
-            this.selectedModules.includes(q.module)) &&
+            this.selectedModules.includes(q.module_name)) &&
           (this.selectedAges.length === 0 ||
-            this.selectedAges.includes(q.age)) &&
+            q.age_groups.some((age) => this.selectedAges.includes(age))) &&
           (this.selectedStatuses.length === 0 ||
             this.selectedStatuses.includes(q.status))
       );
@@ -64,7 +62,17 @@ export default {
       return pages;
     },
   },
+  mounted() {
+    this.loadQuestions();
+  },
   methods: {
+    async loadQuestions() {
+      try {
+        this.questions = await fetchAllQuestions();
+      } catch (err) {
+        console.error("Failed to load questions:", err.message);
+      }
+    },
     toggleSelection(array, value) {
       const index = array.indexOf(value);
       if (index > -1) array.splice(index, 1);
@@ -75,21 +83,22 @@ export default {
     },
     editQuestion(qcode) {
       console.log("Edit clicked for:", qcode);
-      // Optional: Navigate to edit mode or open modal
     },
-    archiveQuestion(qcode) {
-      console.log("Archive clicked for:", qcode);
-      // Optional: Archive logic
+    async archiveQuestion(qcode) {
+      try {
+        await archiveQuestion(qcode);
+        this.questions = this.questions.map((q) =>
+          q.qcode === qcode ? { ...q, status: "Archived" } : q
+        );
+      } catch (err) {
+        console.error(`Failed to archive ${qcode}:`, err.message);
+      }
     },
   },
   template: `
     <div class="container mt-4">
-
-      <!-- Top Controls -->
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-        <!-- Filters -->
         <div class="d-flex align-items-end gap-2 flex-grow-1">
-
           <input
             v-model="searchQuery"
             type="text"
@@ -97,8 +106,6 @@ export default {
             placeholder="Search QCode..."
             style="max-width: 150px;"
           />
-
-          <!-- Type Multi-select -->
           <div class="dropdown">
             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
               Type
@@ -112,8 +119,6 @@ export default {
               </li>
             </ul>
           </div>
-
-          <!-- Module Multi-select -->
           <div class="dropdown">
             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
               Module
@@ -127,8 +132,6 @@ export default {
               </li>
             </ul>
           </div>
-
-          <!-- Age Multi-select -->
           <div class="dropdown">
             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
               Age
@@ -142,8 +145,6 @@ export default {
               </li>
             </ul>
           </div>
-
-          <!-- Status Multi-select -->
           <div class="dropdown">
             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
               Status
@@ -158,21 +159,11 @@ export default {
             </ul>
           </div>
         </div>
-
-
-        <!-- Create Button -->
-                 <router-link
-          :to="'/acad/question/create'"
-          class="text-decoration-none text-dark"
-          style="display: block;"
-        >
-        <div>
+        <router-link :to="'/acad/question/create'" class="text-decoration-none text-dark" style="display: block;">
           <button class="btn btn-sm btn-outline-success">+ Create Question</button>
-        </div>
         </router-link>
       </div>
 
-      <!-- Table -->
       <div class="table-responsive">
         <table class="table table-bordered table-hover table-sm">
           <thead class="table-light">
@@ -187,64 +178,41 @@ export default {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="q in paginatedQuestions" 
-  :key="q.qcode" 
-  @click="goToQuestion(q.qcode)" 
-  style="cursor: pointer;">
-              <td>{{ q.qcode }}</td>
-              <td>{{ q.question }}</td>
-              <td>{{ q.type }}</td>
-              <td>{{ q.age }}</td>
-              <td>{{ q.module }}</td>
-              <td>{{ q.status }}</td>
+            <tr v-for="q in paginatedQuestions" :key="q.qcode" style="cursor: pointer;">
+              <td @click="goToQuestion(q.qcode)">{{ q.qcode }}</td>
+              <td @click="goToQuestion(q.qcode)">{{ q.question_text }}</td>
+              <td @click="goToQuestion(q.qcode)">{{ q.question_type }}</td>
+              <td @click="goToQuestion(q.qcode)">{{ q.age_groups.join(", ") }}</td>
+              <td @click="goToQuestion(q.qcode)">{{ q.module_name }}</td>
+              <td @click="goToQuestion(q.qcode)">{{ q.status }}</td>
               <td>
-                <button class="btn btn-sm btn-outline-primary btn-sm me-2">Edit</button>
-                <button class="btn btn-sm btn-outline-secondary btn-sm">Archive</button>
+                <button class="btn btn-sm btn-outline-primary me-2" @click.stop="editQuestion(q.qcode)">Edit</button>
+                <button class="btn btn-sm btn-outline-secondary" @click.stop="archiveQuestion(q.qcode)">Archive</button>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <!-- Range + Pagination -->
       <div class="d-flex justify-content-between align-items-center mt-3">
         <small class="text-muted">
           Showing {{ (currentPage - 1) * questionsPerPage + 1 }}
           to {{ Math.min(currentPage * questionsPerPage, filteredQuestions.length) }}
           of {{ filteredQuestions.length.toLocaleString() }} entries
         </small>
-
-    <div class="btn-group">
-  <!-- Left Arrow -->
-  <button
-    class="btn btn-sm btn-outline-primary"
-    :disabled="currentPage === 1"
-    @click="currentPage--"
-  >
-    «
-  </button>
-
-  <!-- Numbered Buttons -->
-  <button
-    v-for="page in pageWindow"
-    :key="page"
-    class="btn btn-sm"
-    :class="page === currentPage ? 'btn-primary' : 'btn-outline-primary'"
-    @click="currentPage = page"
-  >
-    {{ page }}
-  </button>
-
-  <!-- Right Arrow -->
-  <button
-    class="btn btn-sm btn-outline-primary"
-    :disabled="currentPage === totalPages"
-    @click="currentPage++"
-  >
-    »
-  </button>
-</div>
-
+        <div class="btn-group">
+          <button class="btn btn-sm btn-outline-primary" :disabled="currentPage === 1" @click="currentPage--">«</button>
+          <button
+            v-for="page in pageWindow"
+            :key="page"
+            class="btn btn-sm"
+            :class="page === currentPage ? 'btn-primary' : 'btn-outline-primary'"
+            @click="currentPage = page"
+          >
+            {{ page }}
+          </button>
+          <button class="btn btn-sm btn-outline-primary" :disabled="currentPage === totalPages" @click="currentPage++">»</button>
+        </div>
       </div>
     </div>
   `,

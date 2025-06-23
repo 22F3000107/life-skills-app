@@ -1,3 +1,5 @@
+import { fetchQuestionsByModule } from "../../services/questionService.js";
+
 export default {
   name: "IndividualModulePage",
   props: ["mcode", "filter"],
@@ -11,14 +13,7 @@ export default {
       ageGroups: ["6-8", "9-11", "12-14", "15-18"],
       currentPage: 1,
       rowsPerPage: 10,
-      questions: Array.from({ length: 35 }, (_, i) => ({
-        qcode: `Q10${i + 1}`,
-        question: `This is question number ${i + 1}`,
-        type: ["MCQ", "MSQ", "True/False"][i % 3],
-        age: ["6-8", "9-11", "12-14", "15-18"][i % 4],
-        module: "Time Management",
-        status: ["Approved", "Pending", "Rejected"][i % 3],
-      })),
+      questions: [],
     };
   },
   computed: {
@@ -62,6 +57,13 @@ export default {
       console.log("Archive clicked for:", qcode);
       // Optional: Archive logic
     },
+  },
+  async mounted() {
+    try {
+      this.questions = await fetchQuestionsByModule(this.mcode);
+    } catch (err) {
+      console.error("Failed to load questions:", err.message);
+    }
   },
   template: `
     <div class="container mt-4">

@@ -1,34 +1,43 @@
+import { fetchQuestionById } from "../../services/questionService.js";
+
 export default {
   name: "IndividualQuestionPage",
   data() {
     return {
-      question: {
-        qcode: "Q101",
-        type: "Matching", // Can be "MCQ", "MSQ", "True/False", "Matching"
-        module: "Time Management",
-        age: "9-11",
-        text: "What is the best way to manage your time?",
-        imageUrl: "https://via.placeholder.com/150",
-        audioName: "example.mp3",
-        audioUrl:
-          "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-        options: [
-          { text: "Make a schedule", correct: true },
-          { text: "Do whatever you feel like", correct: false },
-          { text: "Skip important things", correct: false },
-          { text: "Waste time", correct: false },
-        ],
-        correctAnswer: true,
-        matchPairs: [
-          { left: "Wake up early", right: "Start the day on time" },
-          { left: "Make a plan", right: "Stay organized" },
-        ],
-      },
+      question: null,
+      isLoading: true,
+      error: null,
     };
+  },
+  async mounted() {
+    const qcode = this.$route.params.qcode;
+    try {
+      const res = await fetchQuestionById(qcode);
+      this.question = {
+        qcode: res.qcode,
+        type: res.question_type,
+        module: res.module_name,
+        age: res.age_groups.join(", "),
+        text: res.question_text,
+        imageUrl: res.image_url,
+        audioUrl: res.audio_url,
+        audioName: res.audio_url?.split("/").pop() || "",
+        options: res.options || [],
+        correctAnswer:
+          res.options?.[0]?.text === "True" ? res.options[0].correct : null,
+        matchPairs: res.match_pairs || [],
+      };
+    } catch (err) {
+      this.error = err.message;
+    } finally {
+      this.isLoading = false;
+    }
   },
   template: `
     <div class="container mt-4">
-      <div class="bg-white p-3 shadow-sm rounded">
+      <div v-if="isLoading" class="text-center">Loading...</div>
+      <div v-else-if="error" class="text-danger text-center">Error: {{ error }}</div>
+      <div v-else class="bg-white p-3 shadow-sm rounded">
 
         <!-- Metadata -->
         <div class="d-flex gap-3 flex-wrap mb-3">

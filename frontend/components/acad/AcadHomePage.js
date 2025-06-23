@@ -1,3 +1,5 @@
+import { fetchAcadHomeModules } from "../../services/acadService.js";
+
 export default {
   name: "AcadHomePage",
   data() {
@@ -5,45 +7,7 @@ export default {
       searchQuery: "",
       currentPage: 1,
       rowsPerPage: 10,
-      modules: [
-        {
-          mcode: "M1244",
-          name: "Time management",
-          questions: 23,
-          concepts: 22,
-        },
-        {
-          mcode: "M1245",
-          name: "Financial Literacy",
-          questions: 18,
-          concepts: 14,
-        },
-        { mcode: "M1246", name: "Communication", questions: 40, concepts: 35 },
-        { mcode: "M1247", name: "Decision Making", questions: 12, concepts: 9 },
-        {
-          mcode: "M1248",
-          name: "Problem Solving",
-          questions: 30,
-          concepts: 25,
-        },
-        {
-          mcode: "M1249",
-          name: "Stress Management",
-          questions: 15,
-          concepts: 12,
-        },
-        { mcode: "M1250", name: "Leadership", questions: 22, concepts: 20 },
-        { mcode: "M1251", name: "Teamwork", questions: 10, concepts: 8 },
-        { mcode: "M1252", name: "Self Awareness", questions: 28, concepts: 24 },
-        { mcode: "M1253", name: "Empathy", questions: 9, concepts: 7 },
-        {
-          mcode: "M1254",
-          name: "Critical Thinking",
-          questions: 25,
-          concepts: 21,
-        },
-        { mcode: "M1255", name: "Goal Setting", questions: 11, concepts: 10 },
-      ],
+      modules: [],
     };
   },
   computed: {
@@ -71,9 +35,17 @@ export default {
   methods: {
   goToModule(mcode) {
     this.$router.push(`/acad/module/${mcode}`);
-  }
-}
-,
+  },
+  
+},
+async mounted() {
+    try {
+      this.modules = await fetchAcadHomeModules();
+    } catch (err) {
+      console.error("Failed to load academic modules:", err.message);
+    }
+  },
+
   template: `
     <div class="container mt-4">
 
