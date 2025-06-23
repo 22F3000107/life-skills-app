@@ -1,8 +1,8 @@
 // Import router and components
 import router from '../utils/router.js';
-import AdminNavbar from '../components/AdminNavbar.js';
-import UserNavbar from '../components/UserNavbar.js';
-import PublicNavbar from '../components/PublicNavbar.js';
+import AdminNavbar from '../components/admin/AdminNavbar.js';
+import UserNavbar from '../components/user/UserNavbar.js';
+import PublicNavbar from '../components/common/PublicNavbar.js';
 
 new Vue({
   el: '#app',
