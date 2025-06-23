@@ -5,6 +5,7 @@ export default {
       firstName: '',
       lastName: '',
       email: '',
+      parentEmail: '',
       phone: '',
       password: '',
       agreeTerms: false,
@@ -33,6 +34,15 @@ export default {
           <label class="form-label">Email Address*</label>
           <input v-model="email" type="email" class="form-control" required placeholder="Enter your email"/>
         </div>
+
+        <div class="mb-3">
+         <label class="form-label">Parent's Email Address*</label>
+         <input v-model="parentEmail" type="email" class="form-control" required placeholder="Enter parent's email"/>
+         <small class="form-text text-muted">
+          We’ll use this to share important updates with your parent or guardian.
+         </small>
+        </div>
+
 
         <div class="mb-3">
           <label class="form-label">Phone Number*</label>
@@ -80,11 +90,25 @@ export default {
   `,
   methods: {
     register() {
-      if (!this.firstName || !this.lastName || !this.email || !this.phone || !this.password || !this.agreeTerms) {
-        this.error = "Please fill all required fields and agree to the terms.";
+      if (!this.firstName || !this.lastName || !this.email || !this.phone || !this.password || !this.parentEmail || !this.agreeTerms) {
+        this.error = "Please fill all required fields including your parent's email, and agree to the terms.";
         this.success = '';
         return;
       }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(this.email)) {
+        this.error = "Please enter a valid email address.";
+        this.success = '';
+        return;
+      }
+
+      if (!emailRegex.test(this.parentEmail)) {
+        this.error = "Please enter a valid parent's email address.";
+        this.success = '';
+        return;
+      }
+
       this.error = '';
       this.success = "Registered successfully! Redirecting to login...";
       setTimeout(() => this.$router.push('/login'), 1500);

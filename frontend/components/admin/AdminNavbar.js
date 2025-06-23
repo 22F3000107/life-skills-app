@@ -23,7 +23,7 @@ export default {
         <router-link to="/admin/quizzes" exact-active-class="router-link-exact-active" class="nav-link text-white">
           🧠 Manage Quizzes
         </router-link>
-        <router-link to="/admin/flags" exact-active-class="router-link-exact-active" class="nav-link text-white">
+        <router-link to="/admin/flagged" exact-active-class="router-link-exact-active" class="nav-link text-white">
           🚩 Flagged Content
         </router-link>
         <router-link to="/admin/reports" exact-active-class="router-link-exact-active" class="nav-link text-white">

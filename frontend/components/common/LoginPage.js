@@ -35,26 +35,41 @@ export default {
     </div>
   `,
   methods: {
-    handleLogin() {
-      if (this.email && this.password) {
-        if (this.email === "acad@email.com" && this.password === "acad") {
-        localStorage.setItem("auth-token", "acad-token");
-        localStorage.setItem("role", "acad");
-        this.$router.push('/acad-dashboard');  // <-- Change this route to your actual Acad Team Dashboard route
-        return;
-      }
-        localStorage.setItem("auth-token", "dummy-token");
-        localStorage.setItem("role", this.role);
+  //   handleLogin() {
+  //     if (this.email && this.password) {
+  //       localStorage.setItem("auth-token", "dummy-token");
+  //       localStorage.setItem("role", this.role);
 
-        if (this.role === 'admin') {
-          this.$router.push('/admin');
-        } else {
-          this.$router.push('/');
-        }
-      } else {
-        this.error = "Please enter valid credentials.";
-      }
+  //       if (this.role === 'admin') {
+  //         this.$router.push('/admin');
+  //       } else {
+  //         this.$router.push('/');
+  //       }
+  //     } else {
+  //       this.error = "Please enter valid credentials.";
+  //     }
+  //   }
+  // }
+    handleLogin() {
+  if (this.email && this.password) {
+    // Simulate database user check
+    if (this.email === "admin@example.com") {
+      localStorage.setItem("role", "admin");
+    } else {
+      localStorage.setItem("role", "user");
     }
+
+    localStorage.setItem("auth-token", "dummy-token");
+
+    if (localStorage.getItem("role") === "admin") {
+      this.$router.push("/admin");
+    } else {
+      this.$router.push("/");
+    }
+  } else {
+    this.error = "Please enter valid credentials.";
+  }
+}
   }
 };
 
