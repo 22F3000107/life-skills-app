@@ -5,10 +5,11 @@
 // The application is styled with a light gray background color, and the navbars are styled with Bootstrap classes for a consistent look and feel.
 // The `updated` lifecycle hook ensures that the navbar updates if the user's role changes during the session, such as after logging in or out
 // Import router and components
-import router from '../utils/router.js';
-import AdminNavbar from '../components/admin/AdminNavbar.js';
-import UserNavbar from '../components/user/UserNavbar.js';
-import PublicNavbar from '../components/common/PublicNavbar.js';
+import router from "../utils/router.js";
+import AdminNavbar from "../components/admin/AdminNavbar.js";
+import UserNavbar from "../components/user/UserNavbar.js";
+import PublicNavbar from "../components/common/PublicNavbar.js";
+import NewBar from "../components/acad/NewBar.js";
 
 new Vue({
   el: '#app',
@@ -22,18 +23,22 @@ new Vue({
   computed: {
     navbarComponent() {
       if (this.publicPages.includes(this.$route.name)) {
-        return 'PublicNavbar';
+        return "PublicNavbar";
       }
-      return this.userRole === 'admin' ? 'AdminNavbar' : this.userRole === 'acad' ? 'Newbar' : 'UserNavbar' ;
+      return this.userRole === "admin"
+        ? "AdminNavbar"
+        : this.userRole === "acad"
+        ? "Newbar"
+        : "UserNavbar";
     },
     isPublicPage() {
       return this.publicPages.includes(this.$route.name);
-    }
+    },
   },
   watch: {
-    '$route.name': function () {
-      this.userRole = localStorage.getItem('role');
-    }
+    "$route.name": function () {
+      this.userRole = localStorage.getItem("role");
+    },
   },
   template: `
     <div style="min-height: 100vh; background-color: #C0C0C0;">
@@ -57,10 +62,10 @@ new Vue({
   components: {
     AdminNavbar,
     UserNavbar,
-    PublicNavbar
-  }
+    PublicNavbar,
+    Newbar: NewBar,
+  },
 });
-
 
 // This code initializes a Vue.js application with a dynamic navbar that changes based on the user's role.
 // It uses Vue Router for navigation and includes dummy navbar components for admin and user roles.

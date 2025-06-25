@@ -118,7 +118,7 @@ export default {
               <p class="text-muted mb-1">Mcode: {{ mod.mcode }}</p>
               <h6 class="fw-bold mb-3">{{ mod.name }}</h6>
               <p class="mb-1">
-                ✔️ Approved Questions: {{ mod.approved }}
+                ✔️ Approved Questions: {{ mod.approved_count }}
                 <router-link
                   :to="'/acad/module/' + mod.mcode + '?filter=approved'"
                   class="float-end text-decoration-none"
@@ -126,7 +126,7 @@ export default {
                 >➡️</router-link>
               </p>
               <p class="mb-1">
-                ❌ Rejected Questions: {{ mod.rejected }}
+                ❌ Rejected Questions: {{ mod.rejected_count }}
                 <router-link
                   :to="'/acad/module/' + mod.mcode + '?filter=rejected'"
                   class="float-end text-decoration-none"
@@ -134,7 +134,7 @@ export default {
                 >➡️</router-link>
               </p>
               <p class="mb-1">
-                🔍 To Review: {{ mod.review }}
+                🔍 To Review: {{ mod.review_count }}
                 <router-link
                   :to="'/acad/module/' + mod.mcode + '?filter=pending'"
                   class="float-end text-decoration-none"
@@ -142,7 +142,7 @@ export default {
                 >➡️</router-link>
               </p>
               <p class="mb-1">
-  📚 Total Concepts: {{ mod.concepts }}
+  📚 Total Concepts: {{ mod.concepts_count }}
   <router-link
     :to="'/acad/concepts?module=' + mod.mcode"
     class="float-end text-decoration-none"

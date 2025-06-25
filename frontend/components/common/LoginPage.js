@@ -51,13 +51,15 @@ export default {
   //   }
   // }
     handleLogin() {
-  if (this.email && this.password) {
-    // Simulate database user check
-    if (this.email === "admin@example.com") {
-      localStorage.setItem("role", "admin");
-    } else {
-      localStorage.setItem("role", "user");
-    }
+      if (this.email && this.password) {
+        // Simulate database user check
+        if (this.email === "admin@example.com") {
+          localStorage.setItem("role", "admin");
+        } else if (this.email === "acad@email.com") {
+          localStorage.setItem("role", "acad");
+        } else {
+          localStorage.setItem("role", "user");
+        }
 
     localStorage.setItem("auth-token", "dummy-token");
 
