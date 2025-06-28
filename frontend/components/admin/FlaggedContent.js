@@ -51,12 +51,20 @@ export default {
   },
   template: `
     <div class="container mt-4 mb-5">
-      <h2 class="text-center fw-bold mb-4">🚩 Flagged Content</h2>
+      <div class="text-center mb-4">
+        <i class="bi bi-flag-fill fs-1 text-danger"></i>
+        <h2 class="fw-bold mt-2">Flagged Content</h2>
+        <p class="text-muted">Review and take action on reported stories and quizzes.</p>
+      </div>
 
       <!-- Tab Buttons -->
       <div class="btn-group mb-4 w-100">
-        <button class="btn" :class="{'btn-primary': activeTab === 'stories', 'btn-outline-primary': activeTab !== 'stories'}" @click="setTab('stories')">📘 Flagged Stories</button>
-        <button class="btn" :class="{'btn-primary': activeTab === 'quizzes', 'btn-outline-primary': activeTab !== 'quizzes'}" @click="setTab('quizzes')">📝 Flagged Quizzes</button>
+        <button class="btn" :class="{'btn-primary': activeTab === 'stories', 'btn-outline-primary': activeTab !== 'stories'}" @click="setTab('stories')">
+          <i class="bi bi-book-fill me-1"></i> Flagged Stories
+        </button>
+        <button class="btn" :class="{'btn-primary': activeTab === 'quizzes', 'btn-outline-primary': activeTab !== 'quizzes'}" @click="setTab('quizzes')">
+          <i class="bi bi-ui-checks-grid me-1"></i> Flagged Quizzes
+        </button>
       </div>
 
       <!-- Flagged Stories Table -->
@@ -78,9 +86,15 @@ export default {
               <td>{{ story.skill }}</td>
               <td>{{ story.flaggedBy }}</td>
               <td>
-                <button class="btn btn-sm btn-outline-info me-1" @click="viewItem(story)">👁️ View</button>
-                <button class="btn btn-sm btn-outline-success me-1" @click="unflagItem(story, 'story')">✅ Unflag</button>
-                <button class="btn btn-sm btn-outline-danger" @click="deleteItem(index, 'story')">🗑️ Delete</button>
+                <button class="btn btn-sm btn-outline-info me-1" @click="viewItem(story)">
+                  <i class="bi bi-eye-fill"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-success me-1" @click="unflagItem(story, 'story')">
+                  <i class="bi bi-check-circle-fill"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" @click="deleteItem(index, 'story')">
+                  <i class="bi bi-trash-fill"></i>
+                </button>
               </td>
             </tr>
             <tr v-if="flaggedStories.length === 0">
@@ -109,9 +123,15 @@ export default {
               <td>{{ quiz.skill }}</td>
               <td>{{ quiz.flaggedBy }}</td>
               <td>
-                <button class="btn btn-sm btn-outline-info me-1" @click="viewItem(quiz)">👁️ View</button>
-                <button class="btn btn-sm btn-outline-success me-1" @click="unflagItem(quiz, 'quiz')">✅ Unflag</button>
-                <button class="btn btn-sm btn-outline-danger" @click="deleteItem(index, 'quiz')">🗑️ Delete</button>
+                <button class="btn btn-sm btn-outline-info me-1" @click="viewItem(quiz)">
+                  <i class="bi bi-eye-fill"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-success me-1" @click="unflagItem(quiz, 'quiz')">
+                  <i class="bi bi-check-circle-fill"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" @click="deleteItem(index, 'quiz')">
+                  <i class="bi bi-trash-fill"></i>
+                </button>
               </td>
             </tr>
             <tr v-if="flaggedQuizzes.length === 0">
@@ -126,14 +146,16 @@ export default {
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="flaggedPreviewLabel">👁️ Preview</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" />
+              <h5 class="modal-title" id="flaggedPreviewLabel">
+                <i class="bi bi-eye-fill me-1 text-info"></i> Preview Flagged Item
+              </h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" v-if="previewItem">
-              <h5>{{ previewItem.title }}</h5>
+              <h5 class="fw-bold">{{ previewItem.title }}</h5>
               <p><strong>Skill:</strong> {{ previewItem.skill }}</p>
               <p><strong>Flagged By:</strong> {{ previewItem.flaggedBy }}</p>
-              <p><strong>Status:</strong> {{ previewItem.status }}</p>
+              <p><strong>Status:</strong> <span :class="{'text-danger': previewItem.status === 'Flagged', 'text-success': previewItem.status === 'Published'}">{{ previewItem.status }}</span></p>
             </div>
           </div>
         </div>
@@ -141,6 +163,7 @@ export default {
     </div>
   `
 };
+
 // This code defines a Vue.js component for managing flagged content, including stories and quizzes.
 // It allows admins to view, unflag, and delete flagged items, and provides a modal for previewing details of flagged stories and quizzes.
 // The component uses Bootstrap for styling and modal functionality,

@@ -36,9 +36,9 @@ export default {
   },
   methods: {
     getFeedback(current, previous) {
-      if (current > previous) return "✅ Improved from last quiz!";
-      if (current < previous) return "📉 Slight drop, let’s review again!";
-      return "➖ Same as before, keep practicing!";
+      if (current > previous) return "Improved from last quiz!";
+      if (current < previous) return "Slight drop, let’s review again!";
+      return "Same as before, keep practicing!";
     },
     trendClass(current, previous) {
       if (current > previous) return "text-success fw-bold";
@@ -104,34 +104,38 @@ export default {
     <div class="container mt-4 mb-5">
       <!-- Page Header -->
       <div class="text-center mb-4">
-        <h2 class="fw-bold">📊 Progress Summary</h2>
+        <h2 class="fw-bold">
+          <i class="bi bi-bar-chart-line-fill text-primary me-2"></i>Progress Summary
+        </h2>
         <p class="text-muted">See how you're growing in your life skills journey!</p>
-        <p class="text-secondary small">Last updated: {{ lastUpdated }}</p>
+        <p class="text-secondary small">
+          <i class="bi bi-clock me-1"></i>Last updated: {{ lastUpdated }}
+        </p>
       </div>
 
       <!-- Dashboard Cards -->
       <div class="row text-center g-3 mb-4">
         <div class="col-md-3">
           <div class="card p-3 bg-light shadow-sm">
-            <h6>💰 Coins Earned</h6>
+            <h6><i class="bi bi-coin me-1 text-warning"></i>Coins Earned</h6>
             <p class="fw-bold fs-5 text-success">{{ coins }}</p>
           </div>
         </div>
         <div class="col-md-3">
           <div class="card p-3 bg-light shadow-sm">
-            <h6>🧠 Tests Taken</h6>
+            <h6><i class="bi bi-patch-question-fill me-1 text-primary"></i>Tests Taken</h6>
             <p class="fw-bold fs-5 text-primary">{{ testsTaken }}</p>
           </div>
         </div>
         <div class="col-md-3">
           <div class="card p-3 bg-light shadow-sm">
-            <h6>🔥 Streak</h6>
+            <h6><i class="bi bi-lightning-charge-fill me-1 text-warning"></i>Streak</h6>
             <p class="fw-bold fs-5 text-warning">{{ currentStreak }} Days</p>
           </div>
         </div>
         <div class="col-md-3">
           <div class="card p-3 bg-light shadow-sm">
-            <h6>✅ Habits Today</h6>
+            <h6><i class="bi bi-check2-circle me-1 text-info"></i>Habits Today</h6>
             <p class="fw-bold fs-5 text-info">{{ habitsCompletedToday }}</p>
           </div>
         </div>
@@ -139,12 +143,14 @@ export default {
 
       <!-- Motivational Message -->
       <div class="alert alert-info text-center fw-semibold mb-4">
-        {{ motivationalMessage }}
+        <i class="bi bi-stars me-2"></i>{{ motivationalMessage }}
       </div>
 
       <!-- Export Button -->
       <div class="text-end mb-2">
-        <button class="btn btn-outline-secondary btn-sm" @click="exportCSV">⬇ Export as CSV</button>
+        <button class="btn btn-outline-secondary btn-sm" @click="exportCSV">
+          <i class="bi bi-download me-1"></i>Export as CSV
+        </button>
       </div>
 
       <!-- Summary Table -->
@@ -188,7 +194,9 @@ export default {
       <!-- Chart Section -->
       <div class="card shadow-sm">
         <div class="card-body">
-          <h5 class="card-title text-center mb-3">📈 Skill Progress Chart</h5>
+          <h5 class="card-title text-center mb-3">
+            <i class="bi bi-bar-chart-fill me-2 text-dark"></i>Skill Progress Chart
+          </h5>
           <canvas id="skillChart" height="120"></canvas>
         </div>
       </div>

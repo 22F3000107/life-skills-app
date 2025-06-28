@@ -16,10 +16,10 @@ export default {
         { title: "New weekly habit starts", date: "2025-06-20" }
       ],
       logs: [
-        "📌 User A completed a quiz",
-        "🧠 New story added by Academic Member",
-        "⚠️ User B flagged a question",
-        "✅ Reminder sent to 5 inactive users"
+        "User A completed a quiz",
+        "New story added by Academic Member",
+        "User B flagged a question",
+        "Reminder sent to 5 inactive users"
       ]
     };
   },
@@ -82,7 +82,9 @@ export default {
       <div class="row g-4">
         <div class="col-md-6">
           <div class="card shadow-sm h-100">
-            <div class="card-header bg-warning text-white fw-bold">⏰ Scheduled Reminders</div>
+            <div class="card-header bg-warning text-white fw-bold">
+              <i class="bi bi-alarm-fill me-1"></i> Scheduled Reminders
+            </div>
             <div class="card-body">
               <ul class="list-group">
                 <li v-for="(rem, i) in reminders" :key="i" class="list-group-item d-flex justify-content-between">
@@ -96,11 +98,13 @@ export default {
 
         <div class="col-md-6">
           <div class="card shadow-sm h-100">
-            <div class="card-header bg-secondary text-white fw-bold">📜 Recent Activity Logs</div>
+            <div class="card-header bg-secondary text-white fw-bold">
+              <i class="bi bi-clipboard-data-fill me-1"></i> Recent Activity Logs
+            </div>
             <div class="card-body">
               <ul class="list-group">
                 <li v-for="(log, i) in logs" :key="i" class="list-group-item">
-                  {{ log }}
+                  <i class="bi bi-dot text-secondary me-1"></i> {{ log }}
                 </li>
               </ul>
             </div>
@@ -109,17 +113,27 @@ export default {
       </div>
 
       <!-- Quick Actions -->
-      <div class="mt-4">
-        <h5 class="mb-3 fw-semibold">⚡ Quick Actions</h5>
+      <div class="mt-5">
+        <h5 class="fw-semibold mb-3">
+          <i class="bi bi-lightning-fill text-primary me-1"></i> Quick Actions
+        </h5>
         <div class="d-flex flex-wrap gap-3">
-          <router-link to="/admin/stories" class="btn btn-outline-primary">📘 Add New Story</router-link>
-          <router-link to="/admin/quizzes" class="btn btn-outline-success">➕ Create Quiz</router-link>
-          <router-link to="/admin/users" class="btn btn-outline-dark">🔎 Manage Users</router-link>
+          <router-link to="/admin/stories" class="btn btn-outline-primary">
+            <i class="bi bi-journal-plus me-1"></i> Add New Story
+          </router-link>
+          <router-link to="/admin/quizzes" class="btn btn-outline-success">
+            <i class="bi bi-patch-plus-fill me-1"></i> Create Quiz
+          </router-link>
+          <router-link to="/admin/users" class="btn btn-outline-dark">
+            <i class="bi bi-search me-1"></i> Manage Users
+          </router-link>
         </div>
       </div>
     </div>
   `
 };
+
+
 
 
 // This code defines an Admin Dashboard component for a Vue.js application.

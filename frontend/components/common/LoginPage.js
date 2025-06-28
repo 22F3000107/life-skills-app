@@ -8,70 +8,80 @@ export default {
       error: ''
     };
   },
+  methods: {
+    handleLogin() {
+      if (this.email && this.password) {
+        // Simulate basic role check
+        if (this.email === "admin@example.com") {
+          localStorage.setItem("role", "admin");
+        } else {
+          localStorage.setItem("role", "user");
+        }
+
+        localStorage.setItem("auth-token", "dummy-token");
+
+        if (localStorage.getItem("role") === "admin") {
+          this.$router.push("/admin");
+        } else {
+          this.$router.push("/");
+        }
+      } else {
+        this.error = "Please enter valid credentials.";
+      }
+    }
+  },
   template: `
     <div class="d-flex justify-content-center align-items-center vh-100 bg-light">
       <div class="card shadow p-4" style="width: 100%; max-width: 400px;">
-        <h3 class="text-center mb-4">🔐 Login</h3>
+        <div class="text-center mb-4">
+          <i class="bi bi-shield-lock-fill fs-1 text-primary mb-2"></i>
+          <h3 class="fw-bold">Login</h3>
+        </div>
 
+        <!-- Email Field -->
         <div class="mb-3">
           <label class="form-label">Email Address*</label>
-          <input v-model="email" type="email" class="form-control" required placeholder="Enter your email" />
+          <input
+            v-model="email"
+            type="email"
+            class="form-control"
+            required
+            placeholder="Enter your email"
+          />
         </div>
 
+        <!-- Password Field -->
         <div class="mb-3">
           <label class="form-label">Password*</label>
-          <input v-model="password" type="password" class="form-control" required placeholder="Enter your password" />
+          <input
+            v-model="password"
+            type="password"
+            class="form-control"
+            required
+            placeholder="Enter your password"
+          />
         </div>
 
-        <button class="btn btn-primary w-100 mb-2" @click="handleLogin">Login</button>
+        <!-- Login Button -->
+        <button class="btn btn-primary w-100 mb-2" @click="handleLogin">
+          <i class="bi bi-box-arrow-in-right me-1"></i>Login
+        </button>
 
+        <!-- Register Redirect -->
         <p class="text-center mb-0">
           Don't have an account?
           <router-link to="/register">Sign up</router-link>
         </p>
 
-        <p v-if="error" class="text-danger mt-3 text-center">{{ error }}</p>
+        <!-- Error Message -->
+        <p v-if="error" class="text-danger mt-3 text-center">
+          <i class="bi bi-exclamation-circle-fill me-1"></i>{{ error }}
+        </p>
       </div>
     </div>
-  `,
-  methods: {
-  //   handleLogin() {
-  //     if (this.email && this.password) {
-  //       localStorage.setItem("auth-token", "dummy-token");
-  //       localStorage.setItem("role", this.role);
-
-  //       if (this.role === 'admin') {
-  //         this.$router.push('/admin');
-  //       } else {
-  //         this.$router.push('/');
-  //       }
-  //     } else {
-  //       this.error = "Please enter valid credentials.";
-  //     }
-  //   }
-  // }
-    handleLogin() {
-  if (this.email && this.password) {
-    // Simulate database user check
-    if (this.email === "admin@example.com") {
-      localStorage.setItem("role", "admin");
-    } else {
-      localStorage.setItem("role", "user");
-    }
-
-    localStorage.setItem("auth-token", "dummy-token");
-
-    if (localStorage.getItem("role") === "admin") {
-      this.$router.push("/admin");
-    } else {
-      this.$router.push("/");
-    }
-  } else {
-    this.error = "Please enter valid credentials.";
-  }
-}
-  }
+  `
 };
+
 
 // This code defines a Vue.js component for a login page.
 // It includes fields for email, password, and user role (user or admin).
