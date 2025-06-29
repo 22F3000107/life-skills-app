@@ -12,6 +12,7 @@ class DevelopmentConfig(Config):
 	SECURITY_PASSWORD_SALT = "thisissalty"
 	SQLALCHEMY_TRACK_MODIFICATIONS = False
 	WTF_CSRF_ENABLED = False
+	JWT_SECRET_KEY = "your_jwt_secret_key" 
 	SECURITY_TOKEN_AUTHENTICATION_HEADER = 'Authentication-Token'
 	CACHE_REDIS_HOST = 'localhost'
 	CACHE_REDIS_PORT = 6379
