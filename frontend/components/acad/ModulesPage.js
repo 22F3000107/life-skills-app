@@ -161,9 +161,14 @@ export default {
                   </div>
                   <div class="col-md-6 text-md-end">
                     <div class="d-flex align-items-center justify-content-md-end gap-2 mt-3 mt-md-0">
+                                        <router-link
+                      :to="'/acad/questions/review'"
+                      @click.stop
+                    >
                           <button class="btn btn-outline-primary btn-lg px-4">
                         Start Review
                       </button>
+                      </router-link>
                       <button class="btn btn-primary btn-lg px-4" style="background: linear-gradient(45deg, #667eea, #764ba2); border: none;" @click="showCreatePopup = true">
                         <i class="bi bi-plus-circle me-2"></i>Create Module
                       </button>

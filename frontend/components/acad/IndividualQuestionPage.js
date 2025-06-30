@@ -63,7 +63,7 @@ export default {
       this.$router.go(-1);
     },
     editQuestion() {
-      this.$router.push(`/acad/question/${this.question.qcode}/edit`);
+      this.$router.push(`/acad/question/edit/${this.question.qcode}`);
     },
     openImageModal() {
       this.showImageModal = true;

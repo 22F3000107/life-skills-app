@@ -110,6 +110,15 @@ export default {
             <i class="bi bi-lightbulb-fill nav-icon"></i>
             <span class="nav-text" v-if="!isCollapsed">Concepts</span>
           </router-link>
+          <router-link 
+            to="/acad/archived-questions" 
+            exact-active-class="active" 
+            class="nav-link sidebar-link"
+            @click="closeMobileMenu"
+          >
+            <i class="bi bi-lightbulb-fill nav-icon"></i>
+            <span class="nav-text" v-if="!isCollapsed">Archive</span>
+          </router-link>
 
         </nav>
 
