@@ -8,4 +8,4 @@ from .adminapi import LoginAPI, RegisterAPI,AcademyRegisterAPI
 api = Api(prefix='/api')
 api.add_resource(LoginAPI, '/login')
 api.add_resource(RegisterAPI, '/register/student')
-api.add_resource(AcademyRegisterAPI, '/register/academy')
+api.add_resource(AcademyRegisterAPI, '/register/academic')

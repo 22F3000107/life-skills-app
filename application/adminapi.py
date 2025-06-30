@@ -125,7 +125,7 @@ class AcademyRegisterAPI(Resource):
                 "message": "Academy registered successfully",
                 "user_id": user.id,
                 "email": user.email,
-                "role": "academy"
+                "role": "academic"
             }, 201
 
         except SQLAlchemyError as e:
