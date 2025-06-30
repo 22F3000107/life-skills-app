@@ -1,122 +1,242 @@
 [
   {
-    "mcode": "M1240",
+    "mcode": "M13000",
     "name": "Time Management",
-    "approved_count": 12,
-    "rejected_count": 4,
-    "review_count": 5,
-    "concepts_count": 3
-  },
-  {
-    "mcode": "M1241",
-    "name": "Stress Control",
-    "approved_count": 7,
+    "approved_count": 19,
     "rejected_count": 2,
-    "review_count": 6,
-    "concepts_count": 2
+    "review_count": 8,
+    "concepts_count": 5
   },
   {
-    "mcode": "M1242",
-    "name": "Communication",
-    "approved_count": 10,
-    "rejected_count": 3,
-    "review_count": 8,
+    "mcode": "M13001",
+    "name": "Stress Management",
+    "approved_count": 18,
+    "rejected_count": 6,
+    "review_count": 4,
     "concepts_count": 4
   },
   {
-    "mcode": "M1243",
-    "name": "Leadership Skills",
-    "approved_count": 15,
-    "rejected_count": 5,
+    "mcode": "M13002",
+    "name": "Communication",
+    "approved_count": 18,
+    "rejected_count": 3,
+    "review_count": 5,
+    "concepts_count": 6
+  },
+  {
+    "mcode": "M13003",
+    "name": "Leadership",
+    "approved_count": 20,
+    "rejected_count": 6,
+    "review_count": 5,
+    "concepts_count": 5
+  },
+  {
+    "mcode": "M13004",
+    "name": "Decision Making",
+    "approved_count": 13,
+    "rejected_count": 4,
     "review_count": 7,
     "concepts_count": 6
   },
   {
-    "mcode": "M1244",
-    "name": "Project Management",
+    "mcode": "M13005",
+    "name": "Problem Solving",
+    "approved_count": 18,
+    "rejected_count": 5,
+    "review_count": 4,
+    "concepts_count": 7
+  },
+  {
+    "mcode": "M13006",
+    "name": "Critical Thinking",
     "approved_count": 20,
+    "rejected_count": 6,
+    "review_count": 7,
+    "concepts_count": 3
+  },
+  {
+    "mcode": "M13007",
+    "name": "Emotional Intelligence",
+    "approved_count": 20,
+    "rejected_count": 3,
+    "review_count": 6,
+    "concepts_count": 4
+  },
+  {
+    "mcode": "M13008",
+    "name": "Financial Literacy",
+    "approved_count": 14,
+    "rejected_count": 2,
+    "review_count": 5,
+    "concepts_count": 3
+  },
+  {
+    "mcode": "M13009",
+    "name": "Self Awareness",
+    "approved_count": 14,
+    "rejected_count": 3,
+    "review_count": 7,
+    "concepts_count": 4
+  },
+  {
+    "mcode": "M13010",
+    "name": "Goal Setting",
+    "approved_count": 17,
+    "rejected_count": 4,
+    "review_count": 4,
+    "concepts_count": 8
+  },
+  {
+    "mcode": "M13011",
+    "name": "Creative Thinking",
+    "approved_count": 10,
+    "rejected_count": 5,
+    "review_count": 5,
+    "concepts_count": 8
+  },
+  {
+    "mcode": "M13012",
+    "name": "Teamwork",
+    "approved_count": 15,
+    "rejected_count": 6,
+    "review_count": 8,
+    "concepts_count": 4
+  },
+  {
+    "mcode": "M13013",
+    "name": "Conflict Resolution",
+    "approved_count": 10,
+    "rejected_count": 6,
+    "review_count": 6,
+    "concepts_count": 7
+  },
+  {
+    "mcode": "M13014",
+    "name": "Strategic Planning",
+    "approved_count": 10,
+    "rejected_count": 2,
+    "review_count": 4,
+    "concepts_count": 5
+  },
+  {
+    "mcode": "M13015",
+    "name": "Risk Management",
+    "approved_count": 10,
+    "rejected_count": 3,
+    "review_count": 4,
+    "concepts_count": 3
+  },
+  {
+    "mcode": "M13016",
+    "name": "Change Management",
+    "approved_count": 16,
+    "rejected_count": 4,
+    "review_count": 6,
+    "concepts_count": 5
+  },
+  {
+    "mcode": "M13017",
+    "name": "Negotiation Skills",
+    "approved_count": 14,
     "rejected_count": 6,
     "review_count": 4,
     "concepts_count": 8
   },
   {
-    "mcode": "M1245",
-    "name": "Team Building",
-    "approved_count": 9,
-    "rejected_count": 3,
-    "review_count": 5,
-    "concepts_count": 4
+    "mcode": "M13018",
+    "name": "Workplace Etiquette",
+    "approved_count": 16,
+    "rejected_count": 5,
+    "review_count": 6,
+    "concepts_count": 3
   },
   {
-    "mcode": "M1246",
-    "name": "Problem Solving",
-    "approved_count": 14,
+    "mcode": "M13019",
+    "name": "Digital Literacy",
+    "approved_count": 17,
     "rejected_count": 4,
     "review_count": 6,
     "concepts_count": 5
   },
   {
-    "mcode": "M1247",
-    "name": "Critical Thinking",
-    "approved_count": 18,
+    "mcode": "M13020",
+    "name": "Ethical Decision Making",
+    "approved_count": 16,
+    "rejected_count": 4,
+    "review_count": 4,
+    "concepts_count": 6
+  },
+  {
+    "mcode": "M13021",
+    "name": "Financial Planning",
+    "approved_count": 11,
+    "rejected_count": 6,
+    "review_count": 7,
+    "concepts_count": 8
+  },
+  {
+    "mcode": "M13022",
+    "name": "Growth Mindset",
+    "approved_count": 16,
+    "rejected_count": 2,
+    "review_count": 8,
+    "concepts_count": 4
+  },
+  {
+    "mcode": "M13023",
+    "name": "Empathy",
+    "approved_count": 19,
+    "rejected_count": 3,
+    "review_count": 6,
+    "concepts_count": 4
+  },
+  {
+    "mcode": "M13024",
+    "name": "Active Listening",
+    "approved_count": 15,
     "rejected_count": 5,
+    "review_count": 8,
+    "concepts_count": 5
+  },
+  {
+    "mcode": "M13025",
+    "name": "Public Speaking",
+    "approved_count": 17,
+    "rejected_count": 4,
+    "review_count": 5,
+    "concepts_count": 6
+  },
+  {
+    "mcode": "M13026",
+    "name": "Organizational Skills",
+    "approved_count": 15,
+    "rejected_count": 3,
     "review_count": 7,
     "concepts_count": 6
   },
   {
-    "mcode": "M1248",
-    "name": "Decision Making",
-    "approved_count": 16,
+    "mcode": "M13027",
+    "name": "Adaptability",
+    "approved_count": 11,
     "rejected_count": 4,
-    "review_count": 5,
-    "concepts_count": 5
+    "review_count": 6,
+    "concepts_count": 8
   },
   {
-    "mcode": "M1249",
-    "name": "Conflict Resolution",
+    "mcode": "M13028",
+    "name": "Self Regulation",
     "approved_count": 11,
     "rejected_count": 3,
     "review_count": 4,
-    "concepts_count": 4
+    "concepts_count": 8
   },
   {
-    "mcode": "M1250",
-    "name": "Emotional Intelligence",
-    "approved_count": 13,
-    "rejected_count": 4,
-    "review_count": 6,
-    "concepts_count": 5
-  },
-  {
-    "mcode": "M1251",
-    "name": "Strategic Planning",
-    "approved_count": 17,
-    "rejected_count": 5,
-    "review_count": 8,
-    "concepts_count": 7
-  },
-  {
-    "mcode": "M1252",
-    "name": "Risk Management",
-    "approved_count": 19,
-    "rejected_count": 6,
-    "review_count": 7,
-    "concepts_count": 6
-  },
-  {
-    "mcode": "M1253",
-    "name": "Change Management",
-    "approved_count": 15,
-    "rejected_count": 4,
-    "review_count": 5,
-    "concepts_count": 5
-  },
-  {
-    "mcode": "M1254",
-    "name": "Negotiation Skills",
-    "approved_count": 12,
+    "mcode": "M13029",
+    "name": "Networking",
+    "approved_count": 18,
     "rejected_count": 3,
-    "review_count": 6,
-    "concepts_count": 4
+    "review_count": 5,
+    "concepts_count": 7
   }
 ]
