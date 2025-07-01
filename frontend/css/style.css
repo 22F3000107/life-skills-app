@@ -1,17 +1,33 @@
-/* Limit active style to navs inside sidebars */
+/* Active route link styling within sidebar */
 .sidebar .router-link-exact-active {
-  font-weight: bold;
-  background-color: rgba(13, 110, 253, 0.15); /* Light blue background */
-  border-radius: 5px;
+  font-weight: 600;
+  background-color: rgba(13, 110, 253, 0.15); /* Subtle Bootstrap blue tint */
+  border-radius: 6px;
   padding: 6px 12px;
   color: #0d6efd !important;
 }
 
+/* Highlight active icon color if using Bootstrap Icons */
+.sidebar .router-link-exact-active i {
+  color: #0d6efd;
+}
 
-/* Hover effect for nav links */
+/* Smooth hover & focus transitions */
+.nav-link {
+  transition: background-color 0.3s ease, color 0.3s ease;
+  border-radius: 6px;
+}
+
+/* Hover effect for sidebar nav links */
 .nav-link:hover {
   background-color: rgba(13, 110, 253, 0.08);
-  border-radius: 5px;
+  color: #0d6efd;
+}
+
+/* Focus state for accessibility (keyboard users) */
+.nav-link:focus {
+  outline: 2px solid rgba(13, 110, 253, 0.6);
+  outline-offset: 2px;
 }
 
 .hover-shadow:hover {

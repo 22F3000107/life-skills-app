@@ -38,14 +38,19 @@ export default {
   },
   template: `
     <div class="container mt-4 mb-5" style="max-width: 600px;">
+      <!-- Page Header -->
       <div class="text-center mb-4">
-        <h2 class="fw-bold">⚙️ Settings</h2>
+        <h2 class="fw-bold">
+          <i class="bi bi-gear-fill me-2 text-secondary"></i>Settings
+        </h2>
         <p class="text-muted">Update your profile and account preferences</p>
       </div>
 
-      <!-- Profile Section -->
+      <!-- Profile Info Section -->
       <div class="card mb-4 shadow-sm">
-        <div class="card-header fw-semibold">👤 Profile Info</div>
+        <div class="card-header fw-semibold">
+          <i class="bi bi-person-fill me-2"></i>Profile Info
+        </div>
         <div class="card-body">
           <div class="mb-3">
             <label class="form-label">Name</label>
@@ -55,14 +60,20 @@ export default {
             <label class="form-label">Email</label>
             <input v-model="profile.email" type="email" class="form-control" />
           </div>
-          <button class="btn btn-success" @click="saveProfile">Save Changes</button>
-          <div v-if="profileSaved" class="alert alert-success mt-3">Profile updated successfully!</div>
+          <button class="btn btn-success" @click="saveProfile">
+            <i class="bi bi-save me-1"></i>Save Changes
+          </button>
+          <div v-if="profileSaved" class="alert alert-success mt-3">
+            <i class="bi bi-check-circle me-1"></i>Profile updated successfully!
+          </div>
         </div>
       </div>
 
-      <!-- Password Section -->
+      <!-- Password Change Section -->
       <div class="card shadow-sm">
-        <div class="card-header fw-semibold">🔒 Change Password</div>
+        <div class="card-header fw-semibold">
+          <i class="bi bi-lock-fill me-2"></i>Change Password
+        </div>
         <div class="card-body">
           <div class="mb-3">
             <label class="form-label">New Password</label>
@@ -72,12 +83,23 @@ export default {
             <label class="form-label">Confirm Password</label>
             <input v-model="confirmPassword" type="password" class="form-control" />
           </div>
-          <button class="btn btn-primary" @click="savePassword">Update Password</button>
+          <button class="btn btn-primary" @click="savePassword">
+            <i class="bi bi-key-fill me-1"></i>Update Password
+          </button>
 
-          <div v-if="passwordError" class="alert alert-danger mt-3">{{ passwordError }}</div>
-          <div v-if="passwordSaved" class="alert alert-success mt-3">Password changed successfully!</div>
+          <div v-if="passwordError" class="alert alert-danger mt-3">
+            <i class="bi bi-exclamation-circle me-1"></i>{{ passwordError }}
+          </div>
+          <div v-if="passwordSaved" class="alert alert-success mt-3">
+            <i class="bi bi-check-circle-fill me-1"></i>Password changed successfully!
+          </div>
         </div>
       </div>
     </div>
   `
 };
+// This code defines a Vue.js component for the Settings page of a user profile.
+// It allows users to update their profile information and change their password.
+// The component includes data properties for the profile, password, and confirmation,
+// as well as methods to save the profile and password changes.
+

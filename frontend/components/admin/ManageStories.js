@@ -26,10 +26,8 @@ export default {
   computed: {
     filteredStories() {
       return this.stories.filter(story => {
-        const matchesSearch =
-          story.title.toLowerCase().includes(this.searchQuery.toLowerCase());
-        const matchesSkill =
-          this.selectedSkill === "All" || story.skill === this.selectedSkill;
+        const matchesSearch = story.title.toLowerCase().includes(this.searchQuery.toLowerCase());
+        const matchesSkill = this.selectedSkill === "All" || story.skill === this.selectedSkill;
         return matchesSearch && matchesSkill;
       });
     },
@@ -46,16 +44,12 @@ export default {
     flagStory(index) {
       if (this.stories[index].status !== 'Flagged') {
         this.stories[index].status = 'Flagged';
-        alert("🚩 Story flagged successfully.");
+        alert("Story flagged successfully.");
       }
     },
     togglePublish(index) {
       const story = this.stories[index];
-      if (story.status === "Published") {
-        story.status = "Unpublished";
-      } else if (story.status === "Unpublished") {
-        story.status = "Published";
-      }
+      story.status = story.status === "Published" ? "Unpublished" : "Published";
     },
     deleteStory(index) {
       if (confirm("Are you sure you want to delete this story?")) {
@@ -66,7 +60,11 @@ export default {
   },
   template: `
     <div class="container mt-4 mb-5">
-      <h2 class="fw-bold text-center mb-4">📚 Manage Academic Stories</h2>
+      <div class="text-center mb-4">
+        <i class="bi bi-book-half fs-1 text-primary"></i>
+        <h2 class="fw-bold mt-2">Manage Academic Stories</h2>
+        <p class="text-muted">Review, publish, or flag learning stories submitted by the academic team.</p>
+      </div>
 
       <!-- Filters -->
       <div class="row mb-3">
@@ -107,12 +105,18 @@ export default {
                 }">{{ story.status }}</span>
               </td>
               <td>
-                <button class="btn btn-sm btn-outline-primary me-1" @click="viewStory(story)">👁 View</button>
-                <button class="btn btn-sm btn-outline-warning me-1" @click="togglePublish(index)">
-                  {{ story.status === 'Published' ? 'Unpublish' : 'Publish' }}
+                <button class="btn btn-sm btn-outline-primary me-1" @click="viewStory(story)" title="View Story">
+                  <i class="bi bi-eye-fill"></i>
                 </button>
-                <button v-if="story.status !== 'Flagged'" class="btn btn-sm btn-outline-dark" @click="flagStory(index)">🚩 Flag</button>
-                <button class="btn btn-sm btn-outline-danger ms-1" @click="deleteStory(index)">🗑 Delete</button>
+                <button class="btn btn-sm btn-outline-warning me-1" @click="togglePublish(index)" :title="story.status === 'Published' ? 'Unpublish' : 'Publish'">
+                  <i class="bi bi-toggle-{{ story.status === 'Published' ? 'off' : 'on' }}"></i>
+                </button>
+                <button v-if="story.status !== 'Flagged'" class="btn btn-sm btn-outline-dark me-1" @click="flagStory(index)" title="Flag Story">
+                  <i class="bi bi-flag-fill"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" @click="deleteStory(index)" title="Delete Story">
+                  <i class="bi bi-trash-fill"></i>
+                </button>
               </td>
             </tr>
             <tr v-if="filteredStories.length === 0">
@@ -127,14 +131,22 @@ export default {
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">📖 Story Preview</h5>
+              <h5 class="modal-title">
+                <i class="bi bi-eye-fill text-primary me-1"></i> Story Preview
+              </h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"/>
             </div>
             <div class="modal-body" v-if="previewStory">
-              <h5>{{ previewStory.title }}</h5>
+              <h5 class="fw-bold">{{ previewStory.title }}</h5>
               <p><strong>Skill:</strong> {{ previewStory.skill }}</p>
               <p><strong>Created By:</strong> {{ previewStory.createdBy }}</p>
-              <p><strong>Status:</strong> {{ previewStory.status }}</p>
+              <p><strong>Status:</strong>
+                <span :class="{
+                  'text-success': previewStory.status === 'Published',
+                  'text-secondary': previewStory.status === 'Unpublished',
+                  'text-danger': previewStory.status === 'Flagged'
+                }">{{ previewStory.status }}</span>
+              </p>
             </div>
           </div>
         </div>
@@ -142,6 +154,7 @@ export default {
     </div>
   `
 };
+
 
 
 // This code defines a Vue.js component for managing stories in an admin dashboard.

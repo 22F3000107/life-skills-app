@@ -30,7 +30,6 @@ export default {
           email: "meera@example.com",
           role: "academic",
           blocked: false,
-          approved: false,
           registered: "2025-06-01",
           coins: 60,
           tests: 2,
@@ -43,7 +42,6 @@ export default {
           email: "sneha@school.com",
           role: "academic",
           blocked: false,
-          approved: true,
           registered: "2025-05-25",
           coins: 50,
           tests: 1,
@@ -56,17 +54,8 @@ export default {
   computed: {
     approvedUsers() {
       return this.users.filter(user =>
-        (user.role !== "academic" || user.approved) &&
-        (user.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-         user.email.toLowerCase().includes(this.searchQuery.toLowerCase()))
-      );
-    },
-    pendingAcademics() {
-      return this.users.filter(user =>
-        user.role === "academic" &&
-        !user.approved &&
-        (user.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-         user.email.toLowerCase().includes(this.searchQuery.toLowerCase()))
+        user.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        user.email.toLowerCase().includes(this.searchQuery.toLowerCase())
       );
     }
   },
@@ -74,17 +63,8 @@ export default {
     toggleBlock(user) {
       user.blocked = !user.blocked;
     },
-    approve(user) {
-      user.approved = true;
-    },
-    reject(user) {
-      if (confirm("Reject this academic member?")) {
-        const i = this.users.findIndex(u => u.id === user.id);
-        this.users.splice(i, 1);
-      }
-    },
     deleteUser(user) {
-      if (confirm("Delete this user?")) {
+      if (confirm("Delete this user permanently?")) {
         const i = this.users.findIndex(u => u.id === user.id);
         this.users.splice(i, 1);
       }
@@ -92,49 +72,19 @@ export default {
   },
   template: `
     <div class="container mt-4 mb-5">
-      <h2 class="text-center fw-bold mb-4">👩‍🏫 Manage Users & Academic Approvals</h2>
+      <h2 class="text-center fw-bold mb-4">
+        <i class="bi bi-people-fill me-2 text-primary"></i>Manage Users
+      </h2>
 
       <!-- Search -->
-      <div class="input-group mb-4" style="max-width: 400px; margin: auto;">
+      <div class="input-group mb-4" style="max-width: 450px; margin: auto;">
         <input v-model="searchQuery" type="text" class="form-control" placeholder="Search by name or email..." />
         <span class="input-group-text"><i class="bi bi-search"></i></span>
       </div>
 
-      <!-- 🔶 Pending Academic Table -->
-      <div v-if="pendingAcademics.length" class="mb-5">
-        <h5 class="fw-semibold mb-3">📌 Pending Academic Approvals</h5>
-        <div class="table-responsive">
-          <table class="table table-bordered text-center align-middle">
-            <thead class="table-warning">
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Institute</th>
-                <th>Reason for Joining</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="user in pendingAcademics" :key="user.id">
-                <td>{{ user.name }}</td>
-                <td>{{ user.email }}</td>
-                <td>{{ user.institute }}</td>
-                <td>{{ user.reason }}</td>
-                <td><span class="badge bg-warning text-dark">Pending</span></td>
-                <td>
-                  <button class="btn btn-sm btn-success me-2" @click="approve(user)">Approve</button>
-                  <button class="btn btn-sm btn-danger" @click="reject(user)">Reject</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- ✅ Approved Users Table -->
+      <!-- Approved Users Table -->
       <div>
-        <h5 class="fw-semibold mb-3">👥 All Active Users</h5>
+        <h5 class="fw-semibold mb-3"><i class="bi bi-person-check me-2 text-success"></i>All Users</h5>
         <div class="table-responsive">
           <table class="table table-bordered text-center align-middle">
             <thead class="table-light">
@@ -175,9 +125,11 @@ export default {
                 </td>
                 <td>
                   <button class="btn btn-sm btn-outline-warning me-2" @click="toggleBlock(user)">
-                    {{ user.blocked ? 'Unblock' : 'Block' }}
+                    <i class="bi bi-shield-exclamation me-1"></i>{{ user.blocked ? 'Unblock' : 'Block' }}
                   </button>
-                  <button class="btn btn-sm btn-outline-danger" @click="deleteUser(user)">Delete</button>
+                  <button class="btn btn-sm btn-outline-danger" @click="deleteUser(user)">
+                    <i class="bi bi-trash me-1"></i>Delete
+                  </button>
                 </td>
               </tr>
               <tr v-if="approvedUsers.length === 0">

@@ -11,7 +11,6 @@ export default {
       },
       inactivityDays: 7,
       previewMessage: "Hi there! We noticed you haven’t completed any activities this week. Let’s get back on track! 🚀",
-      // Dummy inactive users
       inactiveUsers: [
         { id: 1, name: "Riya Sharma", email: "riya@gmail.com", lastLogin: "2024-05-30" },
         { id: 2, name: "Aman Kumar", email: "amank@example.com", lastLogin: "2024-06-01" },
@@ -21,35 +20,34 @@ export default {
   },
   methods: {
     saveSettings() {
-      alert("Reminder settings saved successfully!");
-      // Send to backend via API later
+      alert("✅ Reminder settings saved successfully!");
+      // Future: Send to backend API
     },
     daysSince(dateStr) {
       const now = new Date();
       const last = new Date(dateStr);
-      const diff = Math.floor((now - last) / (1000 * 60 * 60 * 24));
-      return diff;
+      return Math.floor((now - last) / (1000 * 60 * 60 * 24));
     },
     sendReminder(user) {
-      alert(`Reminder sent to ${user.name} (${user.email})`);
+      alert(`📩 Reminder sent to ${user.name} (${user.email})`);
     }
   },
   computed: {
     filteredInactiveUsers() {
-      return this.inactiveUsers.filter(
-        (u) => this.daysSince(u.lastLogin) >= this.inactivityDays
-      );
+      return this.inactiveUsers.filter(u => this.daysSince(u.lastLogin) >= this.inactivityDays);
     }
   },
   template: `
     <div class="container mt-4 mb-5">
-      <h2 class="text-center fw-bold mb-4">⏰ Reminder Settings</h2>
+      <h2 class="text-center fw-bold mb-4">
+        <i class="bi bi-alarm-fill text-primary me-2"></i>Reminder Settings
+      </h2>
 
       <div class="card shadow-sm p-4 mb-5">
-        <!-- Toggle -->
+        <!-- Enable Switch -->
         <div class="form-check form-switch mb-4">
           <input class="form-check-input" type="checkbox" v-model="enabled" id="reminderToggle" />
-          <label class="form-check-label" for="reminderToggle">
+          <label class="form-check-label fw-semibold" for="reminderToggle">
             Enable Automatic Reminders
           </label>
         </div>
@@ -64,7 +62,7 @@ export default {
           </select>
         </div>
 
-        <!-- Type -->
+        <!-- Channels -->
         <div class="mb-3">
           <label class="form-label fw-bold">Send Via</label>
           <div class="form-check">
@@ -83,24 +81,29 @@ export default {
 
         <!-- Inactivity Days -->
         <div class="mb-3">
-          <label class="form-label fw-bold">Days of Inactivity Before Reminder</label>
+          <label class="form-label fw-bold">Inactivity Threshold (Days)</label>
           <input type="number" v-model.number="inactivityDays" class="form-control" min="1" max="30" :disabled="!enabled" />
         </div>
 
-        <!-- Preview -->
+        <!-- Message Preview -->
         <div class="mb-3">
           <label class="form-label fw-bold">Sample Reminder Message</label>
           <textarea class="form-control" rows="3" v-model="previewMessage" :disabled="!enabled"></textarea>
         </div>
 
+        <!-- Save Button -->
         <button class="btn btn-success w-100" @click="saveSettings" :disabled="!enabled">
-          Save Settings
+          <i class="bi bi-save me-2"></i>Save Settings
         </button>
       </div>
 
-      <!-- Inactive Users -->
+      <!-- Inactive Users List -->
       <div class="card shadow-sm p-4">
-        <h4 class="mb-3">📋 Users Inactive More Than {{ inactivityDays }} Days</h4>
+        <h4 class="mb-3">
+          <i class="bi bi-person-x-fill text-warning me-2"></i>
+          Users Inactive More Than {{ inactivityDays }} Days
+        </h4>
+
         <div v-if="filteredInactiveUsers.length > 0" class="table-responsive">
           <table class="table table-bordered text-center align-middle">
             <thead class="table-light">
@@ -122,20 +125,22 @@ export default {
                 <td>{{ daysSince(user.lastLogin) }} days</td>
                 <td>
                   <button class="btn btn-sm btn-outline-warning" @click="sendReminder(user)">
-                    📩 Send Reminder
+                    <i class="bi bi-envelope-paper-fill me-1"></i>Send Reminder
                   </button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
+
         <div v-else class="text-muted text-center">
-          🎉 No users have been inactive for more than {{ inactivityDays }} days!
+          🎉 No users inactive for more than {{ inactivityDays }} days!
         </div>
       </div>
     </div>
   `
 };
+
 
 // ReminderSettings.js
 // This component allows users to configure reminder settings for their activities.

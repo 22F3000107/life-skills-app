@@ -3,7 +3,9 @@ export default {
   template: `
     <div class="container mt-4">
       <div class="text-center mb-4">
-        <h2 class="fw-bold">Welcome to Life Skills App 👋</h2>
+        <h2 class="fw-bold">
+          <i class="bi bi-stars text-primary me-2"></i>Welcome to Life Skills App
+        </h2>
         <p class="text-muted">Let's build your daily habits and life skills together!</p>
       </div>
 
@@ -11,7 +13,9 @@ export default {
         <div class="col-md-6">
           <div class="card h-100 shadow-sm">
             <div class="card-body text-center">
-              <h5 class="card-title">🎯 Goal Tracker</h5>
+              <h5 class="card-title">
+                <i class="bi bi-bullseye text-danger me-2"></i>Goal Tracker
+              </h5>
               <p class="card-text">Set and track your weekly personal goals easily.</p>
               <router-link to="/goals" class="btn btn-outline-primary btn-sm">Go to Goals</router-link>
             </div>
@@ -21,7 +25,9 @@ export default {
         <div class="col-md-6">
           <div class="card h-100 shadow-sm">
             <div class="card-body text-center">
-              <h5 class="card-title">📋 Healthy Habits</h5>
+              <h5 class="card-title">
+                <i class="bi bi-heart-pulse text-success me-2"></i>Healthy Habits
+              </h5>
               <p class="card-text">Practice good daily habits and track your progress.</p>
               <router-link to="/habits" class="btn btn-outline-success btn-sm">Daily Habits</router-link>
             </div>
@@ -31,7 +37,9 @@ export default {
         <div class="col-md-6">
           <div class="card h-100 shadow-sm">
             <div class="card-body text-center">
-              <h5 class="card-title">🧠 Take Test</h5>
+              <h5 class="card-title">
+                <i class="bi bi-patch-question text-warning me-2"></i>Take Test
+              </h5>
               <p class="card-text">Test your learning with fun quizzes and challenges.</p>
               <router-link to="/test" class="btn btn-outline-warning btn-sm">Take a Test</router-link>
             </div>
@@ -41,7 +49,9 @@ export default {
         <div class="col-md-6">
           <div class="card h-100 shadow-sm">
             <div class="card-body text-center">
-              <h5 class="card-title">📊 Summary</h5>
+              <h5 class="card-title">
+                <i class="bi bi-graph-up-arrow text-dark me-2"></i>Summary
+              </h5>
               <p class="card-text">Check how you're doing and get your progress report.</p>
               <router-link to="/result" class="btn btn-outline-dark btn-sm">View Summary</router-link>
             </div>

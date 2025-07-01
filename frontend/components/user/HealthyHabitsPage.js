@@ -3,10 +3,10 @@ export default {
   data() {
     return {
       habits: [
-        { text: 'Brush Teeth', emoji: '🪥', done: false },
-        { text: 'Eat Breakfast', emoji: '🍽️', done: false },
-        { text: 'Do 5-min Exercise', emoji: '🏃', done: false },
-        { text: 'Sleep Early', emoji: '😴', done: false }
+        { text: 'Brush Teeth', icon: 'bi-tooth', done: false },
+        { text: 'Eat Breakfast', icon: 'bi-egg-fried', done: false },
+        { text: 'Do 5-min Exercise', icon: 'bi-person-running', done: false },
+        { text: 'Sleep Early', icon: 'bi-moon-stars', done: false }
       ],
       rewardEarned: false
     };
@@ -30,7 +30,9 @@ export default {
   template: `
     <div class="container mt-4">
       <div class="text-center mb-4">
-        <h2 class="fw-bold">📋 Today's Healthy Habits</h2>
+        <h2 class="fw-bold">
+          <i class="bi bi-clipboard-check text-primary me-2"></i>Today's Healthy Habits
+        </h2>
         <p class="text-muted">Track your daily habits and stay consistent!</p>
       </div>
 
@@ -55,13 +57,15 @@ export default {
               {{ habit.text }}
             </span>
           </div>
-          <span class="fs-5">{{ habit.emoji }}</span>
+          <i :class="['fs-5', 'bi', habit.icon]"></i>
         </li>
       </ul>
 
       <!-- Progress Bar -->
       <div class="mb-4">
-        <label class="form-label">Progress: {{ progressPercent }}%</label>
+        <label class="form-label">
+          <i class="bi bi-graph-up-arrow me-1 text-success"></i>Progress: {{ progressPercent }}%
+        </label>
         <div class="progress">
           <div
             class="progress-bar bg-success progress-bar-striped progress-bar-animated"
@@ -74,17 +78,18 @@ export default {
       <!-- Complete All Button -->
       <div class="d-grid mb-4">
         <button class="btn btn-success fw-bold" @click="markAllComplete">
-          ✔ Mark All Complete
+          <i class="bi bi-check2-circle me-2"></i>Mark All Complete
         </button>
       </div>
 
       <!-- Reward -->
       <div v-if="rewardEarned" class="alert alert-success text-center fw-semibold shadow-sm">
-        🎉 Great job! You earned 10 stars today!
+        <i class="bi bi-stars me-2"></i>Great job! You earned 10 stars today!
       </div>
     </div>
   `
 };
+
 
 // This code defines a Vue.js component for a healthy habits page.
 // It allows users to track daily habits, mark them as done, edit habit names, and reset their habits.

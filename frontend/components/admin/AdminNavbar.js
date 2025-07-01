@@ -6,40 +6,42 @@ export default {
       <!-- Logo + Admin Title -->
       <div class="p-3 border-bottom text-center">
         <img src="./images/lifeskills-logo.png" alt="Life Skills Logo" height="50" class="mb-2" />
-        <h6 class="fw-bold">Admin Panel</h6>
+        <h6 class="fw-bold text-white">Admin Panel</h6>
       </div>
 
       <!-- Navigation Links -->
       <nav class="flex-grow-1 nav flex-column p-2">
         <router-link to="/admin" exact-active-class="router-link-exact-active" class="nav-link text-white">
-          📊 Dashboard
+          <i class="bi bi-speedometer2 me-2"></i> Dashboard
         </router-link>
         <router-link to="/admin/users" exact-active-class="router-link-exact-active" class="nav-link text-white">
-          👥 Manage Users
+          <i class="bi bi-people-fill me-2"></i> Manage Users
         </router-link>
         <router-link to="/admin/stories" exact-active-class="router-link-exact-active" class="nav-link text-white">
-          📚 Manage Stories
+          <i class="bi bi-journals me-2"></i> Manage Stories
         </router-link>
         <router-link to="/admin/quizzes" exact-active-class="router-link-exact-active" class="nav-link text-white">
-          🧠 Manage Quizzes
+          <i class="bi bi-puzzle-fill me-2"></i> Manage Quizzes
         </router-link>
         <router-link to="/admin/flagged" exact-active-class="router-link-exact-active" class="nav-link text-white">
-          🚩 Flagged Content
+          <i class="bi bi-flag-fill me-2"></i> Flagged Content
         </router-link>
         <router-link to="/admin/reports" exact-active-class="router-link-exact-active" class="nav-link text-white">
-          📈 Reports & Analytics
+          <i class="bi bi-bar-chart-line-fill me-2"></i> Reports & Analytics
         </router-link>
         <router-link to="/admin/reminders" exact-active-class="router-link-exact-active" class="nav-link text-white">
-          🔔 Reminder Settings
+          <i class="bi bi-bell-fill me-2"></i> Reminder Settings
         </router-link>
         <router-link to="/admin/settings" exact-active-class="router-link-exact-active" class="nav-link text-white">
-          ⚙️ Settings
+          <i class="bi bi-gear-fill me-2"></i> Settings
         </router-link>
       </nav>
 
       <!-- Logout -->
       <div class="p-3 border-top">
-        <button class="btn btn-outline-light btn-sm w-100" @click="logout">🚪 Logout</button>
+        <button class="btn btn-outline-light btn-sm w-100" @click="logout">
+          <i class="bi bi-box-arrow-right me-1"></i> Logout
+        </button>
       </div>
     </div>
   `,
@@ -51,6 +53,7 @@ export default {
     }
   }
 };
+
 
 // This code defines an Admin Navbar component for a Vue.js application.
 // It provides a sidebar navigation menu for admin users with links to various admin functionalities.
