@@ -11,9 +11,11 @@ export default {
   methods: {
     handleLogin() {
       if (this.email && this.password) {
-        // Simulate basic role check
+        // Simulate basic role check with multiple roles
         if (this.email === "admin@example.com") {
           localStorage.setItem("role", "admin");
+        } else if (this.email === "acad@email.com") {
+          localStorage.setItem("role", "acad");
         } else {
           localStorage.setItem("role", "user");
         }
@@ -81,6 +83,7 @@ export default {
     </div>
   `
 };
+
 
 
 // This code defines a Vue.js component for a login page.

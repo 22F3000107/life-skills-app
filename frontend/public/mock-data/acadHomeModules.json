@@ -1,0 +1,188 @@
+[
+  {
+    "mcode": "M13000",
+    "name": "Time Management",
+    "questions": 18,
+    "concepts": 24
+  },
+  {
+    "mcode": "M13001",
+    "name": "Stress Management",
+    "questions": 20,
+    "concepts": 22
+  },
+  {
+    "mcode": "M13002",
+    "name": "Communication",
+    "questions": 35,
+    "concepts": 30
+  },
+  {
+    "mcode": "M13003",
+    "name": "Leadership",
+    "questions": 40,
+    "concepts": 6
+  },
+  {
+    "mcode": "M13004",
+    "name": "Decision Making",
+    "questions": 18,
+    "concepts": 15
+  },
+  {
+    "mcode": "M13005",
+    "name": "Problem Solving",
+    "questions": 26,
+    "concepts": 24
+  },
+  {
+    "mcode": "M13006",
+    "name": "Critical Thinking",
+    "questions": 12,
+    "concepts": 22
+  },
+  {
+    "mcode": "M13007",
+    "name": "Emotional Intelligence",
+    "questions": 40,
+    "concepts": 14
+  },
+  {
+    "mcode": "M13008",
+    "name": "Financial Literacy",
+    "questions": 26,
+    "concepts": 24
+  },
+  {
+    "mcode": "M13009",
+    "name": "Self Awareness",
+    "questions": 13,
+    "concepts": 27
+  },
+  {
+    "mcode": "M13010",
+    "name": "Goal Setting",
+    "questions": 39,
+    "concepts": 14
+  },
+  {
+    "mcode": "M13011",
+    "name": "Creative Thinking",
+    "questions": 12,
+    "concepts": 13
+  },
+  {
+    "mcode": "M13012",
+    "name": "Teamwork",
+    "questions": 37,
+    "concepts": 29
+  },
+  {
+    "mcode": "M13013",
+    "name": "Conflict Resolution",
+    "questions": 33,
+    "concepts": 6
+  },
+  {
+    "mcode": "M13014",
+    "name": "Strategic Planning",
+    "questions": 12,
+    "concepts": 21
+  },
+  {
+    "mcode": "M13015",
+    "name": "Risk Management",
+    "questions": 12,
+    "concepts": 5
+  },
+  {
+    "mcode": "M13016",
+    "name": "Change Management",
+    "questions": 29,
+    "concepts": 27
+  },
+  {
+    "mcode": "M13017",
+    "name": "Negotiation Skills",
+    "questions": 21,
+    "concepts": 16
+  },
+  {
+    "mcode": "M13018",
+    "name": "Workplace Etiquette",
+    "questions": 26,
+    "concepts": 19
+  },
+  {
+    "mcode": "M13019",
+    "name": "Digital Literacy",
+    "questions": 29,
+    "concepts": 7
+  },
+  {
+    "mcode": "M13020",
+    "name": "Ethical Decision Making",
+    "questions": 12,
+    "concepts": 24
+  },
+  {
+    "mcode": "M13021",
+    "name": "Financial Planning",
+    "questions": 35,
+    "concepts": 24
+  },
+  {
+    "mcode": "M13022",
+    "name": "Growth Mindset",
+    "questions": 19,
+    "concepts": 30
+  },
+  {
+    "mcode": "M13023",
+    "name": "Empathy",
+    "questions": 27,
+    "concepts": 9
+  },
+  {
+    "mcode": "M13024",
+    "name": "Active Listening",
+    "questions": 40,
+    "concepts": 23
+  },
+  {
+    "mcode": "M13025",
+    "name": "Public Speaking",
+    "questions": 20,
+    "concepts": 24
+  },
+  {
+    "mcode": "M13026",
+    "name": "Organizational Skills",
+    "questions": 17,
+    "concepts": 21
+  },
+  {
+    "mcode": "M13027",
+    "name": "Adaptability",
+    "questions": 33,
+    "concepts": 18
+  },
+  {
+    "mcode": "M13028",
+    "name": "Self Regulation",
+    "questions": 30,
+    "concepts": 24
+  },
+  {
+    "mcode": "M13029",
+    "name": "Networking",
+    "questions": 26,
+    "concepts": 24
+  },
+  {
+    "mcode": "M13030",
+    "name": "Cooking",
+    "questions": 0,
+    "concepts": 0
+  }
+]
