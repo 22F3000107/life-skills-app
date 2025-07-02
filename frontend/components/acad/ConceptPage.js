@@ -51,7 +51,7 @@ export default {
     filteredConcepts() {
       return this.concepts.filter(
         (c) =>
-          c.code.toLowerCase().includes(this.searchQuery.toLowerCase()) &&
+          c.name.toLowerCase().includes(this.searchQuery.toLowerCase()) &&
           (this.selectedModules.length === 0 ||
             this.selectedModules.includes(c.module)) &&
           (this.selectedAges.length === 0 || this.selectedAges.includes(c.age))

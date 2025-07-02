@@ -28,6 +28,9 @@ import ConceptPage from "../components/acad/ConceptPage.js";
 import ConceptQuestionsPage from "../components/acad/ConceptQuestionsPage.js";
 import QuestionCreationPage from "../components/acad/QuestionCreationPage.js";
 import IndividualQuestionPage from "../components/acad/IndividualQuestionPage.js";
+import EditQuestionPage from "../components/acad/EditQuestionPage.js";
+import ReviewPage from "../components/acad/ReviewPage.js";
+import ArchivedQuestionsPage from "../components/acad/ArchivedQuestionsPage.js";
 
 // Define routes
 const routes = [
@@ -81,6 +84,21 @@ const routes = [
     path: "/acad/question/:qcode",
     name: "IndividualQuestionPage",
     component: IndividualQuestionPage,
+  },
+  {
+    path: "/acad/question/edit/:qcode",
+    name: "EditQuestionPage",
+    component: EditQuestionPage,
+  },
+  {
+    path: "/acad/questions/review",
+    name: "ReviewPage",
+    component: ReviewPage,
+  },
+  {
+    path: "/acad/archived-questions",
+    name: "ArchivedQuestionsPage",
+    component: ArchivedQuestionsPage,
   },
 ];
 

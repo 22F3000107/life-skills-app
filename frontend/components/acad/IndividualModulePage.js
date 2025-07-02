@@ -106,7 +106,7 @@ export default {
       this.$router.push(`/acad/question/${qcode}`);
     },
     editQuestion(qcode) {
-      console.log("Edit clicked for:", qcode);
+      this.$router.push(`/acad/question/edit/${this.question.qcode}`);
     },
     archiveQuestion(qcode) {
       console.log("Archive clicked for:", qcode);
@@ -114,9 +114,7 @@ export default {
     bulkAction(action) {
       console.log("Bulk action:", action);
     },
-    exportQuestions() {
-      console.log("Export questions");
-    },
+
     setSort(key) {
       if (this.sortKey === key) {
         this.sortOrder = this.sortOrder === "asc" ? "desc" : "asc";
@@ -173,9 +171,6 @@ export default {
               </div>
               <div class="col-auto">
                 <div class="d-flex gap-2">
-                  <button class="btn btn-outline-primary btn-lg px-4" @click="exportQuestions">
-                    <i class="bi bi-download me-2"></i>Export
-                  </button>
                   <button class="btn btn-primary btn-lg px-4" style="background: linear-gradient(45deg, #667eea, #764ba2); border: none;">
                     <i class="bi bi-plus-circle me-2"></i>Add Question
                   </button>

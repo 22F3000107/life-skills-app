@@ -240,9 +240,7 @@ export default {
                   </div>
                   <div class="col-lg-4">
                     <div class="d-flex gap-2 justify-content-lg-end">
-                      <button class="btn btn-outline-primary btn-sm px-2 py-1">
-                        <i class="bi bi-download me-2"></i>Export
-                      </button>
+
                       <router-link to="/acad/question/create" class="btn btn-primary btn-lg px-4" style="background: linear-gradient(45deg, #667eea, #764ba2); border: none;">
                         <i class="bi bi-plus-circle me-2"></i>Create Question
                       </router-link>
@@ -502,35 +500,36 @@ export default {
                         <td class="px-4 py-4">
                           <div class="question-text" style="max-width: 400px;">
                             <p class="mb-0 fw-medium text-dark" style="line-height: 1.4;">
-                              {{ q.question_text.length > 80 ? q.question_text.substring(0, 80) + '...' : q.question_text }}
+                              {{ q.question_text.length > 50 ? q.question_text.substring(0, 50) + '...' : q.question_text }}
                             </p>
                           </div>
                         </td>
-                        <td class="px-4 py-4 text-center">
-                          <span class="badge bg-info bg-opacity-20 text-dark px-3 py-2 fs-6" style="border-radius: 20px;">
-                            <i :class="getTypeIcon(q.question_type) + ' me-1'"></i>
-                            {{ q.question_type }}
-                          </span>
-                        </td>
-                        <td class="px-4 py-4 text-center">
-                          <span class="badge bg-secondary bg-opacity-20 text-white px-3 py-2 fs-6" style="border-radius: 20px;">
-                            {{ q.age_groups.join(", ") }}
-                          </span>
-                        </td>
-                        <td class="px-4 py-4 text-center">
-                          <span class="badge bg-primary bg-opacity-20 text-white px-3 py-2 fs-6" style="border-radius: 20px;">
-                            {{ q.module_name }}
-                          </span>
-                        </td>
-                        <td class="px-4 py-4 text-center">
-                          <span
-                            class="badge px-3 py-2 fs-6"
-                            :class="getStatusBadgeClass(q.status)"
-                            style="border-radius: 20px;"
-                          >
-                            {{ q.status }}
-                          </span>
-                        </td>
+<td class="px-4 py-4 text-center">
+  <span class="badge bg-info bg-opacity-20 text-dark px-3 py-2" style="border-radius: 20px; font-size: 0.75rem;">
+    <i :class="getTypeIcon(q.question_type) + ' me-1'"></i>
+    {{ q.question_type }}
+  </span>
+</td>
+<td class="px-4 py-4 text-center">
+  <span class="badge bg-secondary bg-opacity-20 text-white px-3 py-2" style="border-radius: 20px; font-size: 0.75rem;">
+    {{ q.age_groups.join(", ") }}
+  </span>
+</td>
+<td class="px-4 py-4 text-center">
+  <span class="badge bg-primary bg-opacity-20 text-white px-3 py-2" style="border-radius: 20px; font-size: 0.75rem;">
+    {{ q.module_name }}
+  </span>
+</td>
+<td class="px-4 py-4 text-center">
+  <span
+    class="badge px-3 py-2"
+    :class="getStatusBadgeClass(q.status)"
+    style="border-radius: 20px; font-size: 0.75rem;"
+  >
+    {{ q.status }}
+  </span>
+</td>
+
                         <td class="px-4 py-4 text-center" @click.stop>
                           <div class="btn-group" role="group">
                             <button
