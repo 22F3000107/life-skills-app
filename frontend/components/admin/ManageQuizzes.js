@@ -45,17 +45,13 @@ export default {
       if (this.quizzes[index].status !== 'Flagged') {
         if (confirm("Do you want to flag this quiz?")) {
           this.quizzes[index].status = 'Flagged';
-          alert("🚩 Quiz flagged successfully.");
+          alert("Quiz flagged successfully.");
         }
       }
     },
     togglePublish(index) {
       const quiz = this.quizzes[index];
-      if (quiz.status === "Published") {
-        quiz.status = "Unpublished";
-      } else if (quiz.status === "Unpublished") {
-        quiz.status = "Published";
-      }
+      quiz.status = quiz.status === "Published" ? "Unpublished" : "Published";
     },
     deleteQuiz(index) {
       if (confirm("Are you sure you want to delete this quiz?")) {
@@ -65,7 +61,11 @@ export default {
   },
   template: `
     <div class="container mt-4 mb-5">
-      <h2 class="text-center fw-bold mb-4">📝 Manage Quizzes</h2>
+      <div class="text-center mb-4">
+        <i class="bi bi-ui-checks fs-1 text-primary"></i>
+        <h2 class="fw-bold mt-2">Manage Quizzes</h2>
+        <p class="text-muted">View, edit, and control all published quizzes on the platform.</p>
+      </div>
 
       <!-- Search and Filter -->
       <div class="row mb-3">
@@ -81,7 +81,7 @@ export default {
 
       <!-- Quiz Table -->
       <div class="table-responsive">
-        <table class="table table-bordered text-center align-middle">
+        <table class="table table-bordered align-middle text-center">
           <thead class="table-light">
             <tr>
               <th>#</th>
@@ -106,12 +106,18 @@ export default {
                 }">{{ quiz.status }}</span>
               </td>
               <td>
-                <button class="btn btn-sm btn-outline-info me-1" @click="viewQuiz(quiz)">👁️ View</button>
-                <button class="btn btn-sm btn-outline-warning me-1" @click="togglePublish(index)">
-                  {{ quiz.status === 'Published' ? 'Unpublish' : 'Publish' }}
+                <button class="btn btn-sm btn-outline-info me-1" @click="viewQuiz(quiz)" title="View Quiz">
+                  <i class="bi bi-eye-fill"></i>
                 </button>
-                <button v-if="quiz.status !== 'Flagged'" class="btn btn-sm btn-outline-dark me-1" @click="flagQuiz(index)">🚩 Flag</button>
-                <button class="btn btn-sm btn-outline-danger" @click="deleteQuiz(index)">🗑️ Delete</button>
+                <button class="btn btn-sm btn-outline-warning me-1" @click="togglePublish(index)" :title="quiz.status === 'Published' ? 'Unpublish' : 'Publish'">
+                  <i class="bi bi-toggle-{{ quiz.status === 'Published' ? 'off' : 'on' }}"></i>
+                </button>
+                <button v-if="quiz.status !== 'Flagged'" class="btn btn-sm btn-outline-dark me-1" @click="flagQuiz(index)" title="Flag Quiz">
+                  <i class="bi bi-flag-fill"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" @click="deleteQuiz(index)" title="Delete Quiz">
+                  <i class="bi bi-trash-fill"></i>
+                </button>
               </td>
             </tr>
             <tr v-if="filteredQuizzes.length === 0">
@@ -126,14 +132,22 @@ export default {
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="quizPreviewLabel">📖 Quiz Preview</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"/>
+              <h5 class="modal-title" id="quizPreviewLabel">
+                <i class="bi bi-eye-fill me-1 text-primary"></i> Quiz Preview
+              </h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" />
             </div>
             <div class="modal-body" v-if="previewQuiz">
-              <h5>{{ previewQuiz.title }}</h5>
+              <h5 class="fw-bold">{{ previewQuiz.title }}</h5>
               <p><strong>Skill:</strong> {{ previewQuiz.skill }}</p>
               <p><strong>Total Questions:</strong> {{ previewQuiz.questions }}</p>
-              <p><strong>Status:</strong> {{ previewQuiz.status }}</p>
+              <p><strong>Status:</strong>
+                <span :class="{
+                  'text-success': previewQuiz.status === 'Published',
+                  'text-secondary': previewQuiz.status === 'Unpublished',
+                  'text-danger': previewQuiz.status === 'Flagged'
+                }">{{ previewQuiz.status }}</span>
+              </p>
             </div>
           </div>
         </div>
@@ -141,6 +155,7 @@ export default {
     </div>
   `
 };
+
 
 
 // This code defines a Vue.js component for managing quizzes in an admin dashboard.

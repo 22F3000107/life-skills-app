@@ -48,7 +48,7 @@ export default {
   },
   created() {
     const shuffled = [...this.questionBank].sort(() => 0.5 - Math.random());
-    this.questions = shuffled.slice(0, 3); // Take 3 random questions
+    this.questions = shuffled.slice(0, 3);
   },
   methods: {
     checkAnswer() {
@@ -56,9 +56,7 @@ export default {
         const current = this.questions[this.currentQuestionIndex];
         const isCorrect = this.selectedOption === current.correctIndex;
         this.correct = isCorrect;
-        if (isCorrect) {
-          this.score++;
-        }
+        if (isCorrect) this.score++;
 
         this.answers.push({
           question: current.text,
@@ -73,7 +71,6 @@ export default {
       this.selectedOption = null;
       this.showFeedback = false;
       this.hintUsed = false;
-
       if (this.currentQuestionIndex < this.questions.length - 1) {
         this.currentQuestionIndex++;
       } else {
@@ -103,15 +100,20 @@ export default {
   },
   template: `
     <div class="container mt-4 mb-5">
+      <!-- Header -->
       <div class="text-center mb-4">
-        <h2 class="fw-bold">🧠 Take a Test</h2>
+        <h2 class="fw-bold">
+          <i class="bi bi-patch-question-fill text-primary me-2"></i>Take a Test
+        </h2>
         <p class="text-muted">Answer questions and test your life skills!</p>
-        <p>💰 Coins: <strong>{{ coins }}</strong></p>
+        <p><i class="bi bi-coin text-warning me-1"></i><strong>{{ coins }}</strong> Coins</p>
       </div>
 
+      <!-- Quiz Panel -->
       <div v-if="!quizFinished" class="card shadow-sm">
         <div class="card-body">
           <h5 class="card-title mb-3">
+            <i class="bi bi-question-circle me-2 text-dark"></i>
             Q{{ currentQuestionIndex + 1 }}. {{ questions[currentQuestionIndex].text }}
           </h5>
 
@@ -130,34 +132,41 @@ export default {
 
           <div class="d-flex flex-wrap gap-2">
             <button class="btn btn-outline-warning" @click="useHint" :disabled="hintUsed || coins < 3">
-              💡 Use Hint (3 Coins)
+              <i class="bi bi-lightbulb me-1"></i>Use Hint (3 Coins)
             </button>
 
             <button class="btn btn-primary" @click="checkAnswer" :disabled="selectedOption === null || showFeedback">
-              Check Answer
+              <i class="bi bi-check-circle me-1"></i>Check Answer
             </button>
 
             <button class="btn btn-secondary" @click="nextQuestion" v-if="showFeedback">
-              Next
+              <i class="bi bi-arrow-right-circle me-1"></i>Next
             </button>
           </div>
 
           <div v-if="hintUsed" class="alert alert-warning mt-3">
-            Hint: {{ questions[currentQuestionIndex].hint }}
+            <i class="bi bi-info-circle me-1"></i>Hint: {{ questions[currentQuestionIndex].hint }}
           </div>
 
           <div v-if="showFeedback" class="mt-3">
-            <div v-if="correct" class="alert alert-success">🎉 Correct! Great job!</div>
-            <div v-else class="alert alert-danger">❌ Oops! That's not right. Keep practicing!</div>
+            <div v-if="correct" class="alert alert-success">
+              <i class="bi bi-emoji-smile me-1"></i>Correct! Great job!
+            </div>
+            <div v-else class="alert alert-danger">
+              <i class="bi bi-emoji-frown me-1"></i>Oops! That's not right. Keep practicing!
+            </div>
           </div>
         </div>
       </div>
 
+      <!-- Quiz Results -->
       <div v-else class="mt-4 text-center">
-        <h3 class="mb-3">🎉 Quiz Completed!</h3>
+        <h3 class="mb-3">
+          <i class="bi bi-flag-fill text-success me-2"></i>Quiz Completed!
+        </h3>
         <p class="fs-5">Your Score: <strong>{{ score }} / {{ questions.length }}</strong></p>
 
-        <!-- Summary Table -->
+        <!-- Results Table -->
         <div class="table-responsive mt-4">
           <table class="table table-bordered">
             <thead class="table-light">
@@ -176,19 +185,22 @@ export default {
                 <td>{{ questions[index].options[ans.selected] || '—' }}</td>
                 <td>{{ questions[index].options[ans.correct] }}</td>
                 <td>
-                  <span v-if="ans.selected === ans.correct" class="text-success">✔</span>
-                  <span v-else class="text-danger">✘</span>
+                  <i v-if="ans.selected === ans.correct" class="bi bi-check-circle-fill text-success"></i>
+                  <i v-else class="bi bi-x-circle-fill text-danger"></i>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <button class="btn btn-success mt-3" @click="restartQuiz">🔁 Restart Quiz</button>
+        <button class="btn btn-success mt-3" @click="restartQuiz">
+          <i class="bi bi-arrow-repeat me-1"></i>Restart Quiz
+        </button>
       </div>
     </div>
   `
 };
+
 // This code defines a Vue.js component for a quiz page in a life skills application.
 // It allows users to answer multiple-choice questions, check their answers, and view their score at the end.
 // The quiz includes features like hints that can be purchased with in-app coins, and a summary of answers after completion.
