@@ -120,7 +120,7 @@ An interactive web application designed to help children (ages 8–14) build ess
 ## 📌 Notes
 
 - ⚠️ Backend is mocked using localStorage — a real backend  can be integrated in Phase 2.
-- 🧪 No authentication/authorization yet — UI role-switching is simulated.
+- 🧪 No authentication/authorization yet — UI role-switching is simulated.  
 
 ---
 
