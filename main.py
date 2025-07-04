@@ -40,6 +40,7 @@ def create_app():
                 first_name="Admin",
                 last_name="Admin",
                 phone_number=9999999999,
+                age=30,
                 roles=[admin_role],
                 fs_uniquifier=str(uuid.uuid4())
             )
