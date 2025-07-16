@@ -192,7 +192,7 @@ class ConceptResource(Resource):
 question_parser = reqparse.RequestParser()
 question_parser.add_argument('module_id', type=int, required=True, help='Module ID is required.')
 question_parser.add_argument('concept_id', type=int, required=True, help='Concept ID is required.')
-question_parser.add_argument('user_question_prefix', type=str, required=False, help='User input for new question id.')
+question_parser.add_argument('question_id', type=int, required=False, help='Question id.')
 question_parser.add_argument('age_group', type=str, required=False, help='Age group for the question.')
 question_parser.add_argument('type', type=str, required=False, help='Type of question.')
 question_parser.add_argument('question_statement', type=str, required=True, help='Question Statement is required.')
@@ -206,8 +206,7 @@ question_parser.add_argument('image_url', type=str, required=False, help='Image 
 
 question_fields={
     'id':fields.Integer,
-    'new_question_id':fields.String,
-    'user_question_prefix':fields.String,
+    'question_id':fields.Integer,
     'module_id':fields.Integer,
     'concept_id':fields.Integer,
     'age_group':fields.String,
@@ -239,7 +238,7 @@ class QuestionAPI(Resource):
         args = question_parser.parse_args()
         module_id = args['module_id']
         concept_id = args['concept_id']
-        user_question_prefix = args.get('user_question_prefix')
+        question_id = args.get('question_id')
         age_group = args.get('age_group')
         type = args.get('type')
         question_statement = args.get('question_statement')
@@ -258,7 +257,7 @@ class QuestionAPI(Resource):
             new_question = Question(
                 module_id=module_id,
                 concept_id=concept_id,
-                user_question_prefix=user_question_prefix,
+                question_id=question_id,
                 age_group=age_group,
                 type=type,
                 question_statement=question_statement,
@@ -271,11 +270,6 @@ class QuestionAPI(Resource):
                 img_url=img_url
             )
             db.session.add(new_question)
-            db.session.commit()
-            if user_question_prefix:
-                new_question.new_question_id = f"{user_question_prefix}-{new_question.id}"
-            else:
-                new_question.new_question_id = str(new_question.id)
             db.session.commit()
             return {"message": "Question created successfully."}, 200
         except SQLAlchemyError as e:
@@ -299,7 +293,7 @@ class QuestionResource(Resource):
         args = question_parser.parse_args()
         module_id = args['module_id']
         concept_id = args['concept_id']
-        user_question_prefix = args.get('user_question_prefix')
+        parent_question_id = args.get('question_id')
         age_group = args.get('age_group')
         type = args.get('type')
         question_statement = args.get('question_statement')
@@ -317,6 +311,7 @@ class QuestionResource(Resource):
             
             questions.module_id = module_id
             questions.concept_id = concept_id
+            questions.question_id= parent_question_id
             questions.age_group = age_group
             questions.type = type
             questions.question_statement = question_statement
@@ -327,13 +322,6 @@ class QuestionResource(Resource):
             questions.flag = flag
             questions.audio_url = audio_url
             questions.img_url = img_url
-            update_prefix = args.get('user_question_prefix')
-            if update_prefix is not None and update_prefix != questions.user_question_prefix:
-                questions.user_question_prefix = update_prefix
-                if questions.user_question_prefix:
-                    questions.new_question_id = f"{questions.user_question_prefix}-{questions.id}"
-                else:
-                    questions.new_question_id = str(questions.id)
             db.session.commit()
             return {"message": "Question updated successfully."}, 200
         except SQLAlchemyError as e:
