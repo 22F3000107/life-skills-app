@@ -114,7 +114,9 @@ class Concept(db.Model):
 class Question(db.Model):
     __tablename__ = 'question'
     id = db.Column(db.Integer, primary_key=True)
-    question_id = db.Column(db.Integer, db.ForeignKey('question.id'), nullable=True)  # Self-referencing FK
+    # questions_id = db.Column(db.Integer, db.ForeignKey('question.id'), nullable=True)  # Self-referencing FK
+    new_question_id = db.Column(db.String(255), unique=True, nullable=True)
+    user_question_prefix = db.Column(db.String(25), nullable=True)
     module_id = db.Column(db.Integer, db.ForeignKey('module.id'), nullable=False)
     concept_id = db.Column(db.Integer, db.ForeignKey('concept.id'), nullable=False)
     age_group = db.Column(db.String(20))
@@ -128,7 +130,7 @@ class Question(db.Model):
     audio_url = db.Column(db.String(255))
     img_url = db.Column(db.String(255))
 
-    parent = db.relationship('Question', remote_side=[id], backref='sub_questions')
+    # parent = db.relationship('Question', remote_side=[id], backref='sub_questions')
     module = db.relationship('Module', backref=db.backref('questions', lazy=True))
     concept = db.relationship('Concept', back_populates='questions')
 

@@ -50,8 +50,7 @@ module_fields = {
     'description': fields.String
 }
 class ModuleAPI(Resource):
-    @auth_required("token")
-    @roles_required("admin")
+    @jwt_required()
     def get(self):
         try:
             modules = Module.query.all()
@@ -62,8 +61,7 @@ class ModuleAPI(Resource):
         except SQLAlchemyError as e:
             return {"error": str(e)}, 500
 
-    @auth_required("token")
-    @roles_required("admin")    
+    @jwt_required()   
     def post(self):
 
         args = module_parser.parse_args()
@@ -84,8 +82,7 @@ class ModuleAPI(Resource):
         
 
 class ModuleResource(Resource):
-    @auth_required("token")
-    @roles_required("admin")
+    @jwt_required()
     def get(self, module_id):
         try:
             module = Module.query.get(module_id)
@@ -96,8 +93,7 @@ class ModuleResource(Resource):
         except SQLAlchemyError as e:
             return{"error": str(e)}, 500
         
-    @auth_required("token")
-    @roles_required("admin")
+    @jwt_required()
     def put(self, module_id):
         args = module_parser.parse_args()
         name = args['name']
@@ -119,8 +115,7 @@ class ModuleResource(Resource):
             #db.session.rollback()
             return{"error": str(e)}, 500
         
-    @auth_required("token")
-    @roles_required("admin")
+    @jwt_required()
     def delete(self, module_id):
         try:
             module = Module.query.get(module_id)

@@ -14,6 +14,7 @@ class DevelopmentConfig(Config):
 	WTF_CSRF_ENABLED = False
 	JWT_SECRET_KEY = "your_jwt_secret_key" 
 	SECURITY_TOKEN_AUTHENTICATION_HEADER = 'Authentication-Token'
+	SECURITY_JOIN_USER_ROLES = "roles_users"
 	CACHE_REDIS_HOST = 'localhost'
 	CACHE_REDIS_PORT = 6379
 	CACHE_REDIS_DB = 3

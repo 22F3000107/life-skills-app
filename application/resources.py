@@ -26,7 +26,7 @@ api.add_resource(ConceptAPI, "/concept")
 api.add_resource(ConceptResource, "/concept/<int:concept_id>")
 
 api.add_resource(QuestionAPI, "/question")
-api.add_resource(QuestionResource, "/question/<int:quesiton_id>")
+api.add_resource(QuestionResource, "/question/<int:question_id>")
 
 
 

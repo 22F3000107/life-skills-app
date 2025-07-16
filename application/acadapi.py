@@ -8,7 +8,6 @@ import os
 from sqlalchemy import func
 from application.sec import datastore
 import uuid
-from flask_security import auth_required, roles_required, current_user
 from datetime import datetime
 
 class AcademicRegisterAPI(Resource):
@@ -91,8 +90,7 @@ concept_fields = {
 }
 
 class ConceptAPI(Resource):
-    @auth_required("token")
-    @roles_required("academic")
+    @jwt_required()
     def get(self):
         try:
             concepts = Concept.query.all()
@@ -104,8 +102,7 @@ class ConceptAPI(Resource):
             return{"error": str(e)}, 500
         
 
-    @auth_required("token")
-    @roles_required("academic")
+    @jwt_required()
     def post(self):
                 args = concept_parser.parse_args()
                 module_id = args['module_id']
@@ -114,19 +111,23 @@ class ConceptAPI(Resource):
                 date_str = args.get('date')
                 live = args.get('live', False)
                 max_marks = args.get('max_marks')
+                current_user_id = get_jwt_identity()
                 try:
                     existing_concept = Concept.query.filter_by(name=name).first()
                     if existing_concept:
                         return{"message": "Concept With this name already exists."}
                     
                     concept_date = datetime.strptime(date_str, "%d-%m-%Y").date()
+                    acad_team_member = Acadteam.query.filter_by(user_id=current_user_id).first()
+                    if not acad_team_member:
+                        return{"message": "Academic team member is required for this action."}, 404
                     new_concept = Concept(
                         module_id=module_id,
                         name=name,
                         description=description,
                         date=concept_date,
                         live=live,
-                        created_by=current_user.id,
+                        created_by=acad_team_member.id,
                         max_marks=max_marks
                     )
                     db.session.add(new_concept)
@@ -137,8 +138,7 @@ class ConceptAPI(Resource):
 
 
 class ConceptResource(Resource):
-    @auth_required("token")
-    @roles_required("academic")
+    @jwt_required()
     def get(self, concept_id):
         try:
             concepts = Concept.query.get(concept_id)
@@ -149,9 +149,8 @@ class ConceptResource(Resource):
         except SQLAlchemyError as e:
             return{"error": str(e)}, 500   
 
-    @auth_required("token")
-    @roles_required("academic")
-    def post(self, concept_id):
+    @jwt_required()
+    def put(self, concept_id):
                 args = concept_parser.parse_args()
                 module_id = args['module_id']
                 name = args['name']
@@ -177,8 +176,7 @@ class ConceptResource(Resource):
                 except SQLAlchemyError as e:
                     return{"error": str(e)}, 500
 
-    @auth_required("token")
-    @roles_required("academic")
+    @jwt_required()
     def delete(self, concept_id):
         try:
             concepts = Concept.query.get(concept_id)
@@ -194,7 +192,7 @@ class ConceptResource(Resource):
 question_parser = reqparse.RequestParser()
 question_parser.add_argument('module_id', type=int, required=True, help='Module ID is required.')
 question_parser.add_argument('concept_id', type=int, required=True, help='Concept ID is required.')
-question_parser.add_argument('question_id', type=int, required=False, help='Question ID.')
+question_parser.add_argument('user_question_prefix', type=str, required=False, help='User input for new question id.')
 question_parser.add_argument('age_group', type=str, required=False, help='Age group for the question.')
 question_parser.add_argument('type', type=str, required=False, help='Type of question.')
 question_parser.add_argument('question_statement', type=str, required=True, help='Question Statement is required.')
@@ -208,7 +206,8 @@ question_parser.add_argument('image_url', type=str, required=False, help='Image 
 
 question_fields={
     'id':fields.Integer,
-    'question_id':fields.Integer,
+    'new_question_id':fields.String,
+    'user_question_prefix':fields.String,
     'module_id':fields.Integer,
     'concept_id':fields.Integer,
     'age_group':fields.String,
@@ -224,8 +223,7 @@ question_fields={
 }
 
 class QuestionAPI(Resource):
-    @auth_required("token")
-    @roles_required("academic")
+    @jwt_required()
     def get(self):
         try:
             questions = Question.query.all()
@@ -236,13 +234,12 @@ class QuestionAPI(Resource):
         except SQLAlchemyError as e:
             return{"error": str(e)}, 500
         
-    @auth_required("token")
-    @roles_required("academic")
+    @jwt_required()
     def post(self):
         args = question_parser.parse_args()
         module_id = args['module_id']
         concept_id = args['concept_id']
-        question_id = args.get('question_id')
+        user_question_prefix = args.get('user_question_prefix')
         age_group = args.get('age_group')
         type = args.get('type')
         question_statement = args.get('question_statement')
@@ -261,7 +258,7 @@ class QuestionAPI(Resource):
             new_question = Question(
                 module_id=module_id,
                 concept_id=concept_id,
-                question_id=question_id,
+                user_question_prefix=user_question_prefix,
                 age_group=age_group,
                 type=type,
                 question_statement=question_statement,
@@ -275,14 +272,18 @@ class QuestionAPI(Resource):
             )
             db.session.add(new_question)
             db.session.commit()
+            if user_question_prefix:
+                new_question.new_question_id = f"{user_question_prefix}-{new_question.id}"
+            else:
+                new_question.new_question_id = str(new_question.id)
+            db.session.commit()
             return {"message": "Question created successfully."}, 200
         except SQLAlchemyError as e:
             return{"error": str(e)}, 500
 
 
 class QuestionResource(Resource):
-    @auth_required("token")
-    @roles_required("academic")
+    @jwt_required()
     def get(self, question_id):
         try:
             questions = Question.query.get(question_id)
@@ -293,13 +294,12 @@ class QuestionResource(Resource):
         except SQLAlchemyError as e:
             return{"error": str(e)}, 500
         
-    @auth_required("token")
-    @roles_required("academic")
+    @jwt_required()
     def put(self, question_id):
         args = question_parser.parse_args()
         module_id = args['module_id']
         concept_id = args['concept_id']
-        question_id = args.get('question_id')
+        user_question_prefix = args.get('user_question_prefix')
         age_group = args.get('age_group')
         type = args.get('type')
         question_statement = args.get('question_statement')
@@ -317,7 +317,6 @@ class QuestionResource(Resource):
             
             questions.module_id = module_id
             questions.concept_id = concept_id
-            questions.question_id = question_id
             questions.age_group = age_group
             questions.type = type
             questions.question_statement = question_statement
@@ -328,13 +327,19 @@ class QuestionResource(Resource):
             questions.flag = flag
             questions.audio_url = audio_url
             questions.img_url = img_url
+            update_prefix = args.get('user_question_prefix')
+            if update_prefix is not None and update_prefix != questions.user_question_prefix:
+                questions.user_question_prefix = update_prefix
+                if questions.user_question_prefix:
+                    questions.new_question_id = f"{questions.user_question_prefix}-{questions.id}"
+                else:
+                    questions.new_question_id = str(questions.id)
             db.session.commit()
             return {"message": "Question updated successfully."}, 200
         except SQLAlchemyError as e:
             return{"error": str(e)}, 500
         
-    @auth_required("token")
-    @roles_required("academic")
+    @jwt_required()
     def delete(self, question_id):
         try:
             questions = Question.query.get(question_id)
