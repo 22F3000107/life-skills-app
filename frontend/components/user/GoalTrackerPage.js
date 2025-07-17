@@ -1,9 +1,13 @@
+import { getWeeklyGoals, addGoal, updateGoalStatus } from "../utils/api.js";
+
 export default {
   name: "GoalTrackerPage",
   data() {
     return {
       newGoal: '',
-      goals: []
+      goals: [],
+      isLoading: false,
+      error: ''
     };
   },
   computed: {
@@ -15,27 +19,71 @@ export default {
     }
   },
   methods: {
-    addGoal() {
-      if (this.newGoal.trim() !== '') {
-        this.goals.push({ text: this.newGoal, status: 'active' });
-        this.newGoal = '';
+    async fetchGoals() {
+      this.isLoading = true;
+      try {
+        const res = await getWeeklyGoals();
+        this.goals = res.goals;
+        this.error = '';
+      } catch (err) {
+        this.error = err.message || 'Failed to fetch goals.';
+      } finally {
+        this.isLoading = false;
       }
     },
-    markComplete(index) {
-      this.goals[index].status = 'done';
+
+    async addGoal() {
+      if (!this.newGoal.trim()) return;
+
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 7); // Default 1-week goal
+      const goalPayload = {
+        text: this.newGoal,
+        due_date: dueDate.toISOString().split('T')[0]
+      };
+
+      try {
+        const response = await addGoal(goalPayload);
+        this.goals.push({ ...goalPayload, id: response.goal_id, status: 'active' });
+        this.newGoal = '';
+      } catch (err) {
+        this.error = err.message || 'Failed to add goal.';
+      }
     },
-    markFailed(index) {
-      this.goals[index].status = 'failed';
+
+    async markComplete(goal) {
+      try {
+        await updateGoalStatus(goal.id, { status: 'done' });
+        goal.status = 'done';
+      } catch (err) {
+        this.error = 'Error updating goal status.';
+      }
     },
+
+    async markFailed(goal) {
+      try {
+        await updateGoalStatus(goal.id, { status: 'failed' });
+        goal.status = 'failed';
+      } catch (err) {
+        this.error = 'Error updating goal status.';
+      }
+    },
+
     clearCompleted() {
       this.goals = this.goals.filter(g => g.status === 'active');
     }
+  },
+  mounted() {
+    this.fetchGoals();
   },
   template: `
     <div class="container mt-4 mb-5">
       <h2 class="mb-4 text-center">
         <i class="bi bi-bullseye text-primary me-2"></i>My Weekly Goals
       </h2>
+
+      <!-- Error -->
+      <div v-if="error" class="alert alert-danger text-center">{{ error }}</div>
 
       <!-- Add Goal -->
       <div class="input-group mb-4">
@@ -50,8 +98,13 @@ export default {
         <h5 class="text-primary mb-3">
           <i class="bi bi-hourglass-split me-1"></i>Active Goals
         </h5>
-        <ul class="list-group mb-4" v-if="activeGoals.length > 0">
-          <li v-for="(goal, index) in goals" :key="index" v-if="goal.status === 'active'"
+
+        <div v-if="isLoading" class="text-center text-muted mb-3">
+          <div class="spinner-border spinner-border-sm me-2"></div>Loading...
+        </div>
+
+        <ul class="list-group mb-4" v-if="activeGoals.length > 0 && !isLoading">
+          <li v-for="goal in activeGoals" :key="goal.id"
               class="list-group-item d-flex justify-content-between align-items-center">
             <span class="text-secondary">
               {{ goal.text }}
@@ -59,16 +112,17 @@ export default {
             </span>
 
             <div>
-              <button class="btn btn-outline-success btn-sm me-1" @click="markComplete(index)">
+              <button class="btn btn-outline-success btn-sm me-1" @click="markComplete(goal)">
                 <i class="bi bi-check-circle"></i> Done
               </button>
-              <button class="btn btn-outline-danger btn-sm" @click="markFailed(index)">
+              <button class="btn btn-outline-danger btn-sm" @click="markFailed(goal)">
                 <i class="bi bi-x-circle"></i> Fail
               </button>
             </div>
           </li>
         </ul>
-        <div v-else class="text-muted">
+
+        <div v-else-if="!isLoading" class="text-muted">
           <i class="bi bi-info-circle me-1"></i>No active goals available.
         </div>
       </div>
@@ -78,8 +132,9 @@ export default {
         <h5 class="text-success mb-3">
           <i class="bi bi-bookmark-check me-1"></i>Completed Goals
         </h5>
+
         <ul class="list-group" v-if="completedGoals.length > 0">
-          <li v-for="(goal, index) in completedGoals" :key="index"
+          <li v-for="goal in completedGoals" :key="goal.id"
               class="list-group-item d-flex justify-content-between align-items-center">
             <span :class="{
               'text-success': goal.status === 'done',
@@ -97,6 +152,7 @@ export default {
             </span>
           </li>
         </ul>
+
         <div v-else class="text-muted">
           <i class="bi bi-info-circle me-1"></i>No completed goals yet.
         </div>
@@ -110,6 +166,7 @@ export default {
     </div>
   `
 };
+
 
 
 

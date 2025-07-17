@@ -1,130 +1,160 @@
-# 🌱 Life Skill App for School-Aged Children
+# Application Setup Guide
 
-An interactive web application designed to help children (ages 8–14) build essential life skills like time management, emotional intelligence, financial literacy, and healthy habits.
+This guide will help you set up and run the application locally on your machine.
 
----
+## Prerequisites
 
-## Test Credentials
+Before getting started, make sure you have the following installed on your system:
 
-### 👨‍💼 Admin Login
-- Email: `admin@example.com`
-- Password: `1200`
+Node.js and npm
+Python 3
 
-### 🙋‍♂️ User Login
-- Email: `user@example.com`
-- Password: `1200`
+## Installation and Setup
 
----
+### 1. Clone the Repository
 
-## ⚙️ Tech Stack
+First, clone the repository to your local machine:
 
-- **Frontend**: Vue.js, Bootstrap 5  
-- **Backend**: Simulated using LocalStorage (for now)  
-- **Icons**: Bootstrap Icons  
-- **Dev Tool**: Live Server (VS Code)
+bash
+git clone https://github.com/MagicalMe2025/soft-engg-project-may-2025-se-May-34.git
+cd soft-engg-project-may-2025-se-May-34
 
----
+### 2. Install Dependencies
 
-## 📂 Project Structure
+Install the required Node.js dependencies:
 
-<details>
-  <summary><strong>frontend/</strong></summary>
+bash
+npm install
 
-  <details>
-    <summary><strong>components/</strong></summary>
+### 3. Start the Servers
 
-  <details>
-    <summary><strong>admin/</strong></summary>
+You'll need to run two separate Python HTTP servers for the frontend and mock server.
 
-- AdminDashboard.js  
-- AdminNavbar.js  
-- AdminSettings.js  
-- FlaggedContent.js  
-- ManageQuizzes.js  
-- ManageStories.js  
-- ManageUsers.js  
-- ReminderSettings.js  
-- ReportsAnalytics.js  
+#### Start the Mock Server
 
-  </details>
+Open a terminal window and run:
 
-  <details>
-    <summary><strong>user/</strong></summary>
+bash
+python3 -m http.server 5001
 
-- GoalTrackerPage.js  
-- HomePage.js  
-- HealthyHabits.js  
-- SettingsPage.js  
-- SummaryPage.js  
-- TakeTest.js  
-- UserNavbar.js  
+#### Start the Frontend Server
 
-  </details>
+Open another terminal window and run:
 
-  <details>
-    <summary><strong>common/</strong></summary>
+bash
+python3 -m http.server 5500
 
-- LoginPage.js  
-- PublicNavbar.js  
-- RegistrationPage.js  
+### 4. Access the Application
 
-  </details>
+Once both servers are running, open your web browser and navigate to:
 
-  </details>
+http://localhost:5500/frontend/index.html
 
-- css/  
-- images/  
-- mock-data/  
-- static/  
-- utils/  
-- index.html  
-- README.md  
+### 5. Folder Structure
+.
+├── application
+│   ├── adminapi.py
+│   ├── instances.py
+│   ├── models.py
+│   ├── resources.py
+│   └── sec.py
+├── config.py
+├── frontend
+│   ├── components
+│   │   ├── acad
+│   │   │   ├── AcadDashboard.js
+│   │   │   ├── AcadHomePage.js
+│   │   │   ├── ArchivedQuestionsPage.js
+│   │   │   ├── ConceptPage.js
+│   │   │   ├── ConceptQuestionsPage.js
+│   │   │   ├── EditQuestionPage.js
+│   │   │   ├── IndividualModulePage.js
+│   │   │   ├── IndividualQuestionPage.js
+│   │   │   ├── ModulesPage.js
+│   │   │   ├── NewBar.js
+│   │   │   ├── QuestionBankPage.js
+│   │   │   ├── QuestionCreationPage.js
+│   │   │   └── ReviewPage.js
+│   │   ├── admin
+│   │   │   ├── AdminDashboard.js
+│   │   │   ├── AdminNavbar.js
+│   │   │   ├── AdminSettings.js
+│   │   │   ├── FlaggedContent.js
+│   │   │   ├── ManageQuizzes.js
+│   │   │   ├── ManageStories.js
+│   │   │   ├── ManageUsers.js
+│   │   │   ├── ReminderSettings.js
+│   │   │   └── ReportsAnalytics.js
+│   │   ├── common
+│   │   │   ├── LoginPage.js
+│   │   │   ├── PublicNavbar.js
+│   │   │   └── RegistrationPage.js
+│   │   └── user
+│   │       ├── GoalTrackerPage.js
+│   │       ├── HealthyHabitsPage.js
+│   │       ├── HomePage.js
+│   │       ├── SettingsPage.js
+│   │       ├── SummaryPage.js
+│   │       ├── TakeTestPage.js
+│   │       └── UserNavbar.js
+│   ├── css
+│   │   └── style.css
+│   ├── images
+│   │   ├── active.png
+│   │   ├── flag.png
+│   │   ├── lifeskills-logo.png
+│   │   ├── pending.png
+│   │   ├── quiz.png
+│   │   ├── story.png
+│   │   ├── teacher.png
+│   │   └── user.png
+│   ├── index.html
+│   ├── mock-data
+│   │   └── user.json
+│   ├── public
+│   │   └── mock-data
+│   │       ├── acadHomeModules.json
+│   │       ├── modules.json
+│   │       ├── questions.json
+│   │       └── questionsByModule.json
+│   ├── README.md
+│   ├── services // for fetch data using mock server or real API
+│   │   ├── acadService.js
+│   │   ├── api.js
+│   │   ├── moduleService.js
+│   │   └── questionService.js
+│   ├── static
+│   │   └── index.js
+│   ├── store
+│   │   └── index.js
+│   └── utils
+│       ├── router.js
+│       └── store.js
+├── instance
+│   └── dev.db
+├── main.py
+├── package-lock.json
+├── package.json
+├── README.md
+└── requirements.txt
 
-</details>
+## Test Accounts
 
+The application comes with pre-configured test accounts for different user roles:
 
+| Role     | Email             | Password     |
+| -------- | ----------------- | ------------ |
+| Admin    | admin@example.com | any password |
+| User     | user@example.com  | any password |
+| Academic | acad@email.com    | any password |
 
+You can use any password when logging in with these test accounts.
 
----
+## Troubleshooting
 
-## 🚀 Features
-
-- 📚 Life Skill Progress Tracking for Students  
-- 👩‍🏫 Academic Team Management (admin-only registration)  
-- 📥 Story Contribution & Quiz Management  
-- ⏰ Admin-Controlled Weekly Reminders  
-- 📊 Dashboard with key metrics and recent activity  
-
----
-
-## 🧪 Testing Instructions
-
-1. Open `index.html` using **Live Server** in VS Code.
-2. Login using:
-   - Admin: `admin@example.com` / `1200`
-   - User: `user@example.com` / `1200`
-3. Explore:
-   - 🧑‍💼 Admin Dashboard (stats, manage users, quizzes, stories)
-   - 👤 User-side (quizzes, habits, stories — WIP)
-
-
----
-
-## 🙌 Contributors
-
-- **Deepak Kumar** (Frontend + Integration)
-
-
----
-
-## 📌 Notes
-
-- ⚠️ Backend is mocked using localStorage — a real backend  can be integrated in Phase 2.
-- 🧪 No authentication/authorization yet — UI role-switching is simulated.  
-
----
-
-
+**Port conflicts**: If ports 5001 or 5500 are already in use, you can specify different ports by adding the port number after the command (e.g., python3 -m http.server 8080)
+**Python command not found**: Try using python instead of python3 if you're on Windows
+**Permission errors**: Make sure you have the necessary permissions to run servers on the specified ports
 
 
 

@@ -1,3 +1,5 @@
+import { registerUser } from '../utils/api.js';
+
 export default {
   name: "RegistrationPage",
   data() {
@@ -5,9 +7,9 @@ export default {
       firstName: '',
       lastName: '',
       email: '',
-      parentEmail: '',
-      phone: '',
       password: '',
+      phone: '',
+      age: '',
       agreeTerms: false,
       agreePromos: false,
       error: '',
@@ -15,9 +17,10 @@ export default {
     };
   },
   methods: {
-    register() {
-      if (!this.firstName || !this.lastName || !this.email || !this.phone || !this.password || !this.parentEmail || !this.agreeTerms) {
-        this.error = "Please fill all required fields including your parent's email, and agree to the terms.";
+    async register() {
+      // Validation
+      if (!this.firstName || !this.lastName || !this.email || !this.phone || !this.password || !this.age || !this.agreeTerms) {
+        this.error = "Please fill all required fields including age, and agree to the terms.";
         this.success = '';
         return;
       }
@@ -25,19 +28,34 @@ export default {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(this.email)) {
         this.error = "Please enter a valid email address.";
-        this.success = '';
         return;
       }
 
-      if (!emailRegex.test(this.parentEmail)) {
-        this.error = "Please enter a valid parent's email address.";
-        this.success = '';
-        return;
-      }
+      // Prepare payload
+      const payload = {
+        email: this.email,
+        password: this.password,
+        first_name: this.firstName,
+        last_name: this.lastName,
+        phone_number: this.phone,
+        age: parseInt(this.age)
+      };
 
-      this.error = '';
-      this.success = "Registered successfully! Redirecting to login...";
-      setTimeout(() => this.$router.push('/login'), 1500);
+      try {
+        const response = await registerUser(payload);
+
+        if (response.error) {
+          this.error = response.error;
+          this.success = '';
+        } else {
+          this.error = '';
+          this.success = "Registered successfully! Redirecting to login...";
+          setTimeout(() => this.$router.push('/login'), 1500);
+        }
+      } catch (err) {
+        console.error("Registration error:", err);
+        this.error = "Server error. Please try again.";
+      }
     }
   },
   template: `
@@ -60,21 +78,13 @@ export default {
           </div>
         </div>
 
-        <!-- Email Fields -->
+        <!-- Email -->
         <div class="mb-3">
           <label class="form-label">Email Address*</label>
           <input v-model="email" type="email" class="form-control" required placeholder="Enter your email"/>
         </div>
 
-        <div class="mb-3">
-          <label class="form-label">Parent's Email Address*</label>
-          <input v-model="parentEmail" type="email" class="form-control" required placeholder="Enter parent's email"/>
-          <small class="form-text text-muted">
-            We'll use this to share important updates with your parent or guardian.
-          </small>
-        </div>
-
-        <!-- Phone Field -->
+        <!-- Phone -->
         <div class="mb-3">
           <label class="form-label">Phone Number*</label>
           <div class="input-group">
@@ -83,7 +93,13 @@ export default {
           </div>
         </div>
 
-        <!-- Password Field -->
+        <!-- Age -->
+        <div class="mb-3">
+          <label class="form-label">Your Age*</label>
+          <input v-model="age" type="number" min="8" max="18" class="form-control" placeholder="Enter your age" required />
+        </div>
+
+        <!-- Password -->
         <div class="mb-3">
           <label class="form-label">Password*</label>
           <input v-model="password" type="password" class="form-control" required placeholder="Create a password"/>
@@ -120,7 +136,7 @@ export default {
           <router-link to="/login">Log in</router-link>
         </p>
 
-        <!-- Feedback Messages -->
+        <!-- Feedback -->
         <p v-if="error" class="text-danger mt-3 text-center">
           <i class="bi bi-exclamation-circle-fill me-1"></i>{{ error }}
         </p>
@@ -131,6 +147,8 @@ export default {
     </div>
   `
 };
+
+
 
 
 // This code defines a Vue.js component for a registration page.
