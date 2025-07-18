@@ -1,16 +1,17 @@
 from flask import jsonify, current_app
 from flask_restful import Resource, request
 from sqlalchemy.exc import SQLAlchemyError
-from .models import db, User,roles_users,Acadteam,Habit,Goal,Rewards,Scores
+from .models import db, User,roles_users,Acadteam,Habit,Goal,Rewards,Scores,Quiz, QuizQuestion
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash
 import os
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import func
+from sqlalchemy import func, select
 from application.sec import datastore
 import uuid
 from datetime import datetime, date
-
+import json
+from sqlalchemy import text
 class RegisterAPI(Resource):
     def post(self):
         data = request.get_json()
@@ -174,12 +175,142 @@ class UpdateGoalStatus(Resource):
     @jwt_required()
     def put(self, goal_id):
         current_user_id = get_jwt_identity()
+        current_app.logger.debug(f"Updating goal {goal_id} for user {current_user_id}")
         goal = Goal.query.filter_by(id=goal_id, user_id=current_user_id).first()
         if not goal:
             return {"error": "Goal not found"}, 404
 
+        data = request.get_json() or {}
+        new_status = data.get("status")
+
+        if new_status not in ("done", "active"):
+            return {"error": "Invalid status. Allowed: 'done' or 'active'."}, 400
+
+        goal.status = new_status
+        db.session.commit()
+        return {"message": "Goal marked as done."}, 200
+    
+
+class QuizListAPI(Resource):
+    @jwt_required()
+    def get(self):
+        quizzes = Quiz.query.all()
+        quiz_list = []
+        for quiz in quizzes:
+            question_count = db.session.query(QuizQuestion).filter_by(quiz_id=quiz.id).count()
+            quiz_list.append({
+                "id": quiz.id,
+                "title": quiz.title,
+                "skill": quiz.skill,
+                "questions": question_count
+            })
+        return {"quizzes": quiz_list}, 200
+
+
+class QuizDetailAPI(Resource):
+    @jwt_required()
+    def get(self, quiz_id):
+        quiz = Quiz.query.get(quiz_id)
+        if not quiz:
+            return {"error": "Quiz not found"}, 404
+
+        rows = db.session.execute(
+            text("SELECT id, question, options FROM quiz_question WHERE quiz_id = :quiz_id"),
+            {"quiz_id": quiz_id}
+        ).mappings().all()
+
+        questions_data = []
+        for row in rows:
+            try:
+                opts = json.loads(row["options"])
+            except Exception:
+                opts = [row["options"]]
+            questions_data.append({
+                "id": row["id"],
+                "question": row["question"],
+                "options": opts
+            })
+
+        return {
+            "quiz_id": quiz.id,
+            "title": quiz.title,
+            "questions": questions_data
+        }, 200
+
+
+class QuizSubmitAPI(Resource):
+    @jwt_required()
+    def post(self, quiz_id):
         data = request.get_json()
-        goal.status = data.get("status", goal.status)
+        answers = data.get("answers", [])
+
+        quiz = Quiz.query.get(quiz_id)
+        if not quiz:
+            return {"message": "Quiz not found"}, 404
+
+        questions = quiz.questions
+        max_score = len(questions)
+        score = 0
+
+        for idx, question in enumerate(questions):
+            if idx < len(answers) and answers[idx] == question.correct_answer:
+                score += 1
+
+        feedback = "Excellent!" if score == max_score else "Good job!" if score >= max_score // 2 else "Keep practicing!"
+        coins_awarded = score * 5
+
+        user_id = get_jwt_identity()
+        rewards = Rewards.query.filter_by(user_id=user_id).first()
+        if rewards:
+            rewards.coins += coins_awarded
+        else:
+            rewards = Rewards(user_id=user_id, coins=coins_awarded)
+            db.session.add(rewards)
+
         db.session.commit()
 
-        return {"message": "Goal marked as done."}, 200
+        return {
+            "score": score,
+            "max_score": max_score,
+            "feedback": feedback,
+            "coins_awarded": coins_awarded
+        }, 200
+
+
+    
+
+class UserSkillSummaryAPI(Resource):
+    @jwt_required()
+    def get(self):
+        user_id = get_jwt_identity()
+        rewards = Rewards.query.filter_by(user_id=user_id).first()
+        coins = rewards.coins if rewards else 0
+        streak = rewards.streak if rewards else 0
+        habits_today = Habit.query.filter_by(user_id=user_id, completed=True).count()
+        # replace with actual skill data retrieval logic
+        skills = [
+            {
+                "name": "Healthy Habits",
+                "current": 85,
+                "previous": 70,
+                "feedback": "Improved from last quiz!"
+            },
+            {
+                "name": "Emotional Intelligence",
+                "current": 60,
+                "previous": 68,
+                "feedback": "Slight drop, let’s review again!"
+            }
+        ]
+
+        return {
+            "skills": skills,
+            "overall": {
+                "current": 72,
+                "previous": 69
+            },
+            "coins": coins,
+            "tests_taken": 5, 
+            "current_streak": streak,
+            "habits_completed_today": habits_today
+        }, 200

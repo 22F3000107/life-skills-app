@@ -1,14 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import UserMixin, RoleMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-import uuid
-from datetime import date
-
-db = SQLAlchemy()
-
-from flask_sqlalchemy import SQLAlchemy
-from flask_security import UserMixin, RoleMixin
-from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import date
 import uuid
 
@@ -38,6 +30,8 @@ class User(db.Model, UserMixin):
     habits = db.relationship('Habit', backref='user', lazy=True)
     goals = db.relationship('Goal', backref='user', lazy=True)
     scores = db.relationship('Scores', backref='user', lazy=True)
+    stories = db.relationship('Story', backref='author', lazy=True, cascade="all, delete-orphan")
+    quizzes = db.relationship('Quiz', backref='author', lazy=True, cascade="all, delete-orphan")
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
@@ -90,7 +84,7 @@ class Goal(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     text = db.Column(db.String(255), nullable=False)
-    status = db.Column(db.String(20), default="active")  # 'active' or 'done'
+    status = db.Column(db.String(20), default="active")
     due_date = db.Column(db.Date, nullable=False)
 
     def __repr__(self):
@@ -121,15 +115,15 @@ class Concept(db.Model):
 class Question(db.Model):
     __tablename__ = 'question'
     id = db.Column(db.Integer, primary_key=True)
-    question_id = db.Column(db.Integer, db.ForeignKey('question.id'), nullable=True)  # Self-referencing FK
+    question_id = db.Column(db.Integer, db.ForeignKey('question.id'), nullable=True)
     module_id = db.Column(db.Integer, db.ForeignKey('module.id'), nullable=False)
     concept_id = db.Column(db.Integer, db.ForeignKey('concept.id'), nullable=False)
     age_group = db.Column(db.String(20))
     type = db.Column(db.String(20))
     question_statement = db.Column(db.String(255))
-    answers = db.Column(db.String(255))  # CSV
-    approvals = db.Column(db.String(255))  # CSV
-    rejections = db.Column(db.String(255))  # CSV
+    answers = db.Column(db.String(255))
+    approvals = db.Column(db.String(255))
+    rejections = db.Column(db.String(255))
     marks = db.Column(db.Integer)
     flag = db.Column(db.Boolean, default=False)
     audio_url = db.Column(db.String(255))
@@ -148,3 +142,31 @@ class Scores(db.Model):
 
     concept = db.relationship('Concept', backref=db.backref('scores', lazy=True))
 
+class Quiz(db.Model):
+    __tablename__ = 'quiz'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    skill = db.Column(db.String(100), nullable=False)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    status = db.Column(db.String(20), default="draft")  # draft|published|flagged
+    flag_reason = db.Column(db.String(255))
+    flag = db.Column(db.Boolean, default=False)
+    questions = db.relationship('QuizQuestion', backref='quiz', lazy=True)
+
+class QuizQuestion(db.Model):
+    __tablename__ = 'quiz_question'
+    id = db.Column(db.Integer, primary_key=True)
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id'), nullable=False)
+    question = db.Column(db.String(255), nullable=False)
+    options = db.Column(db.PickleType, nullable=False)  # Store list of options
+    correct_answer = db.Column(db.Integer, nullable=False)  # Index of correct answer
+
+class Story(db.Model):
+    __tablename__ = 'story'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # optional
+    status = db.Column(db.String(20), default="draft")  # draft|published|archived|flagged
+    flag_reason = db.Column(db.String(255))
+    flag = db.Column(db.Boolean, default=False)
