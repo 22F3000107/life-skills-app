@@ -2,8 +2,8 @@ from flask_restful import Resource, Api
 from .models import User,db
 from flask_security import roles_required,auth_required, current_user
 from .instances import cache
-from .adminapi import LoginAPI
-from .acadapi import AcademicRegisterAPI
+from .adminapi import LoginAPI, ModuleAPI, ModuleResource
+from .acadapi import AcademicRegisterAPI, ConceptAPI, ConceptResource, QuestionAPI, QuestionResource
 from .userapi import RegisterAPI, UserProfile,TodayHabits, SubmitHabits, WeeklyGoals, AddGoal, UpdateGoalStatus
 from .userapi import QuizDetailAPI,QuizListAPI, QuizSubmitAPI, UserSkillSummaryAPI
 from .adminapi import AdminUsersAPI, AdminBlockUserAPI, AdminUnblockUserAPI,AdminStoriesAPI, AdminUpdateStoryAPI, AdminDeleteStoryAPI,AdminGetStoryAPI
@@ -19,6 +19,7 @@ api.add_resource(TodayHabits, "/habits/today")
 api.add_resource(SubmitHabits, "/habits/submit")
 api.add_resource(WeeklyGoals, "/weekly/goals")
 api.add_resource(AddGoal, "/add/goals")
+
 api.add_resource(UpdateGoalStatus, "/goals/<int:goal_id>")
 api.add_resource(QuizListAPI, '/quizzes')
 api.add_resource(QuizDetailAPI, '/quiz/<int:quiz_id>')
@@ -42,3 +43,16 @@ api.add_resource(AdminDeleteQuizAPI, '/admin/quiz/<int:quiz_id>')
 api.add_resource(AdminFlaggedContentAPI, '/admin/flagged-content')
 api.add_resource(AdminUnflagContentAPI, '/admin/flagged-content/<string:content_type>/<int:content_id>/unflag')
 api.add_resource(AdminDeleteFlaggedContentAPI, '/admin/flagged-content/<string:content_type>/<int:content_id>')
+
+#Admin access
+api.add_resource(ModuleAPI, "/module")
+api.add_resource(ModuleResource, "/module/<int:module_id>")
+
+# Academic Team access
+api.add_resource(ConceptAPI, "/concept")
+api.add_resource(ConceptResource, "/concept/<int:concept_id>")
+
+api.add_resource(QuestionAPI, "/question")
+api.add_resource(QuestionResource, "/question/<int:question_id>")
+
+

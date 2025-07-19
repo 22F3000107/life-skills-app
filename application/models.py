@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import UserMixin, RoleMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+
 from datetime import date
 import uuid
 
@@ -47,6 +48,7 @@ class User(db.Model, UserMixin):
 class Role(db.Model, RoleMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), unique=True)
+    description = db.Column(db.String(255))
 
 class Acadteam(db.Model):
     __tablename__ = 'acadteam'
