@@ -8,7 +8,7 @@ export default {
       searchQuery: "",
       selectedType: "",
       selectedAges: [],
-      selectedModule: "Time Management", // pre-selected module
+      selectedModule: "",
       questionTypes: ["MCQ", "MSQ", "True/False"],
       ageGroups: ["6-8", "9-11", "12-14", "15-18"],
       currentPage: 1,
@@ -24,10 +24,14 @@ export default {
     filteredQuestions() {
       const filtered = this.questions.filter(
         (q) =>
-          q.qcode.toLowerCase().includes(this.searchQuery.toLowerCase()) &&
+          String(q.id).includes(this.searchQuery) &&
           (this.selectedType === "" || q.type === this.selectedType) &&
           (this.selectedAges.length === 0 ||
-            this.selectedAges.includes(q.age)) &&
+            q.age_group?.some((ag) =>
+              ag
+                .split(",")
+                .some((sub) => this.selectedAges.includes(sub.trim()))
+            )) &&
           (this.filter === "all" ||
             this.filter === "" ||
             q.status.toLowerCase() === this.filter.toLowerCase())
@@ -137,7 +141,9 @@ export default {
   async mounted() {
     try {
       this.isLoading = true;
-      this.questions = await fetchQuestionsByModule(this.mcode);
+      const response = await fetchQuestionsByModule(this.mcode);
+      this.questions = response.questions;
+      this.selectedModule = response.module.name;
     } catch (err) {
       console.error("Failed to load questions:", err.message);
     } finally {
@@ -171,9 +177,9 @@ export default {
               </div>
               <div class="col-auto">
                 <div class="d-flex gap-2">
-                  <button class="btn btn-primary btn-lg px-4" style="background: linear-gradient(45deg, #667eea, #764ba2); border: none;">
-                    <i class="bi bi-plus-circle me-2"></i>Add Question
-                  </button>
+                   <router-link to="/acad/question/create" class="btn btn-primary btn-lg px-4" style="background: linear-gradient(45deg, #667eea, #764ba2); border: none;">
+                        <i class="bi bi-plus-circle me-2"></i>Add Question
+                      </router-link>
                 </div>
               </div>
             </div>
@@ -316,8 +322,8 @@ export default {
                 <tbody>
                   <tr
                     v-for="(q, index) in paginatedQuestions"
-                    :key="q.qcode"
-                    @click="goToQuestion(q.qcode)"
+                    :key="q.id"
+                    @click="goToQuestion(q.id)"
                     class="question-row"
                     style="cursor: pointer; transition: all 0.3s ease;"
                     :style="{ 'animation-delay': (index * 0.05) + 's' }"
@@ -325,14 +331,14 @@ export default {
                     <td class="px-4 py-4">
                       <div class="d-flex align-items-center gap-3">
                         <div class="bg-primary bg-opacity-10 px-3 py-2 rounded-pill">
-                          <span class="fw-bold text-primary">{{ q.qcode }}</span>
+                          <span class="fw-bold text-primary">Q{{ q.id }}</span>
                         </div>
                       </div>
                     </td>
                     <td class="px-4 py-4">
                       <div class="question-text" style="max-width: 400px;">
                         <p class="mb-0 fw-medium text-dark" style="line-height: 1.4;">
-                          {{ q.question.length > 80 ? q.question.substring(0, 80) + '...' : q.question }}
+                          {{ q.question_statement.length > 80 ? q.question_statement.substring(0, 80) + '...' : q.question_statement }}
                         </p>
                       </div>
                     </td>
@@ -351,8 +357,13 @@ export default {
                       </span>
                     </td>
                     <td class="px-4 py-4 text-center">
-                      <span class="badge bg-secondary px-3 py-2 fs-6" style="border-radius: 20px;">
-                        {{ q.age }} years
+                      <span
+                        v-for="(age, i) in q.age_group[0].split(',')"
+                        :key="age"
+                        class="badge bg-secondary me-1"
+                        style="border-radius: 20px;"
+                      >
+                        {{ age }} 
                       </span>
                     </td>
                     <td class="px-4 py-4 text-center">
@@ -380,7 +391,7 @@ export default {
                       <div class="btn-group" role="group">
                         <button
                           class="btn btn-sm btn-outline-primary"
-                          @click.stop="editQuestion(q.qcode)"
+                          @click.stop="editQuestion(q.id)"
                           title="Edit Question"
                           style="border-radius: 10px 0 0 10px;"
                         >
@@ -388,7 +399,7 @@ export default {
                         </button>
                         <button
                           class="btn btn-sm btn-outline-danger"
-                          @click.stop="archiveQuestion(q.qcode)"
+                          @click.stop="archiveQuestion(q.id)"
                           title="Archive Question"
                           style="border-radius: 0 10px 10px 0;"
                         >

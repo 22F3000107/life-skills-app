@@ -15,12 +15,7 @@ export default {
       selectedAges: [],
       selectedArchiveReasons: [],
       questionTypes: ["MCQ", "MSQ", "True/False", "Matching"],
-      moduleOptions: [
-        "Time Management",
-        "Stress Control",
-        "Communication",
-        "Leadership",
-      ],
+      moduleList: [],
       ageGroups: ["6-8", "9-11", "12-14", "15-18"],
       archiveReasons: [
         "Outdated Content",
@@ -82,15 +77,15 @@ export default {
 
   computed: {
     archivedQuestions() {
-      return this.questions.filter((q) => q.status === "Archived");
+      return this.questions.filter((q) => q.is_archived === true);
     },
 
     filteredQuestions() {
       let filtered = this.archivedQuestions.filter((q) => {
         const matchesSearch =
           !this.searchQuery ||
-          q.qcode.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          q.question_text
+          q.id.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          q.question_statement
             .toLowerCase()
             .includes(this.searchQuery.toLowerCase());
 
@@ -104,8 +99,8 @@ export default {
 
         const matchesAge =
           this.selectedAges.length === 0 ||
-          (q.age_groups &&
-            q.age_groups.some((age) => this.selectedAges.includes(age)));
+          (q.age_group &&
+            q.age_group.some((age) => this.selectedAges.includes(age)));
 
         const matchesReason =
           this.selectedArchiveReasons.length === 0 ||
@@ -192,7 +187,7 @@ export default {
           ...q,
           archived_date:
             q.archived_date ||
-            (q.status === "Archived" ? new Date().toISOString() : null),
+            (q.is_archived === true ? new Date().toISOString() : null),
           archive_reason: q.archive_reason || "Other",
           archived_by: q.archived_by || "System",
         }));
@@ -268,7 +263,7 @@ export default {
 
         // Update local data
         const index = this.questions.findIndex(
-          (q) => q.qcode === questionToRestore.qcode
+          (q) => q.id === questionToRestore.qcode
         );
         if (index > -1) {
           this.questions[index] = {
@@ -311,7 +306,7 @@ export default {
 
         // Remove from local data
         this.questions = this.questions.filter(
-          (q) => q.qcode !== questionToDelete.qcode
+          (q) => q.id !== questionToDelete.qcode
         );
         this.selectedQuestions = this.selectedQuestions.filter(
           (qcode) => qcode !== questionToDelete.qcode
@@ -345,7 +340,7 @@ export default {
 
         // Update local data
         this.selectedQuestions.forEach((qcode) => {
-          const index = this.questions.findIndex((q) => q.qcode === qcode);
+          const index = this.questions.findIndex((q) => q.id === qcode);
           if (index > -1) {
             this.questions[index] = {
               ...this.questions[index],
@@ -390,7 +385,7 @@ export default {
 
         // Remove from local data
         this.questions = this.questions.filter(
-          (q) => !this.selectedQuestions.includes(q.qcode)
+          (q) => !this.selectedQuestions.includes(q.id)
         );
         this.selectedQuestions = [];
 
@@ -414,7 +409,7 @@ export default {
     },
 
     selectAllFiltered() {
-      this.selectedQuestions = this.filteredQuestions.map((q) => q.qcode);
+      this.selectedQuestions = this.filteredQuestions.map((q) => q.id);
     },
 
     clearSelection() {
@@ -716,7 +711,7 @@ export default {
                         <span v-if="selectedModules.length" class="badge bg-primary ms-2">{{ selectedModules.length }}</span>
                       </button>
                       <div v-show="activeDropdown === 'module'" class="dropdown-menu show p-3 shadow-lg" style="border-radius: 15px; min-width: 200px;">
-                        <div v-for="mod in moduleOptions" :key="mod" class="form-check mb-2">
+                        <div v-for="mod in moduleList" :key="mod" class="form-check mb-2">
                           <input
                             class="form-check-input"
                             type="checkbox"
@@ -844,10 +839,10 @@ export default {
                             <i :class="getSortIcon('qcode')"></i>
                           </div>
                         </th>
-                        <th class="px-4 py-3 border-0" @click="sortBy('question_text')" style="cursor: pointer;">
+                        <th class="px-4 py-3 border-0" @click="sortBy('question_statement')" style="cursor: pointer;">
                           <div class="d-flex align-items-center gap-2">
                             <span class="fw-semibold">Question</span>
-                            <i :class="getSortIcon('question_text')"></i>
+                            <i :class="getSortIcon('question_statement')"></i>
                           </div>
                         </th>
                         <th class="px-4 py-3 border-0 text-center" @click="sortBy('archive_reason')" style="cursor: pointer;">
@@ -876,7 +871,7 @@ export default {
                     <tbody>
                       <tr
                         v-for="(q, index) in paginatedQuestions"
-                        :key="q.qcode"
+                        :key="q.id"
                         class="question-row"
                         style="transition: all 0.3s ease;"
                         :style="{ 'animation-delay': (index * 0.05) + 's' }"
@@ -885,24 +880,24 @@ export default {
                           <input 
                             type="checkbox" 
                             class="form-check-input"
-                            :checked="selectedQuestions.includes(q.qcode)"
-                            @change="toggleQuestionSelection(q.qcode)"
+                            :checked="selectedQuestions.includes(q.id)"
+                            @change="toggleQuestionSelection(q.id)"
                           />
                         </td>
                         <td class="px-4 py-4">
                           <div class="bg-danger bg-opacity-10 px-3 py-2 rounded-pill d-inline-block">
-                            <span class="fw-bold text-danger">{{ q.qcode }}</span>
+                            <span class="fw-bold text-danger">Q{{ q.id }}</span>
                           </div>
                         </td>
                         <td class="px-4 py-4">
                           <div class="question-text" style="max-width: 400px;">
                             <p class="mb-1 fw-medium text-dark" style="line-height: 1.4;">
-                              {{ q.question_text.length > 80 ? q.question_text.substring(0, 80) + '...' : q.question_text }}
+                              {{ q.question_statement.length > 80 ? q.question_statement.substring(0, 80) + '...' : q.question_statement }}
                             </p>
                             <div class="d-flex align-items-center gap-2 mt-2">
                               <span class="badge bg-info bg-opacity-20 text-black px-2 py-1 small">
-                                <i :class="getTypeIcon(q.question_type)" class="me-1"></i>
-                                {{ q.question_type }}
+                                <i :class="getTypeIcon(q.type)" class="me-1"></i>
+                                {{ q.type }}
                               </span>
                               <span class="badge bg-secondary bg-opacity-20 text-white px-2 py-1 small">
                                 {{ q.module_name }}
@@ -929,7 +924,7 @@ export default {
                           <div class="btn-group" role="group">
                             <button
                               class="btn btn-sm btn-outline-primary"
-                              @click="viewQuestion(q.qcode)"
+                              @click="viewQuestion(q.id)"
                               title="View Details"
                             >
                               <i class="bi bi-eye"></i>
@@ -1042,7 +1037,7 @@ export default {
                   This will restore the question back to draft status and make it available for editing.
                 </div>
                 <div v-if="currentQuestion" class="mb-3">
-                  <strong>Question:</strong> {{ currentQuestion.qcode }} - {{ currentQuestion.question_text.substring(0, 100) }}...
+                  <strong>Question:</strong> {{ currentQuestion.qcode }} - {{ currentQuestion.question_statement.substring(0, 100) }}...
                 </div>
                 <div class="mb-3">
                   <label class="form-label fw-semibold">Restore Comment (Optional)</label>
@@ -1090,7 +1085,7 @@ export default {
                   <strong>Warning:</strong> This action cannot be undone. The question will be permanently deleted from the system.
                 </div>
                 <div v-if="currentQuestion">
-                  <strong>Question to delete:</strong> {{ currentQuestion.qcode }} - {{ currentQuestion.question_text.substring(0, 100) }}...
+                  <strong>Question to delete:</strong> {{ currentQuestion.qcode }} - {{ currentQuestion.question_statement.substring(0, 100) }}...
                 </div>
               </div>
               <div class="modal-footer p-4 border-0">

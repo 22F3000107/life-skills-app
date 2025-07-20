@@ -2,7 +2,7 @@ import {
   fetchQuestionById,
   updateQuestion,
 } from "../../services/questionService.js";
-
+import { fetchModules } from "../../services/moduleService.js";
 export default {
   name: "EditQuestionPage",
   data() {
@@ -22,17 +22,12 @@ export default {
           { text: "", correct: false },
         ],
         matchPairs: [{ left: "", right: "" }],
-        status: "Draft",
+        status: "Pending",
       },
       questionTypes: ["MCQ", "MSQ", "True/False", "Matching"],
-      moduleOptions: [
-        "Time Management",
-        "Stress Control",
-        "Communication",
-        "Leadership",
-      ],
+      moduleOptions: [],
       ageGroups: ["6-8", "9-11", "12-14", "15-18"],
-      statusOptions: ["Draft", "Review", "Approved", "Rejected"],
+      statusOptions: ["Review", "Approved", "Rejected"],
       isLoading: true,
       isSaving: false,
       error: null,
@@ -84,11 +79,20 @@ export default {
   async mounted() {
     await this.loadQuestion();
     this.setupBeforeUnload();
+    await this.loadModules();
   },
   beforeUnmount() {
     window.removeEventListener("beforeunload", this.handleBeforeUnload);
   },
   methods: {
+    async loadModules() {
+      try {
+        this.moduleOptions = await fetchModules();
+      } catch (error) {
+        console.error("Failed to load modules:", error);
+        this.moduleOptions = [];
+      }
+    },
     async loadQuestion() {
       const qcode = this.$route.params.qcode;
       try {
@@ -96,16 +100,16 @@ export default {
         const res = await fetchQuestionById(qcode);
 
         this.question = {
-          qcode: res.qcode,
-          type: res.question_type,
-          module: res.module_name,
-          age: res.age_groups || [],
-          text: res.question_text || "",
+          qcode: res.id,
+          type: res.type,
+          module: res.module_id,
+          age: res.age_group || [],
+          text: res.question_statement || "",
           imageUrl: res.image_url || "",
           audioUrl: res.audio_url || "",
-          options: this.formatOptions(res),
-          matchPairs: res.match_pairs || [{ left: "", right: "" }],
-          status: res.status || "Draft",
+          options: res.answers,
+          status: this.getStatusLabel(res.is_approved),
+
         };
 
         this.isDirty = false;
@@ -115,15 +119,20 @@ export default {
         this.isLoading = false;
       }
     },
+    getStatusLabel(status) {
+      if (status === true) return "Approved";
+      else if (status === false) return "Rejected";
+      else return "Pending";
+    },
 
     formatOptions(res) {
-      if (res.question_type === "True/False") {
+      if (res.type === "True/False") {
         return [
           { text: "True", correct: res.correct_answer === "True" },
           { text: "False", correct: res.correct_answer === "False" },
         ];
-      } else if (res.options) {
-        return res.options;
+      } else if (res.answers) {
+        return res.answers;
       } else {
         return Array(4)
           .fill()
@@ -278,64 +287,77 @@ export default {
       document.getElementById("audioInput").value = "";
     },
 
-    async saveQuestion(isDraft = false) {
-      this.validateForm();
+    async saveQuestion() {
+  this.validateForm();
 
-      if (!this.isValidForm && !isDraft) {
-        this.error = "Please fix all validation errors before saving";
-        return;
-      }
+  if (!this.isValidForm) {
+    this.error = "Please fix all validation errors before saving";
+    return;
+  }
 
-      try {
-        this.isSaving = true;
-        this.error = null;
+  try {
+    this.isSaving = true;
+    this.error = null;
 
-        const formData = new FormData();
-        formData.append("qcode", this.question.qcode);
-        formData.append("question_type", this.question.type);
-        formData.append("module_name", this.question.module);
-        formData.append("age_groups", JSON.stringify(this.question.age));
-        formData.append("question_text", this.question.text);
-        formData.append("status", isDraft ? "Draft" : this.question.status);
+    const formData = new FormData();
+    formData.append("id", this.question.qcode);
+    formData.append("type", this.question.type);
+    formData.append("module_id", this.question.module);
+    formData.append("age_group", JSON.stringify(this.question.age));
+    formData.append("question_statement", this.question.text);
+    formData.append("is_approved", this.question.status);
 
-        if (this.question.type === "Matching") {
-          formData.append(
-            "match_pairs",
-            JSON.stringify(this.question.matchPairs)
-          );
-        } else {
-          formData.append("options", JSON.stringify(this.question.options));
-        }
+    // 🧠 Clean and append answers based on type
+    let cleanedAnswers = [];
 
-        if (this.imageFile) {
-          formData.append("image", this.imageFile);
-        } else if (this.question.imageUrl) {
-          formData.append("existing_image_url", this.question.imageUrl);
-        }
+    if (this.question.type === "Matching") {
+      cleanedAnswers = this.question.matchPairs.map(pair => ({
+        text: null,
+        correct: null,
+        submitted: null,
+        left: pair.left || "",
+        right: pair.right || ""
+      }));
+    } else {
+      cleanedAnswers = this.question.options.map(option => ({
+        text: option.text || "",
+        correct: !!option.correct,
+        submitted: !!option.submitted,
+        left: null,
+        right: null
+      }));
+    }
 
-        if (this.audioFile) {
-          formData.append("audio", this.audioFile);
-        } else if (this.question.audioUrl) {
-          formData.append("existing_audio_url", this.question.audioUrl);
-        }
+    formData.append("answers", JSON.stringify(cleanedAnswers));
 
-        await updateQuestion(this.question.qcode, formData);
+    // 🖼️ Image
+    if (this.imageFile) {
+      formData.append("image_url", this.imageFile);
+    } else if (this.question.imageUrl) {
+      formData.append("image_url", this.question.imageUrl);
+    }
 
-        this.successMessage = `Question ${
-          isDraft ? "saved as draft" : "updated"
-        } successfully!`;
-        this.isDirty = false;
+    // 🔊 Audio
+    if (this.audioFile) {
+      formData.append("audio_url", this.audioFile);
+    } else if (this.question.audioUrl) {
+      formData.append("audio_url", this.question.audioUrl);
+    }
 
-        setTimeout(() => {
-          this.successMessage = "";
-        }, 3000);
-      } catch (err) {
-        this.error = err.message;
-      } finally {
-        this.isSaving = false;
-      }
-    },
+    await updateQuestion(this.question.qcode, formData);
 
+    this.successMessage = "Question updated successfully!";
+    this.isDirty = false;
+
+    setTimeout(() => {
+      this.successMessage = "";
+    }, 3000);
+  } catch (err) {
+    this.error = err.message;
+  } finally {
+    this.isSaving = false;
+  }
+},
     setupBeforeUnload() {
       window.addEventListener("beforeunload", this.handleBeforeUnload);
     },
@@ -410,7 +432,7 @@ export default {
                           <h1 class="mb-1 fw-bold text-dark">Edit Question</h1>
                           <p class="text-muted mb-0">
                             <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill me-2">
-                              {{ question.qcode }}
+                              Q{{ question.qcode }}
                             </span>
                             <i class="bi bi-info-circle me-2"></i>
                             Make changes to your question and save when ready
@@ -494,7 +516,7 @@ export default {
                         :class="{ 'is-invalid': validationErrors.module }"
                       >
                         <option value="">Select Module</option>
-                        <option v-for="module in moduleOptions" :key="module" :value="module">{{ module }}</option>
+                        <option v-for="module in moduleOptions" :key="module.id" :value="module.id">{{ module.name }}</option>
                       </select>
                       <div v-if="validationErrors.module" class="invalid-feedback">
                         {{ validationErrors.module }}
@@ -873,17 +895,7 @@ export default {
                 </div>
                 <div class="card-body p-4">
                   <div class="d-grid gap-3">
-                    <button 
-                      type="button"
-                      class="btn btn-outline-secondary btn-lg"
-                      @click="saveQuestion(true)"
-                      :disabled="isSaving"
-                      v-if="question.status === 'Draft'"
-                    >
-                      <span v-if="isSaving" class="spinner-border spinner-border-sm me-2"></span>
-                      <i v-else class="bi bi-file-earmark me-2"></i>
-                      Save as Draft
-                    </button>
+                    
                     <button 
                       type="button"
                       class="btn btn-primary btn-lg"
@@ -956,7 +968,6 @@ export default {
                         <span class="badge" :class="{
                           'bg-success': question.status === 'Approved',
                           'bg-warning text-dark': question.status === 'Review',
-                          'bg-secondary': question.status === 'Draft',
                           'bg-danger': question.status === 'Rejected'
                         }">{{ question.status }}</span>
                       </div>

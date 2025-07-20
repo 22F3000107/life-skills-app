@@ -2,6 +2,7 @@ import {
   fetchAllQuestions,
   archiveQuestion,
 } from "../../services/questionService.js";
+import { fetchModules } from "../../services/moduleService.js";
 
 export default {
   name: "QuestionBankPage",
@@ -13,13 +14,13 @@ export default {
       selectedAges: [],
       selectedStatuses: [],
       questionTypes: ["MCQ", "MSQ", "True/False"],
-      moduleOptions: ["Time Management", "Stress Control", "Communication"],
+      moduleOptions: [],
       ageGroups: ["6-8", "9-11", "12-14", "15-18"],
       statusOptions: ["Approved", "Rejected", "Pending", "Archived"],
       currentPage: 1,
       questionsPerPage: 15,
       questions: [],
-      sortField: "qcode",
+      sortField: "id",
       sortDirection: "asc",
       activeDropdown: null,
       isLoading: false,
@@ -45,22 +46,26 @@ export default {
     filteredQuestions() {
       let filtered = this.questions.filter(
         (q) =>
-          q.qcode.toLowerCase().includes(this.searchQuery.toLowerCase()) &&
+          q.id
+            .toString()
+            .toLowerCase()
+            .includes(this.searchQuery.toLowerCase()) &&
+            (q.is_archived === false) &&
           (this.selectedTypes.length === 0 ||
-            this.selectedTypes.includes(q.question_type)) &&
+            this.selectedTypes.includes(q.type)) &&
           (this.selectedModules.length === 0 ||
-            this.selectedModules.includes(q.module_name)) &&
+            this.selectedModules.includes(q.module_id)) &&
           (this.selectedAges.length === 0 ||
-            q.age_groups.some((age) => this.selectedAges.includes(age))) &&
+            q.age_group.some((age) => this.selectedAges.includes(age))) &&
           (this.selectedStatuses.length === 0 ||
-            this.selectedStatuses.includes(q.status))
+            this.selectedStatuses.includes(getStatusLabel(q.status)))
       );
       return filtered.sort((a, b) => {
         let aValue = a[this.sortField];
         let bValue = b[this.sortField];
-        if (this.sortField === "age_groups") {
-          aValue = a.age_groups.join(", ");
-          bValue = b.age_groups.join(", ");
+        if (this.sortField === "age_group") {
+          aValue = a.age_group.join(", ");
+          bValue = b.age_group.join(", ");
         }
         if (this.sortDirection === "asc") {
           return aValue > bValue ? 1 : -1;
@@ -117,8 +122,14 @@ export default {
   },
   mounted() {
     this.loadQuestions();
+    this.loadModules();
   },
   methods: {
+    getStatusLabel(status) {
+      if (status === true) return "Approved";
+      else if (status === false) return "Rejected";
+      else return "Pending";
+    },
     async loadQuestions() {
       try {
         this.isLoading = true;
@@ -129,25 +140,33 @@ export default {
         this.isLoading = false;
       }
     },
+    async loadModules() {
+      try {
+        this.moduleOptions = await fetchModules();
+      } catch (error) {
+        console.error("Failed to load modules:", error);
+        this.moduleOptions = [];
+      }
+    },
     toggleSelection(array, value) {
       const index = array.indexOf(value);
       if (index > -1) array.splice(index, 1);
       else array.push(value);
     },
-    goToQuestion(qcode) {
-      this.$router.push(`/acad/question/${qcode}`);
+    goToQuestion(id) {
+      this.$router.push(`/acad/question/${id}`);
     },
-    editQuestion(qcode) {
-      this.$router.push(`/acad/question/edit/${qcode}`);
+    editQuestion(id) {
+      this.$router.push(`/acad/question/edit/${id}`);
     },
-    async archiveQuestion(qcode) {
+    async archiveQuestion(id) {
       try {
-        await archiveQuestion(qcode);
+        await archiveQuestion(id);
         this.questions = this.questions.map((q) =>
-          q.qcode === qcode ? { ...q, status: "Archived" } : q
+          q.id === id ? { ...q, status: "Archived" } : q
         );
       } catch (err) {
-        console.error(`Failed to archive ${qcode}:`, err.message);
+        console.error(`Failed to archive ${id}:`, err.message);
       }
     },
     sortBy(field) {
@@ -293,7 +312,7 @@ export default {
                         v-model="searchQuery"
                         type="text"
                         class="form-control form-control-sm ps-4"
-                        placeholder="Search by QCode..."
+                        placeholder="Search by id..."
                         style="border-radius: 15px; border: 2px solid #e9ecef;"
                       />
                     </div>
@@ -343,18 +362,32 @@ export default {
                         Module
                         <span v-if="selectedModules.length" class="badge bg-primary ms-2">{{ selectedModules.length }}</span>
                       </button>
-                      <div v-show="activeDropdown === 'module'" class="dropdown-menu show p-3 shadow-lg" style="border-radius: 15px; min-width: 200px;">
-                        <div v-for="mod in moduleOptions" :key="mod" class="form-check mb-2">
-                          <input
-                            class="form-check-input"
-                            type="checkbox"
-                            :value="mod"
-                            v-model="selectedModules"
-                            :id="'mod_' + mod"
-                          />
-                          <label class="form-check-label fw-medium" :for="'mod_' + mod">{{ mod }}</label>
-                        </div>
-                      </div>
+                     <div 
+  v-show="activeDropdown === 'module'" 
+  class="dropdown-menu show p-3 shadow-lg" 
+  style="border-radius: 15px; min-width: 200px;"
+>
+  <div 
+    v-for="mod in moduleOptions" 
+    :key="mod.id" 
+    class="form-check mb-2"
+  >
+    <input
+      class="form-check-input"
+      type="checkbox"
+      :value="mod.id"
+      v-model="selectedModules"
+      :id="'mod_' + mod.id"
+    />
+    <label 
+      class="form-check-label fw-medium" 
+      :for="'mod_' + mod.id"
+    >
+      {{ mod.name }}
+    </label>
+  </div>
+</div>
+
                     </div>
                   </div>
 
@@ -442,28 +475,28 @@ export default {
                   <table class="table table-hover align-middle mb-0">
                     <thead style="background: linear-gradient(45deg, #667eea, #764ba2); color: white;">
                       <tr>
-                        <th class="px-4 py-3 border-0" @click="sortBy('qcode')" style="cursor: pointer;">
+                        <th class="px-4 py-3 border-0" @click="sortBy('id')" style="cursor: pointer;">
                           <div class="d-flex align-items-center gap-2">
-                            <span class="fw-semibold">QCode</span>
-                            <i :class="getSortIcon('qcode')"></i>
+                            <span class="fw-semibold">Qcode</span>
+                            <i :class="getSortIcon('id')"></i>
                           </div>
                         </th>
-                        <th class="px-4 py-3 border-0" @click="sortBy('question_text')" style="cursor: pointer;">
+                        <th class="px-4 py-3 border-0" @click="sortBy('question_statement')" style="cursor: pointer;">
                           <div class="d-flex align-items-center gap-2">
                             <span class="fw-semibold">Question</span>
-                            <i :class="getSortIcon('question_text')"></i>
+                            <i :class="getSortIcon('question_statement')"></i>
                           </div>
                         </th>
-                        <th class="px-4 py-3 border-0 text-center" @click="sortBy('question_type')" style="cursor: pointer;">
+                        <th class="px-4 py-3 border-0 text-center" @click="sortBy('type')" style="cursor: pointer;">
                           <div class="d-flex align-items-center justify-content-center gap-2">
                             <span class="fw-semibold">Type</span>
-                            <i :class="getSortIcon('question_type')"></i>
+                            <i :class="getSortIcon('type')"></i>
                           </div>
                         </th>
-                        <th class="px-4 py-3 border-0 text-center" @click="sortBy('age_groups')" style="cursor: pointer;">
+                        <th class="px-4 py-3 border-0 text-center" @click="sortBy('age_group')" style="cursor: pointer;">
                           <div class="d-flex align-items-center justify-content-center gap-2">
                             <span class="fw-semibold">Age Group</span>
-                            <i :class="getSortIcon('age_groups')"></i>
+                            <i :class="getSortIcon('age_group')"></i>
                           </div>
                         </th>
                         <th class="px-4 py-3 border-0 text-center" @click="sortBy('module_name')" style="cursor: pointer;">
@@ -486,33 +519,33 @@ export default {
                     <tbody>
                       <tr
                         v-for="(q, index) in paginatedQuestions"
-                        :key="q.qcode"
-                        @click="goToQuestion(q.qcode)"
+                        :key="q.id"
+                        @click="goToQuestion(q.id)"
                         class="question-row"
                         style="cursor: pointer; transition: all 0.3s ease;"
                         :style="{ 'animation-delay': (index * 0.05) + 's' }"
                       >
                         <td class="px-4 py-4">
                           <div class="bg-primary bg-opacity-10 px-3 py-2 rounded-pill d-inline-block">
-                            <span class="fw-bold text-primary">{{ q.qcode }}</span>
+                            <span class="fw-bold text-primary">Q{{ q.id }}</span>
                           </div>
                         </td>
                         <td class="px-4 py-4">
                           <div class="question-text" style="max-width: 400px;">
                             <p class="mb-0 fw-medium text-dark" style="line-height: 1.4;">
-                              {{ q.question_text.length > 50 ? q.question_text.substring(0, 50) + '...' : q.question_text }}
+                              {{ q.question_statement.length > 50 ? q.question_statement.substring(0, 50) + '...' : q.question_statement }}
                             </p>
                           </div>
                         </td>
 <td class="px-4 py-4 text-center">
   <span class="badge bg-info bg-opacity-20 text-dark px-3 py-2" style="border-radius: 20px; font-size: 0.75rem;">
-    <i :class="getTypeIcon(q.question_type) + ' me-1'"></i>
-    {{ q.question_type }}
+    <i :class="getTypeIcon(q.type) + ' me-1'"></i>
+    {{ q.type }}
   </span>
 </td>
 <td class="px-4 py-4 text-center">
   <span class="badge bg-secondary bg-opacity-20 text-white px-3 py-2" style="border-radius: 20px; font-size: 0.75rem;">
-    {{ q.age_groups.join(", ") }}
+    {{ q.age_group.join(", ") }}
   </span>
 </td>
 <td class="px-4 py-4 text-center">
@@ -523,10 +556,10 @@ export default {
 <td class="px-4 py-4 text-center">
   <span
     class="badge px-3 py-2"
-    :class="getStatusBadgeClass(q.status)"
+    :class="getStatusBadgeClass(getStatusLabel(q.status))"
     style="border-radius: 20px; font-size: 0.75rem;"
   >
-    {{ q.status }}
+    {{ getStatusLabel(q.status) }}
   </span>
 </td>
 
@@ -534,7 +567,7 @@ export default {
                           <div class="btn-group" role="group">
                             <button
                               class="btn btn-sm btn-outline-primary"
-                              @click="editQuestion(q.qcode)"
+                              @click="editQuestion(q.id)"
                               title="Edit Question"
                               style="border-radius: 10px 0 0 10px;"
                             >
@@ -542,7 +575,7 @@ export default {
                             </button>
                             <button
                               class="btn btn-sm btn-outline-danger"
-                              @click="archiveQuestion(q.qcode)"
+                              @click="archiveQuestion(q.id)"
                               title="Archive Question"
                               style="border-radius: 0 10px 10px 0;"
                             >

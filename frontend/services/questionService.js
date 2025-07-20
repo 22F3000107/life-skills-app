@@ -1,5 +1,5 @@
-const MOCK_API_ENABLED = true;
-const BASE_URL = "http://localhost:5001";
+const MOCK_API_ENABLED = false;
+const BASE_URL = "http://127.0.0.1:5000";
 
 // 1. Fetch All Questions
 export async function fetchAllQuestions() {
@@ -8,7 +8,13 @@ export async function fetchAllQuestions() {
       res.json()
     );
   } else {
-    const res = await fetch(`${BASE_URL}/api/questions`);
+    const res = await fetch(`${BASE_URL}/api/question`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
+      },
+    });
     if (!res.ok) throw new Error("Failed to fetch questions");
     return res.json();
   }
@@ -24,7 +30,13 @@ export async function fetchQuestionById(qcode) {
     if (!found) throw new Error("Mock question not found");
     return found;
   } else {
-    const res = await fetch(`${BASE_URL}/api/questions/${qcode}`);
+    const res = await fetch(`${BASE_URL}/api/question/${qcode}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
+      },
+    });
     if (!res.ok) throw new Error("Question not found");
     return res.json();
   }
@@ -53,9 +65,12 @@ export async function createQuestion(data) {
       data,
     };
   } else {
-    const res = await fetch(`${BASE_URL}/api/questions`, {
+    const res = await fetch(`${BASE_URL}/api/question`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
+      },
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error("Failed to create question");
@@ -69,8 +84,12 @@ export async function archiveQuestion(qcode) {
     console.log(`Mock archive for question ${qcode}`);
     return { message: `Mock question ${qcode} archived` };
   } else {
-    const res = await fetch(`${BASE_URL}/api/questions/${qcode}/archive`, {
+    const res = await fetch(`${BASE_URL}/api/question/${qcode}`, {
       method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
+      },
     });
     if (!res.ok) throw new Error("Failed to archive question");
     return res.json();
@@ -87,7 +106,13 @@ export async function fetchQuestionsByModule(mcode) {
     const allQuestions = await res.json();
     return allQuestions.filter((q) => q.mcode === mcode);
   } else {
-    const res = await fetch(`${BASE_URL}/api/module/${mcode}/questions`);
+    const res = await fetch(`${BASE_URL}/api/module/${mcode}/questions`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
+      },
+    });
     if (!res.ok) throw new Error("Failed to fetch questions");
     return res.json();
   }
@@ -99,8 +124,12 @@ export async function updateQuestion(qcode, data) {
     console.log(`Mock edit for question ${qcode}`);
     return { message: `Mock question ${qcode} editted` };
   } else {
-    const res = await fetch(`${BASE_URL}/api/questions/${qcode}/edit`, {
-      method: "PATCH",
+    const res = await fetch(`${BASE_URL}/api/question/${qcode}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
+      },
     });
     if (!res.ok) throw new Error("Failed to archive question");
     return res.json();
@@ -121,7 +150,7 @@ export async function updateQuestionStatus(qcode, statusData) {
       review_date: statusData.review_date,
     };
   } else {
-    const res = await fetch(`${BASE_URL}/api/questions/${qcode}/status`, {
+    const res = await fetch(`${BASE_URL}/api/question/${qcode}/status`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(statusData),
@@ -146,7 +175,7 @@ export async function restoreQuestion(qcode, restoreData) {
       restore_comment: restoreData.restore_comment,
     };
   } else {
-    const res = await fetch(`${BASE_URL}/api/questions/${qcode}/restore`, {
+    const res = await fetch(`${BASE_URL}/api/question/${qcode}/restore`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(restoreData),
@@ -164,7 +193,7 @@ export async function deleteQuestion(qcode) {
     await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate delay
     return { message: `Question ${qcode} permanently deleted` };
   } else {
-    const res = await fetch(`${BASE_URL}/api/questions/${qcode}`, {
+    const res = await fetch(`${BASE_URL}/api/question/${qcode}`, {
       method: "DELETE",
     });
     if (!res.ok) throw new Error("Failed to delete question");
@@ -188,7 +217,7 @@ export async function getArchiveStatistics() {
       },
     };
   } else {
-    const res = await fetch(`${BASE_URL}/api/questions/archive/statistics`);
+    const res = await fetch(`${BASE_URL}/api/question/archive/statistics`);
     if (!res.ok) throw new Error("Failed to fetch archive statistics");
     return res.json();
   }

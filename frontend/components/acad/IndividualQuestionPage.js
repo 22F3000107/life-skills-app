@@ -11,16 +11,6 @@ export default {
     };
   },
   computed: {
-    questionTypeDisplay() {
-      if (!this.question) return "";
-      const typeMap = {
-        MCQ: "Multiple Choice (Single Answer)",
-        MSQ: "Multiple Choice (Multiple Answers)",
-        "True/False": "True or False",
-        Matching: "Matching Pairs",
-      };
-      return typeMap[this.question.type] || this.question.type;
-    },
     questionTypeIcon() {
       if (!this.question) return "fas fa-question";
       const iconMap = {
@@ -37,18 +27,17 @@ export default {
     try {
       const res = await fetchQuestionById(qcode);
       this.question = {
-        qcode: res.qcode,
-        type: res.question_type,
+        qcode: res.id,
+        type: res.type,
         module: res.module_name,
-        age: res.age_groups.join(", "),
-        text: res.question_text,
+        age: res.age_group,
+        text: res.question_statement,
         imageUrl: res.image_url,
         audioUrl: res.audio_url,
         audioName: res.audio_url?.split("/").pop() || "",
-        options: res.options || [],
+        options: res.answers || [],
         correctAnswer:
-          res.options?.[0]?.text === "True" ? res.options[0].correct : null,
-        matchPairs: res.match_pairs || [],
+          res.answers?.[0]?.text === "True" ? res.answers[0].correct : null,
         status: res.status || "Active",
         createdAt: res.created_at || new Date().toISOString(),
       };
@@ -118,14 +107,9 @@ export default {
                               <i class="fas fa-arrow-left me-1"></i>Questions
                             </a>
                           </li>
-                          <li class="breadcrumb-item active">{{ question.qcode }}</li>
+                          <li class="breadcrumb-item active">Q{{ question.qcode }}</li>
                         </ol>
-                      </nav>
-                      <h4 class="mb-1 text-primary">
-                        <i :class="questionTypeIcon + ' me-2'"></i>
-                        Question Details
-                      </h4>
-                      <p class="text-muted mb-0">{{ questionTypeDisplay }}</p>
+                      </nav>   
                     </div>
                     <div class="col-md-4 text-md-end">
                       <div class="btn-group" role="group">
@@ -179,7 +163,7 @@ export default {
                         <div class="info-label">Age Group</div>
                         <div class="info-value">
                           <i class="fas fa-users me-2 text-success"></i>
-                          {{ question.age }}
+                          {{ Array.isArray(question.age) ? question.age.join(", ") : question.age }}
                         </div>
                       </div>
                     </div>
@@ -278,19 +262,15 @@ export default {
                 <div class="card-body p-4">
                   
                   <!-- MCQ/MSQ Options -->
-                  <div v-if="question.type === 'MCQ' || question.type === 'MSQ'" class="answer-section">
-                    <div class="mb-3">
-                      <span class="badge bg-info text-white">
-                        {{ question.type === 'MCQ' ? 'Single Correct Answer' : 'Multiple Correct Answers' }}
-                      </span>
-                    </div>
+                  <div v-if="question.options?.[0]?.text !== null" class="answer-section">
+                    
                     <div class="row g-3">
                       <div v-for="(option, index) in question.options" :key="index" class="col-lg-6">
                         <div class="option-display-card" :class="{ 'correct-option': option.correct }">
                           <div class="option-header">
                             <div class="option-indicator">
                               <input
-                                :type="question.type === 'MCQ' ? 'radio' : 'checkbox'"
+                                :type="question.type === 'MSQ' ? 'checkbox' : 'radio'"
                                 disabled
                                 :checked="option.correct"
                                 class="form-check-input"
@@ -351,12 +331,12 @@ export default {
                   </div>
 
                   <!-- Matching Pairs -->
-                  <div v-else-if="question.type === 'Matching'" class="answer-section">
+                  <div v-else-if="question.options?.[0]?.left && question.options?.[0]?.right" class="answer-section">
                     <div class="mb-3">
                       <span class="badge bg-info text-white">Match the following pairs</span>
                     </div>
                     <div class="matching-display">
-                      <div v-for="(pair, i) in question.matchPairs" :key="i" class="matching-pair-display">
+                      <div v-for="(pair, i) in question.options" :key="i" class="matching-pair-display">
                         <div class="pair-number">
                           {{ i + 1 }}
                         </div>

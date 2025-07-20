@@ -13,41 +13,49 @@ from application.instances import cache
 from flask_security import current_user
 from werkzeug.security import generate_password_hash
 import uuid
+from flask_cors import CORS
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(DevelopmentConfig)
     db.init_app(app)
     api.init_app(app)
+    CORS(app, resources={r"/api/*": {"origins": "http://localhost:5500"}}, supports_credentials=True)
     # Initialize JWT after app configuration
     jwt = JWTManager(app)
     # excel.init_excel(app)
     # app.security = Security(app, datastore)
     cache.init_app(app)
 
-    # with app.app_context():
-    #     # import application.views
-    #     db.create_all()
-    #     admin_role = datastore.find_or_create_role(name="admin")
-    #     student_role = datastore.find_or_create_role(name="user")
-    #     academy_role = datastore.find_or_create_role(name="academic")
-    #     db.session.commit()
+    with app.app_context():
+        # import application.views
+        db.create_all()
+        admin_role = datastore.find_or_create_role(name="admin")
+        student_role = datastore.find_or_create_role(name="user")
+        academy_role = datastore.find_or_create_role(name="academic")
+        db.session.commit()
 
-    #     if not datastore.find_user(email="admin@email.com"):
-    #         datastore.create_user(
-    #             email="admin@email.com",
-    #             password=generate_password_hash("admin"),
-    #             first_name="Admin",
-    #             last_name="Admin",
-    #             phone_number=9999999999,
-    #             age=30,
-    #             roles=[admin_role],
-    #             fs_uniquifier=str(uuid.uuid4())
-    #         )
-    #         db.session.commit()
-    #     else:
-    #         print("Admin exists.")
-
+        if not datastore.find_user(email="acad@email.com"):
+            datastore.create_user(
+                email="acad@email.com",
+                password=generate_password_hash("acad"),
+                first_name="acad",
+                last_name="academ",
+                phone_number=9999999999,
+                age=30,
+                roles=[academy_role],
+                fs_uniquifier=str(uuid.uuid4())
+            )
+            db.session.commit()
+        else:
+            print("acad exists.")
+    # @app.after_request
+    # def add_cors_headers(response):
+    #     response.headers.add("Access-Control-Allow-Origin", "http://localhost:5500")
+    #     response.headers.add("Access-Control-Allow-Credentials", "true")
+    #     response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+    #     response.headers.add("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+    #     return response
     return app
 
 

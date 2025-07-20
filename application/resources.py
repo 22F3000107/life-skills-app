@@ -3,7 +3,7 @@ from .models import User,db
 from flask_security import roles_required,auth_required, current_user
 from .instances import cache
 from .adminapi import LoginAPI, ModuleAPI, ModuleResource
-from .acadapi import AcademicRegisterAPI, ConceptAPI, ConceptResource, QuestionAPI, QuestionResource
+from .acadapi import AcademicRegisterAPI, ConceptAPI, ConceptResource, QuestionAPI, QuestionResource,QuestionsByModuleAPI
 from .userapi import RegisterAPI, UserProfile,TodayHabits, SubmitHabits, WeeklyGoals, AddGoal, UpdateGoalStatus
 
 api = Api(prefix='/api')
@@ -27,6 +27,7 @@ api.add_resource(ConceptResource, "/concept/<int:concept_id>")
 
 api.add_resource(QuestionAPI, "/question")
 api.add_resource(QuestionResource, "/question/<int:question_id>")
+api.add_resource(QuestionsByModuleAPI, "/module/<string:module_id>/questions")
 
 
 
