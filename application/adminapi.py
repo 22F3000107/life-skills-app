@@ -312,7 +312,7 @@ class AdminDeleteFlaggedContentAPI(Resource):
         db.session.commit()
         return {"message": f"{content_type.capitalize()} deleted successfully"}, 200
 
-=======
+
 module_parser = reqparse.RequestParser()
 module_parser.add_argument('name', type=str,help='Module is required.', required=True)
 module_parser.add_argument('description', type=str,help='Description is required.', required=True)
