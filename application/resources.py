@@ -55,7 +55,7 @@ api.add_resource(ConceptResource, "/concept/<int:concept_id>")
 
 api.add_resource(QuestionAPI, "/question")
 api.add_resource(QuestionResource, "/question/<int:question_id>")
-# addition api required
+# addition api required for user and admin
 api.add_resource(ChangePasswordAPI, '/change-password')#for user and admin
 api.add_resource(AdminStatsAPI, '/admin/stats')
 api.add_resource(AdminStatsOverviewAPI, '/admin/stats-overview')
