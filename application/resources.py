@@ -9,7 +9,8 @@ from .userapi import QuizDetailAPI,QuizListAPI, QuizSubmitAPI, UserSkillSummaryA
 from .adminapi import AdminUsersAPI, AdminBlockUserAPI, AdminUnblockUserAPI,AdminStoriesAPI, AdminUpdateStoryAPI, AdminDeleteStoryAPI,AdminGetStoryAPI
 from .adminapi import AdminQuizzesAPI, AdminCreateQuizAPI, AdminUpdateQuizAPI, AdminDeleteQuizAPI,AdminEditStoryAPI
 from .adminapi import AdminFlaggedContentAPI,AdminUnflagContentAPI,AdminDeleteFlaggedContentAPI
-
+from .userapi import ChangePasswordAPI
+from .adminapi import AdminStatsAPI,AdminStatsOverviewAPI,AdminQuizAttemptsAPI, AdminSkillEngagementAPI
 api = Api(prefix='/api')
 api.add_resource(LoginAPI, '/login')
 api.add_resource(RegisterAPI, '/register/user')
@@ -23,7 +24,7 @@ api.add_resource(AddGoal, "/add/goals")
 api.add_resource(UpdateGoalStatus, "/goals/<int:goal_id>")
 api.add_resource(QuizListAPI, '/quizzes')
 api.add_resource(QuizDetailAPI, '/quiz/<int:quiz_id>')
-api.add_resource(QuizSubmitAPI, '/quiz/<int:quiz_id>/submit')# it gives error
+api.add_resource(QuizSubmitAPI, '/quiz/<int:quiz_id>/submit')
 api.add_resource(UserSkillSummaryAPI, '/user/summary')
 api.add_resource(AdminUsersAPI, '/admin/users')
 api.add_resource(AdminBlockUserAPI, '/admin/user/<int:user_id>/block')
@@ -54,5 +55,11 @@ api.add_resource(ConceptResource, "/concept/<int:concept_id>")
 
 api.add_resource(QuestionAPI, "/question")
 api.add_resource(QuestionResource, "/question/<int:question_id>")
+# addition api required
+api.add_resource(ChangePasswordAPI, '/change-password')#for user and admin
+api.add_resource(AdminStatsAPI, '/admin/stats')
+api.add_resource(AdminStatsOverviewAPI, '/admin/stats-overview')
+api.add_resource(AdminQuizAttemptsAPI, '/admin/quiz-attempts')
+api.add_resource(AdminSkillEngagementAPI, '/admin/skill-engagement')
 
 
