@@ -1,34 +1,46 @@
+import { loginUser } from '../utils/api.js';  
+
 export default {
   name: "LoginPage",
   data() {
     return {
       email: '',
       password: '',
-      role: 'user',
       error: ''
     };
   },
   methods: {
-    handleLogin() {
-      if (this.email && this.password) {
-        // Simulate basic role check with multiple roles
-        if (this.email === "admin@example.com") {
-          localStorage.setItem("role", "admin");
-        } else if (this.email === "acad@email.com") {
-          localStorage.setItem("role", "acad");
-        } else {
-          localStorage.setItem("role", "user");
-        }
-
-        localStorage.setItem("auth-token", "dummy-token");
-
-        if (localStorage.getItem("role") === "admin") {
-          this.$router.push("/admin");
-        } else {
-          this.$router.push("/");
-        }
-      } else {
+    async handleLogin() {
+      if (!this.email || !this.password) {
         this.error = "Please enter valid credentials.";
+        return;
+      }
+
+      try {
+        const response = await loginUser({
+          email: this.email,
+          password: this.password
+        });
+
+        if (response.access_token) {
+          localStorage.setItem("auth-token", response.access_token);
+          localStorage.setItem("role", response.roles);
+          localStorage.setItem("user_id", response.user_id);
+
+          if (response.roles === "admin") {
+            this.$router.push("/admin/dashboard");
+          } else if (response.roles === "academic") {
+            this.$router.push("/academic/dashboard");
+          } else {
+            this.$router.push("/user/home");
+          }
+        } else {
+          this.error = response.error || "Login failed. Please try again.";
+        }
+
+      } catch (err) {
+        console.error("Login error:", err);
+        this.error = "Server error. Please try again later.";
       }
     }
   },
@@ -83,6 +95,7 @@ export default {
     </div>
   `
 };
+
 
 
 

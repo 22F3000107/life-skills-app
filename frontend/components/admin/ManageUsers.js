@@ -1,54 +1,11 @@
+import { getAllUsers, blockUser, unblockUser } from '../utils/api.js';
+
 export default {
   name: "ManageUsers",
   data() {
     return {
       searchQuery: "",
-      users: [
-        {
-          id: 1,
-          name: "Riya Sharma",
-          email: "riya@example.com",
-          role: "user",
-          blocked: false,
-          registered: "2025-05-01",
-          coins: 120,
-          tests: 4
-        },
-        {
-          id: 2,
-          name: "Deepak Kumar",
-          email: "deepak@example.com",
-          role: "admin",
-          blocked: false,
-          registered: "2025-04-15",
-          coins: 0,
-          tests: 0
-        },
-        {
-          id: 3,
-          name: "Meera Verma",
-          email: "meera@example.com",
-          role: "academic",
-          blocked: false,
-          registered: "2025-06-01",
-          coins: 60,
-          tests: 2,
-          institute: "Springdale High",
-          reason: "Contribute to stories"
-        },
-        {
-          id: 4,
-          name: "Sneha Patel",
-          email: "sneha@school.com",
-          role: "academic",
-          blocked: false,
-          registered: "2025-05-25",
-          coins: 50,
-          tests: 1,
-          institute: "Oxford Public School",
-          reason: "Improve student engagement"
-        }
-      ]
+      users: []
     };
   },
   computed: {
@@ -60,15 +17,43 @@ export default {
     }
   },
   methods: {
-    toggleBlock(user) {
-      user.blocked = !user.blocked;
-    },
-    deleteUser(user) {
-      if (confirm("Delete this user permanently?")) {
-        const i = this.users.findIndex(u => u.id === user.id);
-        this.users.splice(i, 1);
+    async fetchUsers() {
+      try {
+        const res = await getAllUsers();
+        this.users = res.users.map(user => ({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: "user", // Adjust when role is added in backend
+          blocked: !user.active,
+          registered: "2025-01-01", // Placeholder date
+          coins: 0,
+          tests: 0
+        }));
+      } catch (err) {
+        console.error("Error fetching users:", err);
       }
+    },
+
+    async toggleBlock(user) {
+      try {
+        if (user.blocked) {
+          await unblockUser(user.id);
+        } else {
+          await blockUser(user.id);
+        }
+        user.blocked = !user.blocked;
+      } catch (err) {
+        console.error("Error toggling block status:", err);
+      }
+    },
+
+    deleteUser(user) {
+      alert("Delete function not implemented. Please contact backend team.");
     }
+  },
+  mounted() {
+    this.fetchUsers();
   },
   template: `
     <div class="container mt-4 mb-5">
@@ -142,6 +127,7 @@ export default {
     </div>
   `
 };
+
 
 
 // This code defines a Vue.js component for managing users and academics in an admin dashboard.
