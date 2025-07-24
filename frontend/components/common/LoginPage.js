@@ -28,13 +28,16 @@ export default {
           localStorage.setItem("user_id", response.user_id);
 
           if (response.roles === "admin") {
-            this.$router.push("/admin");
+            this.$router.push("/admin/dashboard");
+          } else if (response.roles === "academic") {
+            this.$router.push("/academic/dashboard");
           } else {
-            this.$router.push("/");
+            this.$router.push("/user/home");
           }
         } else {
           this.error = response.error || "Login failed. Please try again.";
         }
+
       } catch (err) {
         console.error("Login error:", err);
         this.error = "Server error. Please try again later.";
@@ -92,6 +95,8 @@ export default {
     </div>
   `
 };
+
+
 
 
 // This code defines a Vue.js component for a login page.
