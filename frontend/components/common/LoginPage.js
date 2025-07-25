@@ -192,6 +192,7 @@ export default {
   `
 };
 
+
 // This code defines a Vue.js component for a login page.
 // It includes fields for email, password, and user role (user or admin).
 // The login button triggers a dummy authentication process that sets a token and redirects based on the role.
