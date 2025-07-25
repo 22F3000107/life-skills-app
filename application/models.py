@@ -2,7 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_security import UserMixin, RoleMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from datetime import date
+from datetime import date,datetime
 import uuid
 
 db = SQLAlchemy()
@@ -169,6 +169,17 @@ class Story(db.Model):
     title = db.Column(db.String(200), nullable=False)
     content = db.Column(db.Text, nullable=False)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # optional
-    status = db.Column(db.String(20), default="draft")  # draft|published|archived|flagged
+    status = db.Column(db.String(20), default="draft")  # draft|published|
     flag_reason = db.Column(db.String(255))
     flag = db.Column(db.Boolean, default=False)
+
+class QuizAttempt(db.Model):
+    __tablename__ = 'quiz_attempt'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id'), nullable=False)
+    score = db.Column(db.Integer, nullable=True)
+    attempted_on = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('quiz_attempts', lazy=True))
+    quiz = db.relationship('Quiz', backref=db.backref('attempts', lazy=True))

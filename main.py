@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from application.models import db, User, Acadteam, Rewards, Module
 from config import DevelopmentConfig
@@ -16,6 +17,7 @@ import uuid
 
 def create_app():
     app = Flask(__name__)
+    CORS(app)
     app.config.from_object(DevelopmentConfig)
     db.init_app(app)
     api.init_app(app)
