@@ -189,6 +189,7 @@ concept_parser.add_argument('description', type=str, required=False, help='Conce
 concept_parser.add_argument('date', type=str, required=False, help='Date of concept creation.')
 concept_parser.add_argument('live', type=bool, required=False, help='Is concept live?')
 concept_parser.add_argument('max_marks', type=int, required=False, help='Maximum marks for a concept.')
+concept_parser.add_argument('question_ids', type=list, location='json')
 
 concept_fields = {
     'id': fields.Integer,
@@ -202,7 +203,9 @@ concept_fields = {
     'created_at': fields.DateTime(dt_format='iso8601'),
     'updated_at': fields.DateTime(dt_format='iso8601'),
     'flag': fields.Boolean,
-    'max_marks': fields.Integer
+    'max_marks': fields.Integer,
+    'question_count': fields.Integer,
+    'age_groups': fields.List(fields.String, attribute=lambda c: [q.age_group for q in c.questions if q.age_group]),
 }
 
 class ConceptAPI(Resource):
@@ -214,7 +217,20 @@ class ConceptAPI(Resource):
         try:
             concepts = Concept.query.all()
             if concepts:
-                return marshal(concepts, concept_fields), 200
+                enriched_concepts = []
+                for concept in concepts:
+                    concept_data = marshal(concept, concept_fields)
+                    concept_data['question_count'] = len(concept.questions)  # Count related questions
+                    age_groups = list({
+                        age.strip()
+                        for q in concept.questions if q.age_group
+                        for group in q.age_group if isinstance(group, str)
+                        for age in group.split(",")
+                    })
+                    concept_data['age_groups'] = age_groups
+                    enriched_concepts.append(concept_data)
+
+                return enriched_concepts, 200
             else:
                 return {"message": "No concept found."}, 404
         except SQLAlchemyError as e:
@@ -230,6 +246,7 @@ class ConceptAPI(Resource):
         date = args.get('date')
         live = args.get('live', False)
         max_marks = args.get('max_marks')
+        question_ids = args.get('question_ids')
         current_user_id = get_jwt_identity()
 
         try:
@@ -254,7 +271,15 @@ class ConceptAPI(Resource):
             )
             db.session.add(new_concept)
             db.session.commit()
-            return {"message": "Concept created successfully."}, 201
+    
+            for q_id in question_ids:
+                question = Question.query.get(q_id)
+                if question:
+                    question.concept_id = new_concept.id
+            db.session.commit()
+
+            return {"message": "Concept created and linked to questions successfully."}, 201
+
 
         except SQLAlchemyError as e:
             db.session.rollback()
@@ -263,15 +288,26 @@ class ConceptAPI(Resource):
 
 
 class ConceptResource(Resource):
-    def options(self):
+    def options(self,concept_id):
         return {},200
     
     @jwt_required()
     def get(self, concept_id):
         try:
-            concepts = Concept.query.get(concept_id)
-            if concepts:
-                return marshal(concepts, concept_fields), 200
+            concept = Concept.query.get(concept_id)
+            if concept:
+                concept_data = marshal(concept, concept_fields)
+
+                question_ids = [q.id for q in concept.questions]
+                concept_data["question_ids"] = question_ids
+                age_set = set()
+                for q in concept.questions:
+                    if q.age_group:
+                        age_list = q.age_group[0].split(",") if isinstance(q.age_group[0], str) else q.age_group
+                        age_set.update(age_list)
+                concept_data["age_groups"] = sorted(age_set) if age_set else []
+                
+                return concept_data, 200
             else:
                 return {"message": "No concept found."}, 404
         except SQLAlchemyError as e:
@@ -472,10 +508,28 @@ class QuestionResource(Resource):
             if not question:
                 return {"message": "Question not found."}, 404
 
-            question.is_archived = True
+            # Toggle the archived status
+            question.is_archived = not question.is_archived
             question.updated_by_id = current_user_id
             db.session.commit()
-            return {"message": "Question archived successfully."}, 200
+
+            status_msg = "archived" if question.is_archived else "unarchived"
+            return {"message": f"Question {status_msg} successfully."}, 200
+
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+    @jwt_required()
+    def delete(self, question_id):
+        try:
+            question = Question.query.get(question_id)
+            if not question:
+                return {"message": "Question not found."}, 404
+
+            db.session.delete(question)
+            db.session.commit()
+            return {"message": "Question deleted successfully."}, 200
 
         except SQLAlchemyError as e:
             db.session.rollback()
@@ -501,6 +555,9 @@ class QuestionsByModuleAPI(Resource):
             for q in questions:
                 question_data.append({
                     "id": q.id,
+                    "concept_id": q.concept_id,
+                    "module_id": q.module_id,
+                    "is_archived": q.is_archived,
                     "type": q.type,
                     "question_statement": q.question_statement,
                     "age_group": q.age_group,
@@ -511,7 +568,6 @@ class QuestionsByModuleAPI(Resource):
                     "marks": q.marks,
                     "image_url": q.image_url,
                     "audio_url": q.audio_url,
-                    "module_id": module_id, 
                 })
 
             return {

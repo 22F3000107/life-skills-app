@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import UserMixin, RoleMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.ext.declarative import declared_attr
 
 from datetime import date,datetime
 from flask import g
@@ -18,11 +19,22 @@ class TimestampMixin(object):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class UserTrackingMixin(object):
-    created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    updated_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
 
-    created_by = db.relationship('User', foreign_keys=[created_by_id], lazy='joined')
-    updated_by = db.relationship('User', foreign_keys=[updated_by_id], lazy='joined')
+    @declared_attr
+    def created_by_id(cls):
+        return db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+
+    @declared_attr
+    def updated_by_id(cls):
+        return db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+
+    @declared_attr
+    def created_by(cls):
+        return db.relationship('User', foreign_keys=[cls.created_by_id], lazy='joined')
+
+    @declared_attr
+    def updated_by(cls):
+        return db.relationship('User', foreign_keys=[cls.updated_by_id], lazy='joined')
 
 class User(db.Model, UserMixin):
     __tablename__ = 'user'
@@ -118,7 +130,7 @@ class Concept(db.Model, TimestampMixin, UserTrackingMixin):
     description = db.Column(db.String(255))
     date = db.Column(db.Date)
     live = db.Column(db.Boolean, default=False)
-    created_by = db.Column(db.Integer, db.ForeignKey('acadteam.id'))
+    created_by_team_id = db.Column(db.Integer, db.ForeignKey('acadteam.id'))  # Renamed
     flag = db.Column(db.Boolean, default=False)
     max_marks = db.Column(db.Integer)
 
@@ -141,7 +153,7 @@ class Question(db.Model,TimestampMixin, UserTrackingMixin):
     is_archived = db.Column(db.Boolean, default=False)
     audio_url = db.Column(db.String(255))
     image_url = db.Column(db.String(255))
-    created_by = db.Column(db.Integer, db.ForeignKey('acadteam.id'), nullable=True)
+    created_by_team_id = db.Column(db.Integer, db.ForeignKey('acadteam.id'), nullable=True)
 
     created_by_team = db.relationship('Acadteam', backref=db.backref('questions_created', lazy=True))
     parent = db.relationship('Question', remote_side=[id], backref='sub_questions')

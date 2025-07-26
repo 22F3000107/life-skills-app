@@ -505,7 +505,7 @@ export default {
                 
                 <div class="matching-pairs">
                   <div v-for="(pair, i) in matchPairs" :key="i" class="matching-pair">
-                    <div class="pair-number">{{ i + 1 }}</div>
+                    <div class="pair-number text-white">{{ i + 1 }}</div>
                     <div class="pair-content">
                       <div class="left-side">
                         <label class="form-label">Left Side</label>

@@ -175,13 +175,14 @@ export async function restoreQuestion(qcode, restoreData) {
       restore_comment: restoreData.restore_comment,
     };
   } else {
-    const res = await fetch(`${BASE_URL}/api/question/${qcode}/restore`, {
+    const res = await fetch(`${BASE_URL}/api/question/${qcode}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(restoreData),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
+      },
     });
-
-    if (!res.ok) throw new Error("Failed to restore question");
+    if (!res.ok) throw new Error("Failed to unarchive question");
     return res.json();
   }
 }
@@ -195,6 +196,10 @@ export async function deleteQuestion(qcode) {
   } else {
     const res = await fetch(`${BASE_URL}/api/question/${qcode}`, {
       method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
+      },
     });
     if (!res.ok) throw new Error("Failed to delete question");
     return res.json();
