@@ -1,13 +1,108 @@
-import { loginUser } from "../../utils/api.js";
+// import { loginUser } from '../utils/api.js';  
+
+// export default {
+//   name: "LoginPage",
+//   data() {
+//     return {
+//       email: '',
+//       password: '',
+//       error: ''
+//     };
+//   },
+//   methods: {
+//     async handleLogin() {
+//       if (!this.email || !this.password) {
+//         this.error = "Please enter valid credentials.";
+//         return;
+//       }
+
+//       try {
+//         const response = await loginUser({
+//           email: this.email,
+//           password: this.password
+//         });
+
+//         if (response.access_token) {
+//           localStorage.setItem("auth-token", response.access_token);
+//           localStorage.setItem("role", response.roles);
+//           localStorage.setItem("user_id", response.user_id);
+
+//           if (response.roles === "admin") {
+//             this.$router.push("/admin");
+//           } else {
+//             this.$router.push("/");
+//           }
+//         } else {
+//           this.error = response.error || "Login failed. Please try again.";
+//         }
+//       } catch (err) {
+//         console.error("Login error:", err);
+//         this.error = "Server error. Please try again later.";
+//       }
+//     }
+//   },
+//   template: `
+//     <div class="d-flex justify-content-center align-items-center vh-100 bg-light">
+//       <div class="card shadow p-4" style="width: 100%; max-width: 400px;">
+//         <div class="text-center mb-4">
+//           <i class="bi bi-shield-lock-fill fs-1 text-primary mb-2"></i>
+//           <h3 class="fw-bold">Login</h3>
+//         </div>
+
+//         <!-- Email Field -->
+//         <div class="mb-3">
+//           <label class="form-label">Email Address*</label>
+//           <input
+//             v-model="email"
+//             type="email"
+//             class="form-control"
+//             required
+//             placeholder="Enter your email"
+//           />
+//         </div>
+
+//         <!-- Password Field -->
+//         <div class="mb-3">
+//           <label class="form-label">Password*</label>
+//           <input
+//             v-model="password"
+//             type="password"
+//             class="form-control"
+//             required
+//             placeholder="Enter your password"
+//           />
+//         </div>
+
+//         <!-- Login Button -->
+//         <button class="btn btn-primary w-100 mb-2" @click="handleLogin">
+//           <i class="bi bi-box-arrow-in-right me-1"></i>Login
+//         </button>
+
+//         <!-- Register Redirect -->
+//         <p class="text-center mb-0">
+//           Don't have an account?
+//           <router-link to="/register">Sign up</router-link>
+//         </p>
+
+//         <!-- Error Message -->
+//         <p v-if="error" class="text-danger mt-3 text-center">
+//           <i class="bi bi-exclamation-circle-fill me-1"></i>{{ error }}
+//         </p>
+//       </div>
+//     </div>
+//   `
+// };
+
+
+import { loginUser } from '../utils/api.js';  
 
 export default {
   name: "LoginPage",
   data() {
     return {
-      email: "",
-      password: "",
-      role: "user",
-      error: "",
+      email: '',
+      password: '',
+      error: ''
     };
   },
   methods: {
@@ -20,7 +115,7 @@ export default {
       try {
         const response = await loginUser({
           email: this.email,
-          password: this.password,
+          password: this.password
         });
 
         if (response.access_token) {
@@ -29,15 +124,16 @@ export default {
           localStorage.setItem("user_id", response.user_id);
 
           if (response.roles === "admin") {
-            this.$router.push("/admin");
+            this.$router.push("/admin/dashboard");
           } else if (response.roles === "academic") {
             this.$router.push("/acad/home");
           } else {
-            this.$router.push("/");
+            this.$router.push("/user/home");
           }
         } else {
           this.error = response.error || "Login failed. Please try again.";
         }
+
       } catch (err) {
         console.error("Login error:", err);
         this.error = "Server error. Please try again later.";
@@ -95,6 +191,7 @@ export default {
     </div>
   `,
 };
+
 
 // This code defines a Vue.js component for a login page.
 // It includes fields for email, password, and user role (user or admin).

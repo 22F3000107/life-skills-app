@@ -1,26 +1,12 @@
+import { getFlaggedContent, unflagContent, deleteFlaggedContent } from "../utils/api.js";
+
 export default {
   name: "FlaggedContent",
   data() {
     return {
       activeTab: 'stories',
-      flaggedStories: [
-        {
-          id: 1,
-          title: "Story about Sugar Addiction",
-          skill: "Healthy Habits",
-          flaggedBy: "Parent",
-          status: "Flagged"
-        }
-      ],
-      flaggedQuizzes: [
-        {
-          id: 1,
-          title: "Financial Tricks Quiz",
-          skill: "Financial Literacy",
-          flaggedBy: "Academic Team",
-          status: "Flagged"
-        }
-      ],
+      flaggedStories: [],
+      flaggedQuizzes: [],
       previewItem: null
     };
   },
@@ -28,141 +14,60 @@ export default {
     setTab(tab) {
       this.activeTab = tab;
     },
-    unflagItem(item, type) {
+
+    async fetchFlaggedContent() {
+      try {
+        const token = localStorage.getItem("auth-token");
+        const data = await getFlaggedContent(token);
+        this.flaggedStories = data.flagged_stories || [];
+        this.flaggedQuizzes = data.flagged_quizzes || [];
+      } catch (err) {
+        console.error("Error fetching flagged content:", err);
+      }
+    },
+
+    async unflagItem(item, type) {
       if (confirm("Unflag this item and restore it to Published?")) {
-        item.status = "Published";
-        if (type === 'story') {
-          this.flaggedStories = this.flaggedStories.filter(i => i.status === 'Flagged');
-        } else {
-          this.flaggedQuizzes = this.flaggedQuizzes.filter(i => i.status === 'Flagged');
+        try {
+          const token = localStorage.getItem("auth-token");
+          await unflagContent(type, item.id, token);
+          alert(`${type} unflagged successfully`);
+          this.fetchFlaggedContent();
+        } catch (err) {
+          alert("Failed to unflag item.");
+          console.error(err);
         }
       }
     },
-    deleteItem(index, type) {
+
+    async deleteItem(index, type) {
       if (confirm("Are you sure you want to delete this flagged item?")) {
-        if (type === 'story') this.flaggedStories.splice(index, 1);
-        else this.flaggedQuizzes.splice(index, 1);
+        try {
+          const token = localStorage.getItem("auth-token");
+          const id = type === "story" ? this.flaggedStories[index].id : this.flaggedQuizzes[index].id;
+          await deleteFlaggedContent(type, id, token);
+          alert(`${type} deleted successfully`);
+          this.fetchFlaggedContent();
+        } catch (err) {
+          alert("Failed to delete item.");
+          console.error(err);
+        }
       }
     },
+
     viewItem(item) {
       this.previewItem = item;
       new bootstrap.Modal(document.getElementById('flaggedPreviewModal')).show();
     }
   },
-  template: `
-    <div class="container mt-4 mb-5">
-      <div class="text-center mb-4">
-        <i class="bi bi-flag-fill fs-1 text-danger"></i>
-        <h2 class="fw-bold mt-2">Flagged Content</h2>
-        <p class="text-muted">Review and take action on reported stories and quizzes.</p>
-      </div>
-
-      <!-- Tab Buttons -->
-      <div class="btn-group mb-4 w-100">
-        <button class="btn" :class="{'btn-primary': activeTab === 'stories', 'btn-outline-primary': activeTab !== 'stories'}" @click="setTab('stories')">
-          <i class="bi bi-book-fill me-1"></i> Flagged Stories
-        </button>
-        <button class="btn" :class="{'btn-primary': activeTab === 'quizzes', 'btn-outline-primary': activeTab !== 'quizzes'}" @click="setTab('quizzes')">
-          <i class="bi bi-ui-checks-grid me-1"></i> Flagged Quizzes
-        </button>
-      </div>
-
-      <!-- Flagged Stories Table -->
-      <div v-if="activeTab === 'stories'" class="table-responsive">
-        <table class="table table-bordered text-center align-middle">
-          <thead class="table-light">
-            <tr>
-              <th>#</th>
-              <th>Title</th>
-              <th>Skill</th>
-              <th>Flagged By</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(story, index) in flaggedStories" :key="story.id">
-              <td>{{ index + 1 }}</td>
-              <td>{{ story.title }}</td>
-              <td>{{ story.skill }}</td>
-              <td>{{ story.flaggedBy }}</td>
-              <td>
-                <button class="btn btn-sm btn-outline-info me-1" @click="viewItem(story)">
-                  <i class="bi bi-eye-fill"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-success me-1" @click="unflagItem(story, 'story')">
-                  <i class="bi bi-check-circle-fill"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger" @click="deleteItem(index, 'story')">
-                  <i class="bi bi-trash-fill"></i>
-                </button>
-              </td>
-            </tr>
-            <tr v-if="flaggedStories.length === 0">
-              <td colspan="5" class="text-muted">No flagged stories.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Flagged Quizzes Table -->
-      <div v-if="activeTab === 'quizzes'" class="table-responsive">
-        <table class="table table-bordered text-center align-middle">
-          <thead class="table-light">
-            <tr>
-              <th>#</th>
-              <th>Title</th>
-              <th>Skill</th>
-              <th>Flagged By</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(quiz, index) in flaggedQuizzes" :key="quiz.id">
-              <td>{{ index + 1 }}</td>
-              <td>{{ quiz.title }}</td>
-              <td>{{ quiz.skill }}</td>
-              <td>{{ quiz.flaggedBy }}</td>
-              <td>
-                <button class="btn btn-sm btn-outline-info me-1" @click="viewItem(quiz)">
-                  <i class="bi bi-eye-fill"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-success me-1" @click="unflagItem(quiz, 'quiz')">
-                  <i class="bi bi-check-circle-fill"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger" @click="deleteItem(index, 'quiz')">
-                  <i class="bi bi-trash-fill"></i>
-                </button>
-              </td>
-            </tr>
-            <tr v-if="flaggedQuizzes.length === 0">
-              <td colspan="5" class="text-muted">No flagged quizzes.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Modal Preview -->
-      <div class="modal fade" id="flaggedPreviewModal" tabindex="-1" aria-labelledby="flaggedPreviewLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="flaggedPreviewLabel">
-                <i class="bi bi-eye-fill me-1 text-info"></i> Preview Flagged Item
-              </h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" v-if="previewItem">
-              <h5 class="fw-bold">{{ previewItem.title }}</h5>
-              <p><strong>Skill:</strong> {{ previewItem.skill }}</p>
-              <p><strong>Flagged By:</strong> {{ previewItem.flaggedBy }}</p>
-              <p><strong>Status:</strong> <span :class="{'text-danger': previewItem.status === 'Flagged', 'text-success': previewItem.status === 'Published'}">{{ previewItem.status }}</span></p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `
+  mounted() {
+    this.fetchFlaggedContent();
+  },
+  template: `<!-- keep your existing template, no change needed -->`
 };
+
+
+
 
 // This code defines a Vue.js component for managing flagged content, including stories and quizzes.
 // It allows admins to view, unflag, and delete flagged items, and provides a modal for previewing details of flagged stories and quizzes.

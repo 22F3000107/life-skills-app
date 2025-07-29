@@ -1,10 +1,12 @@
+import { getUserProfile, updateUserProfile, changePassword } from "../utils/api.js";
+
 export default {
   name: "SettingsPage",
   data() {
     return {
       profile: {
-        name: "Riya Sharma",
-        email: "riya@example.com"
+        name: "",
+        email: ""
       },
       password: '',
       confirmPassword: '',
@@ -13,12 +15,28 @@ export default {
       passwordError: ''
     };
   },
+  async created() {
+    try {
+      const token = localStorage.getItem("auth-token");
+      const data = await getUserProfile(token);
+      this.profile.name = data.name;
+      this.profile.email = data.email;
+    } catch (error) {
+      console.error("Failed to fetch user profile:", error.message);
+    }
+  },
   methods: {
-    saveProfile() {
-      this.profileSaved = true;
-      setTimeout(() => (this.profileSaved = false), 2000);
+    async saveProfile() {
+      try {
+        const token = localStorage.getItem("auth-token");
+        await updateUserProfile(this.profile, token);
+        this.profileSaved = true;
+        setTimeout(() => (this.profileSaved = false), 2000);
+      } catch (error) {
+        console.error("Profile update failed:", error.message);
+      }
     },
-    savePassword() {
+    async savePassword() {
       if (this.password !== this.confirmPassword) {
         this.passwordError = "Passwords do not match.";
         this.passwordSaved = false;
@@ -29,11 +47,19 @@ export default {
         this.passwordSaved = false;
         return;
       }
-      this.passwordSaved = true;
-      this.passwordError = '';
-      this.password = '';
-      this.confirmPassword = '';
-      setTimeout(() => (this.passwordSaved = false), 2000);
+
+      try {
+        const token = localStorage.getItem("auth-token");
+        await changePassword({ new_password: this.password }, token);
+        this.passwordSaved = true;
+        this.passwordError = '';
+        this.password = '';
+        this.confirmPassword = '';
+        setTimeout(() => (this.passwordSaved = false), 2000);
+      } catch (error) {
+        console.error("Password change failed:", error.message);
+        this.passwordError = error.message;
+      }
     }
   },
   template: `
@@ -98,6 +124,8 @@ export default {
     </div>
   `
 };
+
+
 // This code defines a Vue.js component for the Settings page of a user profile.
 // It allows users to update their profile information and change their password.
 // The component includes data properties for the profile, password, and confirmation,

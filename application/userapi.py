@@ -59,13 +59,9 @@ class UserProfile(Resource):
         rewards = user.rewards
         habits_today = Habit.query.filter_by(user_id=user.id, date=date.today()).all()
         user_profile = {
-            "id": user.id,
-            "name": f"{user.first_name} {user.last_name}",
-            "age": user.age,
-            "email": user.email,
-            "coins": rewards.coins if rewards else 0,
-            "streak": rewards.streak if rewards else 0,
-            "habitsCompletedToday": sum(1 for h in habits_today if h.completed)
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email
         }
         return user_profile, 200
 
@@ -314,3 +310,16 @@ class UserSkillSummaryAPI(Resource):
             "current_streak": streak,
             "habits_completed_today": habits_today
         }, 200
+
+class ChangePasswordAPI(Resource):
+    @jwt_required()
+    def put(self):
+        user_id = get_jwt_identity()
+        data = request.get_json()
+        new_password = data.get("new_password")
+        user = User.query.get(user_id)
+        if not user:
+            return {"error": "User not found"}, 404
+        user.password = generate_password_hash(new_password)
+        db.session.commit()
+        return {"message": "Password updated successfully"}, 200

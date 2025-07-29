@@ -1,8 +1,10 @@
 from flask import jsonify, current_app
 from flask_restful import Resource, request, reqparse, fields, marshal
 from sqlalchemy.exc import SQLAlchemyError
+from datetime import datetime, timedelta
+from sqlalchemy import func
 
-from .models import db, User,roles_users,Acadteam,Habit,Goal,Rewards,Scores,Quiz, QuizQuestion, Story,Module
+from .models import db, User,roles_users,Acadteam,Habit,Goal,Rewards,Scores,Quiz, QuizQuestion, Story,Module,QuizAttempt
 
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash
@@ -406,3 +408,109 @@ class ModuleResource(Resource):
             return{"error": str(e)}, 500
         
 
+
+class AdminStatsAPI(Resource):
+    @jwt_required()
+    def get(self):
+        total_users = User.query.count()
+        total_quizzes = Quiz.query.count()
+
+        flagged_stories = Story.query.filter_by(flag=True).count()
+        flagged_quizzes = Quiz.query.filter_by(flag=True).count()
+        flagged_items = flagged_stories + flagged_quizzes
+
+        stories_added = Story.query.filter(Story.status.in_(["draft", "published"])).count()
+        academic_members = Acadteam.query.count()
+
+        return {
+            "total_users": total_users,
+            "total_quizzes": total_quizzes,
+            "flagged_items": flagged_items,
+            "stories_added": stories_added,
+            "academic_members": academic_members
+        }, 200
+
+class AdminStatsOverviewAPI(Resource):
+    @jwt_required()
+    def get(self):
+        users = User.query.count()
+        academics = Acadteam.query.count()
+        quizzes = Quiz.query.count()
+        stories = Story.query.count()
+
+        return {
+            "users": users-1,
+            "academics": academics,
+            "quizzes": quizzes,
+            "stories": stories
+        }, 200
+
+
+class AdminQuizAttemptsAPI(Resource):
+    @jwt_required()
+    def get(self):
+        time_range = request.args.get("range", "Week")
+        now = datetime.utcnow()
+
+        labels, data = [], []
+
+        if time_range == "Day":
+            labels = [f"{hour}:00" for hour in range(24)]
+            start_time = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            attempts = db.session.query(
+                func.extract('hour', QuizAttempt.attempted_on).label('hour'),
+                func.count(QuizAttempt.id)
+            ).filter(QuizAttempt.attempted_on >= start_time).group_by('hour').all()
+            data = [0]*24
+            for hour, count in attempts:
+                data[int(hour)] = count
+
+        elif time_range == "Week":
+            labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+            start_time = now - timedelta(days=now.weekday())
+            attempts = db.session.query(
+                func.extract('dow', QuizAttempt.attempted_on).label('day'),
+                func.count(QuizAttempt.id)
+            ).filter(QuizAttempt.attempted_on >= start_time).group_by('day').all()
+            data = [0]*7
+            for day, count in attempts:
+                data[int(day)] = count
+
+        elif time_range == "Month":
+            labels = [str(i) for i in range(1, 32)]
+            start_time = now.replace(day=1)
+            attempts = db.session.query(
+                func.extract('day', QuizAttempt.attempted_on).label('day'),
+                func.count(QuizAttempt.id)
+            ).filter(QuizAttempt.attempted_on >= start_time).group_by('day').all()
+            data = [0]*31
+            for day, count in attempts:
+                data[int(day)-1] = count
+
+        elif time_range == "Year":
+            labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+            start_time = now.replace(month=1, day=1)
+            attempts = db.session.query(
+                func.extract('month', QuizAttempt.attempted_on).label('month'),
+                func.count(QuizAttempt.id)
+            ).filter(QuizAttempt.attempted_on >= start_time).group_by('month').all()
+            data = [0]*12
+            for month, count in attempts:
+                data[int(month)-1] = count
+
+        return {"labels": labels, "data": data}, 200
+    
+class AdminSkillEngagementAPI(Resource):
+    @jwt_required()
+    def get(self):
+        results = db.session.query(
+            Quiz.skill,
+            func.count(QuizAttempt.id)
+        ).join(Quiz, QuizAttempt.quiz_id == Quiz.id)\
+         .group_by(Quiz.skill).all()
+
+        skills = [row[0] for row in results]
+        counts = [row[1] for row in results]
+
+        return {"skills": skills, "counts": counts}, 200
+    

@@ -1,23 +1,10 @@
+import { getAllStories, updateStoryStatus, deleteStory } from "../utils/api.js";
+
 export default {
   name: "ManageStories",
   data() {
     return {
-      stories: [
-        {
-          id: 1,
-          title: "Brush Twice a Day",
-          skill: "Healthy Habits",
-          createdBy: "Meera Verma",
-          status: "Published"
-        },
-        {
-          id: 2,
-          title: "Managing Pocket Money",
-          skill: "Financial Literacy",
-          createdBy: "Riya Sharma",
-          status: "Unpublished"
-        }
-      ],
+      stories: [],
       searchQuery: "",
       selectedSkill: "All",
       previewStory: null
@@ -37,26 +24,72 @@ export default {
     }
   },
   methods: {
+    async fetchStories() {
+      try {
+        const token = localStorage.getItem("auth-token");
+        const data = await getAllStories(token);
+        this.stories = data.map(s => ({
+          id: s.id,
+          title: s.title,
+          skill: s.skill || "N/A",
+          createdBy: s.created_by || "Unknown",
+          status: s.status.charAt(0).toUpperCase() + s.status.slice(1)
+        }));
+      } catch (err) {
+        console.error("Failed to load stories:", err);
+      }
+    },
+
     viewStory(story) {
       this.previewStory = story;
       new bootstrap.Modal(document.getElementById('storyPreviewModal')).show();
     },
-    flagStory(index) {
-      if (this.stories[index].status !== 'Flagged') {
-        this.stories[index].status = 'Flagged';
-        alert("Story flagged successfully.");
+
+    async togglePublish(index) {
+      const story = this.stories[index];
+      const newStatus = story.status === "Published" ? "draft" : "published";
+
+      try {
+        const token = localStorage.getItem("auth-token");
+        await updateStoryStatus(story.id, newStatus, token);
+        story.status = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+        alert("Story status updated.");
+      } catch (err) {
+        console.error("Failed to update story:", err);
+        alert("Failed to update story status.");
       }
     },
-    togglePublish(index) {
+
+    async flagStory(index) {
       const story = this.stories[index];
-      story.status = story.status === "Published" ? "Unpublished" : "Published";
+      try {
+        const token = localStorage.getItem("auth-token");
+        await updateStoryStatus(story.id, "flagged", token);
+        story.status = "Flagged";
+        alert("Story flagged successfully.");
+      } catch (err) {
+        console.error("Error flagging story:", err);
+        alert("Failed to flag story.");
+      }
     },
-    deleteStory(index) {
-      if (confirm("Are you sure you want to delete this story?")) {
+
+    async deleteStory(index) {
+      const story = this.stories[index];
+      if (!confirm("Are you sure you want to delete this story?")) return;
+
+      try {
+        const token = localStorage.getItem("auth-token");
+        await deleteStory(story.id, token);
         this.stories.splice(index, 1);
         alert("Story deleted successfully.");
+      } catch (err) {
+        console.error("Failed to delete story:", err);
+        alert("Failed to delete story.");
       }
     }
+  },
+  mounted() {
+    this.fetchStories();
   },
   template: `
     <div class="container mt-4 mb-5">
@@ -100,7 +133,7 @@ export default {
               <td>
                 <span :class="{
                   'badge bg-success': story.status === 'Published',
-                  'badge bg-secondary': story.status === 'Unpublished',
+                  'badge bg-secondary': story.status === 'Draft',
                   'badge bg-danger': story.status === 'Flagged'
                 }">{{ story.status }}</span>
               </td>
@@ -143,7 +176,7 @@ export default {
               <p><strong>Status:</strong>
                 <span :class="{
                   'text-success': previewStory.status === 'Published',
-                  'text-secondary': previewStory.status === 'Unpublished',
+                  'text-secondary': previewStory.status === 'Draft',
                   'text-danger': previewStory.status === 'Flagged'
                 }">{{ previewStory.status }}</span>
               </p>
@@ -154,7 +187,6 @@ export default {
     </div>
   `
 };
-
 
 
 // This code defines a Vue.js component for managing stories in an admin dashboard.
