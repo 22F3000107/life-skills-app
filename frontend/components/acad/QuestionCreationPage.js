@@ -1,13 +1,14 @@
 import { createQuestion } from "../../services/questionService.js";
+import { fetchModules } from "../../services/moduleService.js";
 
 export default {
   name: "QuestionCreatePage",
   data() {
     return {
       questionType: "",
-      selectedModule: "",
+      selectedModuleId: "",
       selectedAges: [],
-      moduleList: ["Time Management", "Stress Control", "Communication"],
+      moduleList: [],
       ageGroups: ["6-8", "9-11", "12-14", "15-18"],
       questionTypes: ["MCQ", "MSQ", "True/False", "Matching"],
       options: [
@@ -35,7 +36,9 @@ export default {
   computed: {
     canProceedToStep2() {
       return (
-        this.questionType && this.selectedModule && this.selectedAges.length > 0
+        this.questionType &&
+        this.selectedModuleId &&
+        this.selectedAges.length > 0
       );
     },
     canProceedToStep3() {
@@ -57,6 +60,11 @@ export default {
       }
 
       return this.canProceedToStep3 && hasValidAnswers;
+    },
+
+    selectedModuleName() {
+      const mod = this.moduleList.find((m) => m.id === this.selectedModuleId);
+      return mod ? mod.name : "";
     },
   },
   methods: {
@@ -129,7 +137,7 @@ export default {
       }
     },
     updateCorrectAnswer(index) {
-      if (this.questionType === "MCQ") {
+      if (this.questionType === "MCQ" || this.questionType === "True/False") {
         this.options.forEach((opt, i) => (opt.correct = i === index));
       } else if (this.questionType === "MSQ") {
         this.options[index].correct = !this.options[index].correct;
@@ -142,27 +150,27 @@ export default {
       }
       this.showSaveConfirm = true;
     },
-    async confirmSave() {
+    async confirmSave(event) {
+      if (event) event.preventDefault();
       this.isLoading = true;
       try {
         const payload = {
-          qcode: "Q" + Math.floor(Math.random() * 1000 + 100),
-          question_text: this.questionText,
-          question_type: this.questionType,
-          module_name: this.selectedModule,
-          age_groups: this.selectedAges,
-          options: ["MCQ", "MSQ"].includes(this.questionType)
-            ? this.options
-            : null,
-          match_pairs:
-            this.questionType === "Matching" ? this.matchPairs : null,
-          image_url: this.selectedImage,
+          module_id: this.selectedModuleId, // ✅ module_id (int)
+          question_statement: this.questionText,
+          type: this.questionType,
+          age_group: this.selectedAges.join(","), // or however you store age_group
+          ...(this.questionType === "Matching"
+            ? { answers: this.matchPairs }
+            : { answers: this.options }),
+          marks: 5, // or whatever marks you're using
           audio_url: this.audioUrl,
-          status: "Pending",
+          image_url: this.selectedImage,
         };
+
         const result = await createQuestion(payload);
         this.generatedQCode = result.qcode || payload.qcode;
         this.showSuccessPopup = true;
+        console.log("saved");
       } catch (err) {
         alert("Failed to save question: " + err.message);
       } finally {
@@ -176,7 +184,37 @@ export default {
     viewQuestion() {
       this.$router.push(`/acad/question/${this.generatedQCode}`);
     },
+    async loadModules() {
+      try {
+        this.moduleList = await fetchModules();
+      } catch (error) {
+        console.error("Failed to load modules:", error);
+        this.moduleList = [];
+      }
+    },
   },
+
+  watch: {
+    questionType(newType) {
+      if (newType === "True/False") {
+        this.options = [
+          { text: "True", correct: false, submitted: false },
+          { text: "False", correct: false, submitted: false },
+        ];
+      } else if (["MCQ", "MSQ"].includes(newType)) {
+        this.options = [
+          { text: "", correct: false, submitted: false },
+          { text: "", correct: false, submitted: false },
+          { text: "", correct: false, submitted: false },
+          { text: "", correct: false, submitted: false },
+        ];
+      }
+    },
+  },
+  mounted() {
+    this.loadModules();
+  },
+
   template: `
     <div class="question-creator-container">
       <div class="container-fluid py-4">
@@ -232,9 +270,9 @@ export default {
                 
                 <div class="col-md-4">
                   <label class="form-label fw-bold">Module <span class="text-danger">*</span></label>
-                  <select v-model="selectedModule" class="form-select form-select-lg">
+                  <select v-model="selectedModuleId" class="form-select form-select-lg">
                     <option disabled value="">Select module...</option>
-                    <option v-for="mod in moduleList" :key="mod" :value="mod">{{ mod }}</option>
+                    <option v-for="mod in moduleList" :key="mod.id" :value="mod.id">{{ mod.name }}</option>
                   </select>
                   <div class="form-text">Choose the subject module</div>
                 </div>
@@ -376,82 +414,85 @@ export default {
             </div>
             <div class="card-body p-4">
               
-              <!-- MCQ/MSQ Options -->
-              <div v-if="questionType === 'MCQ' || questionType === 'MSQ'" class="answer-options">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                  <h6 class="fw-bold mb-0">
-                    {{ questionType === 'MCQ' ? 'Multiple Choice (Select one correct answer)' : 'Multiple Select (Select all correct answers)' }}
-                  </h6>
-                  <button class="btn btn-outline-primary btn-sm" @click="addOption" :disabled="options.length >= 6">
-                    <i class="fas fa-plus me-1"></i>Add Option
-                  </button>
-                </div>
-                
-                <div class="row g-3">
-                  <div v-for="(option, index) in options" :key="index" class="col-lg-6">
-                    <div class="option-card" :class="{ 'correct-answer': option.correct }">
-                      <div class="option-header">
-                        <div class="form-check">
-                          <input 
-                            :type="questionType === 'MCQ' ? 'radio' : 'checkbox'" 
-                            :name="'opt_' + questionType" 
-                            class="form-check-input"
-                            :checked="option.correct" 
-                            @change="updateCorrectAnswer(index)"
-                            :id="'option_' + index"
-                          />
-                          <label class="form-check-label fw-bold" :for="'option_' + index">
-                            Option {{ String.fromCharCode(65 + index) }}
-                            <span v-if="option.correct" class="badge bg-success ms-2">Correct</span>
-                          </label>
-                        </div>
-                        <div class="option-actions">
-                          <button class="btn btn-sm btn-outline-danger" @click="removeOption(index)" :disabled="options.length <= 2" title="Remove option">
-                            <i class="fas fa-trash"></i>
-                          </button>
-                        </div>
-                      </div>
-                      <div class="option-content">
-                        <input 
-                          v-model="option.text" 
-                          class="form-control" 
-                          :placeholder="'Enter option ' + String.fromCharCode(65 + index) + '...'"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <div v-if="['MCQ', 'MSQ', 'True/False'].includes(questionType)" class="answer-options">
+  <div class="d-flex justify-content-between align-items-center mb-4" v-if="questionType !== 'True/False'">
+    <h6 class="fw-bold mb-0">
+      {{ questionType === 'MCQ' ? 'Multiple Choice (Select one correct answer)' : 
+         questionType === 'MSQ' ? 'Multiple Select (Select all correct answers)' : 
+         'True/False' }}
+    </h6>
+    <button 
+      class="btn btn-outline-primary btn-sm" 
+      @click="addOption" 
+      :disabled="options.length >= 6 || questionType === 'True/False'">
+      <i class="fas fa-plus me-1"></i>Add Option
+    </button>
+  </div>
 
-              <!-- True/False Options -->
-              <div v-else-if="questionType === 'True/False'" class="answer-options">
-                <h6 class="fw-bold mb-4">Select the correct answer</h6>
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <div class="tf-option correct-answer">
-                      <div class="form-check">
-                        <input type="radio" name="tf" class="form-check-input" checked id="tf_true">
-                        <label class="form-check-label fw-bold" for="tf_true">
-                          <i class="fas fa-check-circle text-success me-2"></i>
-                          True
-                          <span class="badge bg-success ms-2">Correct</span>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="tf-option">
-                      <div class="form-check">
-                        <input type="radio" name="tf" class="form-check-input" id="tf_false">
-                        <label class="form-check-label fw-bold" for="tf_false">
-                          <i class="fas fa-times-circle text-danger me-2"></i>
-                          False
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+ <div class="row g-3">
+  <div v-for="(option, index) in options" :key="index" class="col-md-6">
+    
+    <!-- Wrapper changes depending on questionType -->
+    <div 
+      :class="[
+        questionType === 'True/False' ? 'tf-option' : 'option-card',
+        option.correct ? 'correct-answer' : ''
+      ]"
+    >
+      <div class="form-check">
+        <input 
+          :type="questionType === 'MCQ' || questionType === 'True/False' ? 'radio' : 'checkbox'" 
+          :name="'opt_' + questionType" 
+          class="form-check-input"
+          :checked="option.correct" 
+          @change="updateCorrectAnswer(index)"
+          :id="'option_' + index"
+        />
+
+        <!-- Label changes for True/False -->
+        <label class="form-check-label fw-bold" :for="'option_' + index">
+          <template v-if="questionType === 'True/False'">
+            <i 
+              :class="[
+                index === 0 ? 'fas fa-check-circle text-success me-2' : 'fas fa-times-circle text-danger me-2'
+              ]"
+            ></i>
+            {{ option.text }}
+            <span v-if="option.correct" class="badge bg-success ms-2">Correct</span>
+          </template>
+
+          <template v-else>
+            Option {{ String.fromCharCode(65 + index) }}
+            <span v-if="option.correct" class="badge bg-success ms-2">Correct</span>
+          </template>
+        </label>
+      </div>
+
+      <!-- Optional delete icon for non-True/False -->
+      <div v-if="questionType !== 'True/False'" class="option-actions mt-2">
+        <button 
+          class="btn btn-sm btn-outline-danger" 
+          @click="removeOption(index)" 
+          :disabled="options.length <= 2"
+        >
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+
+      <!-- Option input -->
+      <div v-if="questionType !== 'True/False'" class="option-content mt-2">
+        <input 
+          v-model="option.text" 
+          class="form-control" 
+          :placeholder="'Enter option ' + String.fromCharCode(65 + index) + '...'"
+        />
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
 
               <!-- Matching Pairs -->
               <div v-else-if="questionType === 'Matching'" class="answer-options">
@@ -464,7 +505,7 @@ export default {
                 
                 <div class="matching-pairs">
                   <div v-for="(pair, i) in matchPairs" :key="i" class="matching-pair">
-                    <div class="pair-number">{{ i + 1 }}</div>
+                    <div class="pair-number text-white">{{ i + 1 }}</div>
                     <div class="pair-content">
                       <div class="left-side">
                         <label class="form-label">Left Side</label>
@@ -491,7 +532,7 @@ export default {
                 <button class="btn btn-outline-secondary btn-lg" @click="prevStep">
                   <i class="fas fa-arrow-left me-2"></i>Back
                 </button>
-                <button class="btn btn-success btn-lg" @click="saveQuestion" :disabled="!canSave || isLoading">
+                <button type="button" class="btn btn-success btn-lg" @click="saveQuestion" :disabled="!canSave || isLoading">
                   <i v-if="isLoading" class="fas fa-spinner fa-spin me-2"></i>
                   <i v-else class="fas fa-save me-2"></i>
                   {{ isLoading ? 'Saving...' : 'Save Question' }}
@@ -516,7 +557,7 @@ export default {
                 <div class="question-summary">
                   <small class="text-muted">
                     <strong>Type:</strong> {{ questionType }}<br>
-                    <strong>Module:</strong> {{  selectedModule }}<br>
+                    <strong>Module:</strong> {{  selectedModuleName }}<br>
                     <strong>Age Groups:</strong> {{ selectedAges.join(', ') }}
                   </small>
                 </div>
@@ -525,7 +566,7 @@ export default {
                 <button class="btn btn-outline-secondary" @click="showSaveConfirm = false">
                   <i class="fas fa-times me-2"></i>Cancel
                 </button>
-                <button class="btn btn-success" @click="confirmSave" :disabled="isLoading">
+                <button type="button" class="btn btn-success"  @click.prevent="confirmSave($event)" :disabled="isLoading">
                   <i v-if="isLoading" class="fas fa-spinner fa-spin me-2"></i>
                   <i v-else class="fas fa-check me-2"></i>
                   {{ isLoading ? 'Saving...' : 'Yes, Save' }}

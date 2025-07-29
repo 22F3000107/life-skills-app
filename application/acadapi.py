@@ -9,8 +9,12 @@ from sqlalchemy import func
 from application.sec import datastore
 import uuid
 from datetime import datetime
+import json
 
 class AcademicRegisterAPI(Resource):
+    def options(self):
+        return {},200
+    
     def post(self):
         data = request.get_json()
 
@@ -69,6 +73,115 @@ class AcademicRegisterAPI(Resource):
             return {"error": str(e)}, 500
         
 
+    
+module_parser = reqparse.RequestParser()
+module_parser.add_argument('name', type=str,help='Module is required.', required=True)
+module_parser.add_argument('description', type=str,help='Description is required.', required=True)
+
+module_fields = {
+    'id': fields.Integer,
+    'name': fields.String,
+    'description': fields.String
+}
+
+class ModuleAPI(Resource):
+    def options(self):
+        return {},200
+    
+    @jwt_required()
+    def get(self):
+        try:
+            modules = Module.query.all()
+            if not modules:
+                return {"message": "No modules found."}, 404
+
+            module_data = []
+            for mod in modules:
+                approved = sum(1 for q in mod.questions if q.is_approved is True)
+                rejected = sum(1 for q in mod.questions if q.is_approved is False)
+                review = sum(1 for q in mod.questions if q.is_approved is None)
+                concepts_count = len(mod.concepts)
+                module_data.append({
+                    "id": mod.id,
+                    "name": mod.name,
+                    "approved_count": approved,
+                    "rejected_count": rejected,
+                    "review_count": review,
+                    "concepts_count": concepts_count,
+                })
+
+            return module_data, 200
+        except SQLAlchemyError as e:
+            return {"error": str(e)}, 500
+
+    @jwt_required()   
+    def post(self):
+
+        args = module_parser.parse_args()
+        name = args['name']
+        description = args['description']
+
+        try:
+            existing_module = Module.query.filter_by(name=name).first()
+            if existing_module:
+                return{"message": "Module with this name already exists."}, 409
+            new_module = Module(name=name, description=description)
+            db.session.add(new_module)
+            db.session.commit()
+            return{"message": "Module created successfully."}, 201
+        except SQLAlchemyError as e:
+            #db.session.rollback()
+            return {"message": "Internal server error."}, 500
+        
+
+class ModuleResource(Resource):
+    @jwt_required()
+    def get(self, module_id):
+        try:
+            module = Module.query.get(module_id)
+            if module:
+                return marshal(module, module_fields), 200
+            else:
+                return{"message": "Module not found."}, 404
+        except SQLAlchemyError as e:
+            return {"message": "Internal server error."}, 500
+        
+    @jwt_required()
+    def put(self, module_id):
+        args = module_parser.parse_args()
+        name = args['name']
+        description = args['description']
+
+        try:
+            module = Module.query.get(module_id)
+            if not module:
+                return{"message": "Module not found."}, 404
+            if module.name != name:
+                existing_module = Module.query.filter_by(name=name).first()
+                if existing_module and existing_module.id != module_id:
+                    return{"message": "Another module with this name already exists."}
+            module.name = name
+            module.description = description
+            db.session.commit()
+            return{"message": "Module updated successfully"}, 200
+        except SQLAlchemyError as e:
+            #db.session.rollback()
+            return {"message": "Internal server error."}, 500
+        
+    @jwt_required()
+    def delete(self, module_id):
+        try:
+            module = Module.query.get(module_id)
+            if not module:
+                return{"message": "Module not found"}, 404
+            db.session.delete(module)
+            db.session.commit()
+            return{"message": "Module deleted successfully."}, 200
+        except SQLAlchemyError as e:
+            #db.session.rollback()
+            return {"message": "Internal server error."}, 500
+        
+
 concept_parser = reqparse.RequestParser()
 concept_parser.add_argument('module_id', type=int, required=True, help='Module ID is required.')
 concept_parser.add_argument('name', type=str, required=True, help='Concept name is required.')
@@ -76,6 +189,7 @@ concept_parser.add_argument('description', type=str, required=False, help='Conce
 concept_parser.add_argument('date', type=str, required=False, help='Date of concept creation.')
 concept_parser.add_argument('live', type=bool, required=False, help='Is concept live?')
 concept_parser.add_argument('max_marks', type=int, required=False, help='Maximum marks for a concept.')
+concept_parser.add_argument('question_ids', type=list, location='json')
 
 concept_fields = {
     'id': fields.Integer,
@@ -84,97 +198,154 @@ concept_fields = {
     'description': fields.String,
     'date': fields.DateTime(dt_format='iso8601'),
     'live': fields.Boolean,
-    'created_by': fields.Integer,
+    'created_by_id': fields.Integer,
+    'updated_by_id': fields.Integer,
+    'created_at': fields.DateTime(dt_format='iso8601'),
+    'updated_at': fields.DateTime(dt_format='iso8601'),
     'flag': fields.Boolean,
-    'max_marks': fields.Integer
+    'max_marks': fields.Integer,
+    'question_count': fields.Integer,
+    'age_groups': fields.List(fields.String, attribute=lambda c: [q.age_group for q in c.questions if q.age_group]),
 }
 
 class ConceptAPI(Resource):
+    def options(self):
+        return {},200
+    
     @jwt_required()
     def get(self):
         try:
             concepts = Concept.query.all()
             if concepts:
-                return marshal(concepts, concept_fields), 200
+                enriched_concepts = []
+                for concept in concepts:
+                    concept_data = marshal(concept, concept_fields)
+                    concept_data['question_count'] = len(concept.questions)  # Count related questions
+                    age_groups = list({
+                        age.strip()
+                        for q in concept.questions if q.age_group
+                        for group in q.age_group if isinstance(group, str)
+                        for age in group.split(",")
+                    })
+                    concept_data['age_groups'] = age_groups
+                    enriched_concepts.append(concept_data)
+
+                return enriched_concepts, 200
             else:
                 return {"message": "No concept found."}, 404
         except SQLAlchemyError as e:
-            return{"error": str(e)}, 500
+            return {"message": "Internal server error."}, 500
         
 
     @jwt_required()
     def post(self):
-                args = concept_parser.parse_args()
-                module_id = args['module_id']
-                name = args['name']
-                description = args.get('description')
-                date_str = args.get('date')
-                live = args.get('live', False)
-                max_marks = args.get('max_marks')
-                current_user_id = get_jwt_identity()
-                try:
-                    existing_concept = Concept.query.filter_by(name=name).first()
-                    if existing_concept:
-                        return{"message": "Concept With this name already exists."}
-                    
-                    concept_date = datetime.strptime(date_str, "%d-%m-%Y").date()
-                    acad_team_member = Acadteam.query.filter_by(user_id=current_user_id).first()
-                    if not acad_team_member:
-                        return{"message": "Academic team member is required for this action."}, 404
-                    new_concept = Concept(
-                        module_id=module_id,
-                        name=name,
-                        description=description,
-                        date=concept_date,
-                        live=live,
-                        created_by=acad_team_member.id,
-                        max_marks=max_marks
-                    )
-                    db.session.add(new_concept)
-                    db.session.commit()
-                    return {"message": "Concept created successfully."}, 200
-                except SQLAlchemyError as e:
-                    return{"error": str(e)}, 500
+        args = concept_parser.parse_args()
+        module_id = args['module_id']
+        name = args['name']
+        description = args.get('description')
+        date = args.get('date')
+        live = args.get('live', False)
+        max_marks = args.get('max_marks')
+        question_ids = args.get('question_ids')
+        current_user_id = get_jwt_identity()
+
+        try:
+            if Concept.query.filter_by(name=name).first():
+                return {"message": "Concept with this name already exists."}, 400
+
+            concept_date = datetime.strptime(date, "%d-%m-%Y").date() if date else None
+
+            acad_team_member = Acadteam.query.filter_by(user_id=current_user_id).first()
+            if not acad_team_member:
+                return {"message": "Academic team member is required for this action."}, 404
+
+            new_concept = Concept(
+                module_id=module_id,
+                name=name,
+                description=description,
+                date=concept_date,
+                live=live,
+                max_marks=max_marks,
+                created_by_id=current_user_id,
+                updated_by_id=current_user_id
+            )
+            db.session.add(new_concept)
+            db.session.commit()
+    
+            for q_id in question_ids:
+                question = Question.query.get(q_id)
+                if question:
+                    question.concept_id = new_concept.id
+            db.session.commit()
+
+            return {"message": "Concept created and linked to questions successfully."}, 201
+
+
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
 
 
 class ConceptResource(Resource):
+    def options(self,concept_id):
+        return {},200
+    
     @jwt_required()
     def get(self, concept_id):
         try:
-            concepts = Concept.query.get(concept_id)
-            if concepts:
-                return marshal(concepts, concept_fields), 200
+            concept = Concept.query.get(concept_id)
+            if concept:
+                concept_data = marshal(concept, concept_fields)
+
+                question_ids = [q.id for q in concept.questions]
+                concept_data["question_ids"] = question_ids
+                age_set = set()
+                for q in concept.questions:
+                    if q.age_group:
+                        age_list = q.age_group[0].split(",") if isinstance(q.age_group[0], str) else q.age_group
+                        age_set.update(age_list)
+                concept_data["age_groups"] = sorted(age_set) if age_set else []
+                
+                return concept_data, 200
             else:
                 return {"message": "No concept found."}, 404
         except SQLAlchemyError as e:
-            return{"error": str(e)}, 500   
+            return {"message": "Internal server error."}, 500   
 
     @jwt_required()
     def put(self, concept_id):
-                args = concept_parser.parse_args()
-                module_id = args['module_id']
-                name = args['name']
-                description = args.get('description')
-                date_str = args.get('date')
-                live = args.get('live', False)
-                max_marks = args.get('max_marks')
-                try:
-                    concept = Concept.query.get(concept_id)
-                    if not concept:
-                        return{"message": "Concept not found."}
-                    
-                    concept_date = datetime.strptime(date_str, "%d-%m-%Y").date()
-                    
-                    concept.module_id = module_id
-                    concept.name = name
-                    concept.description = description
-                    concept.date = concept_date
-                    concept.live = live
-                    concept.max_marks = max_marks
-                    db.session.commit()
-                    return {"message": "Concept updated successfully."}, 200
-                except SQLAlchemyError as e:
-                    return{"error": str(e)}, 500
+        args = concept_parser.parse_args()
+        module_id = args['module_id']
+        name = args['name']
+        description = args.get('description')
+        date = args.get('date')
+        live = args.get('live', False)
+        max_marks = args.get('max_marks')
+        current_user_id = get_jwt_identity()
+
+        try:
+            concept = Concept.query.get(concept_id)
+            if not concept:
+                return {"message": "Concept not found."}, 404
+
+            concept_date = datetime.strptime(date, "%d-%m-%Y").date() if date else None
+
+            concept.module_id = module_id
+            concept.name = name
+            concept.description = description
+            concept.date = concept_date
+            concept.live = live
+            concept.max_marks = max_marks
+            concept.updated_by_id = current_user_id
+            db.session.commit()
+
+            return {"message": "Concept updated successfully."}, 200
+
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
 
     @jwt_required()
     def delete(self, concept_id):
@@ -187,41 +358,56 @@ class ConceptResource(Resource):
             db.session.commit()
             return {"message": "Concept deleted successfully."}, 200
         except SQLAlchemyError as e:
-            return{"error": str(e)}, 500           
+            return {"message": "Internal server error."}, 500           
          
 question_parser = reqparse.RequestParser()
 question_parser.add_argument('module_id', type=int, required=True, help='Module ID is required.')
-question_parser.add_argument('concept_id', type=int, required=True, help='Concept ID is required.')
+question_parser.add_argument('concept_id', type=int, required=False, help='Assigned to the concept.')
 question_parser.add_argument('question_id', type=int, required=False, help='Question id.')
-question_parser.add_argument('age_group', type=str, required=False, help='Age group for the question.')
+question_parser.add_argument('age_group', type=str, action='append', required=False, help='Age group(s) for the question.')
 question_parser.add_argument('type', type=str, required=False, help='Type of question.')
 question_parser.add_argument('question_statement', type=str, required=True, help='Question Statement is required.')
-question_parser.add_argument('answers', type=str, required=True, help='Answers are required.')
-question_parser.add_argument('approvals', type=str, required=False, help='Approval of question.')
-question_parser.add_argument('rejections', type=str, required=False, help='Rejection of question.')
+question_parser.add_argument('answers', type=dict, action='append', required=True)
+question_parser.add_argument('is_approved', type=bool, required=False, help='Approval of question.')
 question_parser.add_argument('marks', type=int, required=True, help='Marks of the question is required.')
-question_parser.add_argument('flag', type=bool, required=False, help='Flag of question.')
+question_parser.add_argument('is_archived', type=bool, required=False, help='Archived?')
 question_parser.add_argument('audio_url', type=str, required=False, help='Audio url for question.')
 question_parser.add_argument('image_url', type=str, required=False, help='Image Url for question.')
 
-question_fields={
-    'id':fields.Integer,
-    'question_id':fields.Integer,
-    'module_id':fields.Integer,
-    'concept_id':fields.Integer,
-    'age_group':fields.String,
-    'type':fields.String,
-    'question_statement':fields.String,
-    'answers':fields.String,
-    'approvals':fields.String,
-    'rejections':fields.String,
-    'marks':fields.Integer,
-    'flag':fields.Boolean,
-    'audio_url':fields.String,
-    'img_url':fields.String,
+answer_fields = {
+    'text': fields.String,
+    'correct': fields.Boolean,
+    'submitted': fields.Boolean,
+    'left': fields.String,
+    'right': fields.String
+}
+question_fields = {
+    'id': fields.Integer,
+    'question_id': fields.Integer,
+    'module_id': fields.Integer,
+    'concept_id': fields.Integer,
+    'age_group': fields.List(fields.String),
+    'type': fields.String,
+    'question_statement': fields.String,
+    'answers': fields.List(fields.Nested(answer_fields)),
+    'is_approved': fields.Boolean,
+    'marks': fields.Integer,
+    'is_archived': fields.Boolean,
+    'audio_url': fields.String,
+    'image_url': fields.String,
+    'created_by_id': fields.Integer,
+    'updated_by_id': fields.Integer,
+    'module_name': fields.String(attribute=lambda q: q.module.name if q.module else None),
+    'created_at': fields.DateTime(dt_format='iso8601'),
+    'updated_at': fields.DateTime(dt_format='iso8601')
 }
 
+
+
 class QuestionAPI(Resource):
+    def options(self):
+        return {},200
+    
     @jwt_required()
     def get(self):
         try:
@@ -231,52 +417,46 @@ class QuestionAPI(Resource):
             else:
                 return {"message": "No question found."}, 404
         except SQLAlchemyError as e:
-            return{"error": str(e)}, 500
-        
+            return {"message": "Internal server error."}, 500
+            
     @jwt_required()
     def post(self):
         args = question_parser.parse_args()
-        module_id = args['module_id']
-        concept_id = args['concept_id']
-        question_id = args.get('question_id')
-        age_group = args.get('age_group')
-        type = args.get('type')
-        question_statement = args.get('question_statement')
-        answers = args.get('answers')
-        approvals = args.get('approvals')
-        rejections = args.get('rejections')
-        marks = args.get('marks')
-        flag = args.get('flag', False)
-        audio_url = args.get('audio_url')
-        img_url = args.get('img_url')
+        current_user_id = get_jwt_identity()
+        
         try:
-            existing_question = Question.query.filter_by(question_statement=question_statement).first()
-            if existing_question:
-                return{"message": "This question already exists."}
-            
+            answers = args.get('answers')
+            if not isinstance(answers, list) or not all(isinstance(ans, dict) for ans in answers):
+                return {"message": "Invalid format for 'answers'. Expected a list of JSON objects."}, 400
+
             new_question = Question(
-                module_id=module_id,
-                concept_id=concept_id,
-                question_id=question_id,
-                age_group=age_group,
-                type=type,
-                question_statement=question_statement,
+                module_id=args['module_id'],
+                concept_id=args['concept_id'],
+                question_id=args.get('question_id'),
+                age_group=args.get('age_group'),
+                type=args.get('type'),
+                question_statement=args.get('question_statement'),
                 answers=answers,
-                approvals=approvals,
-                rejections=rejections,
-                marks=marks,
-                flag=flag,
-                audio_url=audio_url,
-                img_url=img_url
+                is_approved=args.get('is_approved'),
+                marks=args.get('marks'),
+                is_archived=args.get('is_archived', False),
+                audio_url=args.get('audio_url'),
+                image_url=args.get('image_url'),
+                created_by_id=current_user_id,
+                updated_by_id=current_user_id
             )
             db.session.add(new_question)
             db.session.commit()
-            return {"message": "Question created successfully."}, 200
-        except SQLAlchemyError as e:
-            return{"error": str(e)}, 500
+            return {"message": "Question created successfully."}, 201
 
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
 
 class QuestionResource(Resource):
+    def options(self,question_id):
+        return {},200
+    
     @jwt_required()
     def get(self, question_id):
         try:
@@ -286,56 +466,117 @@ class QuestionResource(Resource):
             else:
                 return {"message": "No question found."}, 404
         except SQLAlchemyError as e:
-            return{"error": str(e)}, 500
+            return {"message": "Internal server error."}, 500
         
     @jwt_required()
     def put(self, question_id):
         args = question_parser.parse_args()
-        module_id = args['module_id']
-        concept_id = args['concept_id']
-        parent_question_id = args.get('question_id')
-        age_group = args.get('age_group')
-        type = args.get('type')
-        question_statement = args.get('question_statement')
-        answers = args.get('answers')
-        approvals = args.get('approvals')
-        rejections = args.get('rejections')
-        marks = args.get('marks')
-        flag = args.get('flag', False)
-        audio_url = args.get('audio_url')
-        img_url = args.get('img_url')
+        current_user_id = get_jwt_identity()
+
         try:
-            questions = Question.query.get(question_id)
-            if not questions:
-                return{"message": "Question not found."}, 404
-            
-            questions.module_id = module_id
-            questions.concept_id = concept_id
-            questions.question_id= parent_question_id
-            questions.age_group = age_group
-            questions.type = type
-            questions.question_statement = question_statement
-            questions.answers = answers
-            questions.approvals = approvals
-            questions.rejections = rejections
-            questions.marks = marks
-            questions.flag = flag
-            questions.audio_url = audio_url
-            questions.img_url = img_url
+            question = Question.query.get(question_id)
+            if not question:
+                return {"message": "Question not found."}, 404
+
+            question.module_id = args['module_id']
+            question.concept_id = args['concept_id']
+            question.question_id = args.get('question_id')
+            question.age_group = args.get('age_group')
+            question.type = args.get('type')
+            question.question_statement = args.get('question_statement')
+            question.answers = args.get('answers')
+            question.is_approved = args.get('is_approved')
+            question.marks = args.get('marks')
+            question.is_archived = args.get('is_archived', False)
+            question.audio_url = args.get('audio_url')
+            question.image_url = args.get('image_url')
+            question.updated_by_id = current_user_id
+
             db.session.commit()
             return {"message": "Question updated successfully."}, 200
+
         except SQLAlchemyError as e:
-            return{"error": str(e)}, 500
+            db.session.rollback()
+            return {"error": str(e)}, 500
         
+    @jwt_required()
+    def patch(self, question_id):
+        current_user_id = get_jwt_identity()
+
+        try:
+            question = Question.query.get(question_id)
+            if not question:
+                return {"message": "Question not found."}, 404
+
+            # Toggle the archived status
+            question.is_archived = not question.is_archived
+            question.updated_by_id = current_user_id
+            db.session.commit()
+
+            status_msg = "archived" if question.is_archived else "unarchived"
+            return {"message": f"Question {status_msg} successfully."}, 200
+
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
     @jwt_required()
     def delete(self, question_id):
         try:
-            questions = Question.query.get(question_id)
-            if not questions:
+            question = Question.query.get(question_id)
+            if not question:
                 return {"message": "Question not found."}, 404
-            
-            db.session.delete(questions)
+
+            db.session.delete(question)
             db.session.commit()
             return {"message": "Question deleted successfully."}, 200
+
         except SQLAlchemyError as e:
-            return{"error": str(e)}, 500 
+            db.session.rollback()
+            return {"error": str(e)}, 500
+        
+class QuestionsByModuleAPI(Resource):
+    def options(self,module_id):
+        return {},200
+
+    @jwt_required()
+    def get(self, module_id):
+        try:
+            # Extract module ID from mcode (e.g., "M13001" → 1)
+            
+            module = Module.query.get(module_id)
+            if not module:
+                return {"message": "Module not found."}, 404
+
+            questions = Question.query.filter_by(module_id=module.id).all()
+
+            # Serialize questions
+            question_data = []
+            for q in questions:
+                question_data.append({
+                    "id": q.id,
+                    "concept_id": q.concept_id,
+                    "module_id": q.module_id,
+                    "is_archived": q.is_archived,
+                    "type": q.type,
+                    "question_statement": q.question_statement,
+                    "age_group": q.age_group,
+                    "answers": q.answers,
+                    "status": "Approved" if q.is_approved is True else
+                              "Rejected" if q.is_approved is False else
+                              "Pending",
+                    "marks": q.marks,
+                    "image_url": q.image_url,
+                    "audio_url": q.audio_url,
+                })
+
+            return {
+    "module": {
+        "id": module.id,
+        "name": module.name
+    },
+    "questions": question_data
+}, 200
+
+        except SQLAlchemyError as e:
+            return {"error": str(e)}, 500

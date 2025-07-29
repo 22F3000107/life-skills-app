@@ -34,7 +34,7 @@ with app.app_context():
             age=30,
             fs_uniquifier=str(uuid.uuid4()),
             roles=["academic"], 
-            active=False)
+            active=True)
         
         academic_member = Acadteam(
             user=academic_user,

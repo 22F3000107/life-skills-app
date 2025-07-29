@@ -1,3 +1,8 @@
+import { fetchConceptById } from "../../services/conceptService.js";
+import { fetchModules } from "../../services/moduleService.js";
+import { fetchQuestionById } from "../../services/questionService.js";
+import { fetchQuestionsByModule } from "../../services/questionService.js";
+
 export default {
   name: "ConceptQuestionsPage",
   data() {
@@ -10,7 +15,7 @@ export default {
       currentPage: 1,
       perPage: 12,
       questionTypes: ["MCQ", "MSQ", "True/False"],
-      moduleList: ["Time Management", "Stress Control", "Communication"],
+      moduleList: [],
       ageGroups: ["6-8", "9-11", "12-14", "15-18"],
       questions: [],
       allQuestions: [],
@@ -25,6 +30,7 @@ export default {
       isFetching: false,
       activeDropdown: null,
       showMobileFilters: false,
+      module_id: "",
     };
   },
   directives: {
@@ -46,7 +52,7 @@ export default {
     filteredQuestions() {
       return this.questions.filter(
         (q) =>
-          q.qcode.toLowerCase().includes(this.searchQuery.toLowerCase()) &&
+          q.id.toString().includes(this.searchQuery.toLowerCase()) &&
           (!this.selectedType || q.type === this.selectedType) &&
           (!this.selectedModule || q.module === this.selectedModule) &&
           (!this.selectedAge || q.age === this.selectedAge)
@@ -96,7 +102,7 @@ export default {
       return count;
     },
     conceptCode() {
-      return this.$route.params.ccode || "UNKNOWN";
+      return this.$route.params.id || "UNKNOWN";
     },
   },
   mounted() {
@@ -106,60 +112,74 @@ export default {
     async loadConceptData() {
       try {
         this.isLoading = true;
-        const moduleFromRoute = this.$route.query.module;
-        if (moduleFromRoute) {
-          this.selectedModule = moduleFromRoute;
-          this.isModuleFixed = true;
-          if (!this.moduleList.includes(moduleFromRoute)) {
-            this.moduleList.push(moduleFromRoute);
-          }
-        }
 
-        // Simulate concept questions
-        this.questions = Array.from({ length: 7 }, (_, i) => ({
-          qcode: `Q${201 + i}`,
-          question: `This is a sample concept question ${
-            i + 1
-          } that demonstrates how the question text appears in the interface`,
-          type: this.questionTypes[i % 3],
-          age: this.ageGroups[i % 4],
-          module: this.selectedModule || this.moduleList[i % 3],
-          status: "Approved",
-        }));
-
-        // Simulate all available questions
-        this.allQuestions = Array.from({ length: 30 }, (_, i) => ({
-          qcode: `Q${301 + i}`,
-          question: `Available question ${i + 1} for addition to concept`,
-          type: this.questionTypes[i % 3],
-          age: this.ageGroups[i % 4],
-          module: this.moduleList[i % 3],
-          status: "Approved",
-        }));
+        const conceptId = this.$route.params.id; // or ccode if applicable
+        const concept = await fetchConceptById(conceptId);
+        const questionPromises = concept.question_ids.map((qid) =>
+          fetchQuestionById(qid)
+        );
+        this.questions = await Promise.all(questionPromises);
+        this.module_id = concept.module_id;
+        this.moduleList = [
+          ...new Set(this.questions.map((q) => q.module_name)),
+        ]; // Populate modules from questions
+        console.log(this.moduleList);
+        this.ageGroups = concept.age_groups; // Populate age groups
+        console.log(this.ageGroups);
       } catch (error) {
         console.error("Failed to load concept data:", error);
       } finally {
         this.isLoading = false;
       }
     },
+    getStatusBadgeClass(status) {
+      switch (status) {
+        case "Approved":
+          return "bg-success";
+        case "Rejected":
+          return "bg-danger";
+        case "Pending":
+          return "bg-warning text-dark";
+        case "Archived":
+          return "bg-secondary";
+        default:
+          return "bg-light text-dark";
+      }
+    },
+    getStatusLabel(status) {
+      if (status === true) return "Approved";
+      else if (status === false) return "Rejected";
+      else return "Pending";
+    },
     async fetchQuestions() {
       try {
         this.isFetching = true;
-        await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate delay
 
-        const existingQCodes = this.questions.map((q) => q.qcode);
-        this.fetchedQuestions = this.allQuestions.filter(
+        const moduleId = this.module_id; // from concept
+
+        // 🔁 Fetch all questions for the module
+        const moduleQuestions = await fetchQuestionsByModule(moduleId);
+        console.log(moduleQuestions);
+        // const moduleQuestions = moduleResponse.data;
+
+        // Get already added question IDs
+        const existingQCodes = this.questions.map((q) => q.id);
+
+        // Apply filters
+        this.fetchedQuestions = moduleQuestions.questions.filter(
           (q) =>
+            q.concept_id == null &&
             (!this.filterQcode ||
               q.qcode.toLowerCase().includes(this.filterQcode.toLowerCase())) &&
             (!this.filterType || q.type === this.filterType) &&
-            (!this.filterModule || q.module === this.filterModule) &&
             (!this.filterAge || q.age === this.filterAge) &&
-            !existingQCodes.includes(q.qcode)
+            !existingQCodes.includes(q.id) // Don't show ones already added
         );
+
         this.selectedQuestionIds = [];
       } catch (error) {
-        console.error("Failed to fetch questions:", error);
+        console.error("Failed to fetch module questions:", error);
       } finally {
         this.isFetching = false;
       }
@@ -174,7 +194,7 @@ export default {
     },
     addSelectedQuestions() {
       const toAdd = this.fetchedQuestions.filter((q) =>
-        this.selectedQuestionIds.includes(q.qcode)
+        this.selectedQuestionIds.includes(q.id)
       );
       this.questions.push(...toAdd);
       alert(`${toAdd.length} question(s) added to the concept.`);
@@ -183,7 +203,7 @@ export default {
       this.selectedQuestionIds = [];
     },
     removeQuestion(qcode) {
-      this.questions = this.questions.filter((q) => q.qcode !== qcode);
+      this.questions = this.questions.filter((q) => q.id !== qcode);
     },
     toggleDropdown(dropdownName) {
       this.activeDropdown =
@@ -246,7 +266,7 @@ export default {
                         <h1 class="mb-1 fw-bold text-dark">Concept Questions</h1>
                         <p class="text-muted mb-0">
                           <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill me-2">
-                            {{ conceptCode }}
+                            C{{ conceptCode }}
                           </span>
                           <i class="bi bi-book me-2"></i>{{ selectedModule }}
                           <span class="ms-3">
@@ -341,7 +361,7 @@ export default {
                   <!-- Module (Fixed) -->
                   <div class="col-lg-3">
                     <input 
-                      :value="selectedModule"
+                      :value="this.moduleList[0]"
                       class="form-control form-control-lg"
                       style="border-radius: 15px; border: 2px solid #e9ecef; background-color: #f8f9fa;"
                       readonly
@@ -412,20 +432,20 @@ export default {
                     <tbody>
                       <tr
                         v-for="(q, index) in paginatedQuestions"
-                        :key="q.qcode"
+                        :key="q.id"
                         class="question-row"
                         style="transition: all 0.3s ease;"
                         :style="{ 'animation-delay': (index * 0.05) + 's' }"
                       >
                         <td class="px-4 py-4">
                           <div class="bg-primary bg-opacity-10 px-3 py-2 rounded-pill d-inline-block">
-                            <span class="fw-bold text-primary">{{ q.qcode }}</span>
+                            <span class="fw-bold text-primary">{{ q.id }}</span>
                           </div>
                         </td>
                         <td class="px-4 py-4">
                           <div class="question-text" style="max-width: 400px;">
                             <p class="mb-0 fw-medium text-dark" style="line-height: 1.4;">
-                              {{ q.question.length > 80 ? q.question.substring(0, 80) + '...' : q.question }}
+                              {{ q.question_statement.length > 80 ? q.question_statement.substring(0, 80) + '...' : q.question_statement }}
                             </p>
                           </div>
                         </td>
@@ -437,22 +457,30 @@ export default {
                         </td>
                         <td class="px-4 py-4 text-center">
                           <span class="badge bg-secondary bg-opacity-20 text-white px-3 py-2 fs-6" style="border-radius: 20px;">
-                            {{ q.age }}
+                            {{ q.age_group.join(', ') }}
                           </span>
                         </td>
-                        <td class="px-4 py-4 text-center">
-                          <span
-                            class="badge px-3 py-2 fs-6"
-                            :class="'bg-' + getStatusColor(q.status)"
-                            style="border-radius: 20px;"
-                          >
-                            {{ q.status }}
-                          </span>
-                        </td>
+                              <td class="px-4 py-4 text-center">
+                        <span
+                          class="badge px-3 py-2 fs-6 position-relative"
+                          :class="getStatusBadgeClass(getStatusLabel(q.is_approved))"
+                          style="border-radius: 20px;"
+                        >
+                          <i
+                            class="me-2"
+                            :class="{
+                              'bi bi-check-circle': q.is_approved === 'Approved',
+                              'bi bi-x-circle': q.is_approved === 'Rejected',
+                              'bi bi-clock': q.is_approved === 'Pending'
+                            }"
+                          ></i>
+                          {{ getStatusLabel(q.is_approved) }}
+                        </span>
+                      </td>
                         <td class="px-4 py-4 text-center">
                           <button
                             class="btn btn-sm btn-outline-danger"
-                            @click="removeQuestion(q.qcode)"
+                            @click="removeQuestion(q.id)"
                             title="Remove from Concept"
                             style="border-radius: 10px;"
                           >
@@ -616,7 +644,7 @@ export default {
                                 class="form-check-input" 
                                 type="checkbox" 
                                 :checked="selectedQuestionIds.length === fetchedQuestions.length"
-                                @change="selectedQuestionIds = $event.target.checked ? fetchedQuestions.map(q => q.qcode) : []"
+                                @change="selectedQuestionIds = $event.target.checked ? fetchedQuestions.map(q => q.id) : []"
                               />
                             </div>
                           </th>
@@ -627,25 +655,25 @@ export default {
                         </tr>
                       </thead>
                       <tbody>
-                        <tr v-for="q in fetchedQuestions" :key="q.qcode">
+                        <tr v-for="q in fetchedQuestions" :key="q.id">
                           <td class="px-4 py-3">
                             <div class="form-check">
                               <input 
                                 class="form-check-input" 
                                 type="checkbox" 
-                                :value="q.qcode" 
+                                :value="q.id" 
                                 v-model="selectedQuestionIds" 
                               />
                             </div>
                           </td>
                           <td class="px-4 py-3">
                             <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">
-                              {{ q.qcode }}
+                              {{ q.id }}
                             </span>
                           </td>
                           <td class="px-4 py-3">
                             <div style="max-width: 400px;">
-                              {{ q.question.length > 80 ? q.question.substring(0, 80) + '...' : q.question }}
+                              {{ q.question_statement.length > 80 ? q.question_statement.substring(0, 80) + '...' : q.question_statement }}
                             </div>
                           </td>
                           <td class="px-4 py-3 text-center">
@@ -655,7 +683,7 @@ export default {
                           </td>
                           <td class="px-4 py-3 text-center">
                             <span class="badge bg-secondary bg-opacity-20 text-white px-2 py-1 rounded-pill">
-                              {{ q.age }}
+                              {{ q.age_group.join(', ') }}
                             </span>
                           </td>
                         </tr>
