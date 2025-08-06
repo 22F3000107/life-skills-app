@@ -118,74 +118,188 @@
 //   `
 // };
 
-import { getAdminSettings, updateAdminSettings } from "../utils/api.js";
+// import { getAdminSettings, updateAdminSettings } from "/utils/api.js";
+
+// export default {
+//   name: "AdminSettings",
+//   data() {
+//     return {
+//       admin: {
+//         name: "",
+//         email: "",
+//         password: "",
+//         confirmPassword: ""
+//       },
+//       darkMode: false,
+//       twoFactorAuth: false,
+//       maintenanceMode: false,
+//       userApprovalRequired: false,
+//       message: ""
+//     };
+//   },
+//   methods: {
+//     async loadSettings() {
+//       try {
+//         const token = localStorage.getItem("auth-token");
+//         const res = await getAdminSettings(token);
+//         this.admin.name = res.name || "";
+//         this.admin.email = res.email || "";
+//         this.darkMode = res.preferences?.darkMode || false;
+//         this.twoFactorAuth = res.preferences?.twoFactorAuth || false;
+//         this.maintenanceMode = res.preferences?.maintenanceMode || false;
+//         this.userApprovalRequired = res.preferences?.userApprovalRequired || false;
+//       } catch (err) {
+//         this.message = "❌ Failed to load settings.";
+//         console.error(err);
+//       }
+//     },
+
+//     async saveSettings() {
+//       if (this.admin.password && this.admin.password !== this.admin.confirmPassword) {
+//         this.message = "❌ Passwords do not match.";
+//         return;
+//       }
+
+//       try {
+//         const token = localStorage.getItem("auth-token");
+//         const payload = {
+//           name: this.admin.name,
+//           email: this.admin.email,
+//           password: this.admin.password || null,
+//           preferences: {
+//             darkMode: this.darkMode,
+//             twoFactorAuth: this.twoFactorAuth,
+//             maintenanceMode: this.maintenanceMode,
+//             userApprovalRequired: this.userApprovalRequired
+//           }
+//         };
+
+//         await updateAdminSettings(payload, token);
+//         this.message = "✅ Settings saved successfully.";
+//       } catch (err) {
+//         console.error(err);
+//         this.message = "❌ Failed to save settings.";
+//       }
+//     }
+//   },
+//   mounted() {
+//     this.loadSettings();
+//   },
+//   template: `
+//     <div class="container mt-4">
+//       <h3>Admin Settings</h3>
+
+//       <div class="alert" v-if="message" :class="message.startsWith('✅') ? 'alert-success' : 'alert-danger'">
+//         {{ message }}
+//       </div>
+
+//       <div class="mb-3">
+//         <label class="form-label">Name</label>
+//         <input type="text" class="form-control" v-model="admin.name" placeholder="Enter name" />
+//       </div>
+
+//       <div class="mb-3">
+//         <label class="form-label">Email</label>
+//         <input type="email" class="form-control" v-model="admin.email" placeholder="Enter email" />
+//       </div>
+
+//       <div class="mb-3">
+//         <label class="form-label">New Password</label>
+//         <input type="password" class="form-control" v-model="admin.password" placeholder="Enter new password" />
+//       </div>
+
+//       <div class="mb-3">
+//         <label class="form-label">Confirm Password</label>
+//         <input type="password" class="form-control" v-model="admin.confirmPassword" placeholder="Confirm password" />
+//       </div>
+
+//       <div class="form-check form-switch mb-2">
+//         <input class="form-check-input" type="checkbox" v-model="darkMode" id="darkModeSwitch" />
+//         <label class="form-check-label" for="darkModeSwitch">Enable Dark Mode</label>
+//       </div>
+
+//       <div class="form-check form-switch mb-2">
+//         <input class="form-check-input" type="checkbox" v-model="twoFactorAuth" id="twoFactorSwitch" />
+//         <label class="form-check-label" for="twoFactorSwitch">Enable Two-Factor Authentication</label>
+//       </div>
+
+//       <div class="form-check form-switch mb-2">
+//         <input class="form-check-input" type="checkbox" v-model="maintenanceMode" id="maintenanceSwitch" />
+//         <label class="form-check-label" for="maintenanceSwitch">Maintenance Mode</label>
+//       </div>
+
+//       <div class="form-check form-switch mb-4">
+//         <input class="form-check-input" type="checkbox" v-model="userApprovalRequired" id="approvalSwitch" />
+//         <label class="form-check-label" for="approvalSwitch">Require Admin Approval for Users</label>
+//       </div>
+
+//       <button class="btn btn-primary" @click="saveSettings">Save Settings</button>
+//     </div>
+//   `
+// };
+
+import { changePassword } from "/utils/api.js";
 
 export default {
   name: "AdminSettings",
   data() {
     return {
-      admin: {
-        name: "",
-        email: "",
-        password: "",
-        confirmPassword: ""
-      },
-      darkMode: false,
-      twoFactorAuth: false,
-      maintenanceMode: false,
-      userApprovalRequired: false,
+      oldPassword: "",
+      password: "",
+      confirmPassword: "",
       message: ""
     };
   },
   methods: {
-    async loadSettings() {
-      try {
-        const token = localStorage.getItem("auth-token");
-        const res = await getAdminSettings(token);
-        this.admin.name = res.name;
-        this.admin.email = res.email;
-        this.darkMode = res.preferences.darkMode;
-        this.twoFactorAuth = res.preferences.twoFactorAuth;
-        this.maintenanceMode = res.preferences.maintenanceMode;
-        this.userApprovalRequired = res.preferences.userApprovalRequired;
-      } catch (err) {
-        this.message = "❌ Failed to load settings.";
-        console.error(err);
+    async updatePassword() {
+      if (!this.oldPassword || !this.password || !this.confirmPassword) {
+        this.message = "❌ Please fill in all fields.";
+        return;
       }
-    },
 
-    async saveSettings() {
-      if (this.admin.password && this.admin.password !== this.admin.confirmPassword) {
-        this.message = "❌ Passwords do not match.";
+      if (this.password !== this.confirmPassword) {
+        this.message = "❌ New passwords do not match.";
         return;
       }
 
       try {
         const token = localStorage.getItem("auth-token");
         const payload = {
-          name: this.admin.name,
-          email: this.admin.email,
-          password: this.admin.password || null,
-          preferences: {
-            darkMode: this.darkMode,
-            twoFactorAuth: this.twoFactorAuth,
-            maintenanceMode: this.maintenanceMode,
-            userApprovalRequired: this.userApprovalRequired
-          }
+          old_password: this.oldPassword,
+          new_password: this.password
         };
 
-        const res = await updateAdminSettings(payload, token);
-        this.message = "✅ Settings saved successfully.";
+        await changePassword(payload, token);
+        this.message = "✅ Password updated successfully.";
+
+        // Clear the form
+        this.oldPassword = "";
+        this.password = "";
+        this.confirmPassword = "";
       } catch (err) {
         console.error(err);
-        this.message = "❌ Failed to save settings.";
+        this.message = "❌ Failed to update password. Check your old password.";
       }
     }
   },
-  mounted() {
-    this.loadSettings();
-  }
+  template: `
+    <div class="admin-settings container p-4">
+      <h2 class="mb-3">Change Admin Password</h2>
+      <div class="form-group mb-2">
+        <input type="password" class="form-control" v-model="oldPassword" placeholder="Old Password" />
+      </div>
+      <div class="form-group mb-2">
+        <input type="password" class="form-control" v-model="password" placeholder="New Password" />
+      </div>
+      <div class="form-group mb-2">
+        <input type="password" class="form-control" v-model="confirmPassword" placeholder="Confirm New Password" />
+      </div>
+      <button class="btn btn-primary" @click="updatePassword">Update Password</button>
+      <p class="mt-3">{{ message }}</p>
+    </div>
+  `
 };
+
 
 
 

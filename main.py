@@ -1,4 +1,5 @@
-from flask import Flask
+import os
+from flask import Flask, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from application.models import db, User, Acadteam, Rewards, Module
@@ -16,8 +17,8 @@ from werkzeug.security import generate_password_hash
 import uuid
 
 def create_app():
-    app = Flask(__name__)
-    CORS(app)
+    app = Flask(__name__, static_folder="frontend", static_url_path='') 
+    CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": "*"}})
     app.config.from_object(DevelopmentConfig)
     db.init_app(app)
     api.init_app(app)
@@ -84,20 +85,23 @@ def create_app():
 
 
 app = create_app()
-# celery_app = celery_init_app(app)
 
-# @celery_app.on_after_configure.connect
-# def send_email(sender, **kwargs):
-#     sender.add_periodic_task(
-#         crontab(hour=19, minute=30),
-#         daily_reminder.s())
 
-# @celery_app.on_after_configure.connect
-# def send_activity_report(sender, **kwargs):
-#     sender.add_periodic_task(10, monthly_activity.s())
+@app.route("/")
+def serve_index():
+    return send_from_directory("frontend/static", "index.html")
+
+
+@app.route("/<path:filename>")
+def serve_static(filename):
+    # If the file exists inside frontend, serve it
+    file_path = os.path.join("frontend", filename)
+    if os.path.exists(file_path):
+        return send_from_directory("frontend", filename)
+    # If not found, fallback to index.html (for Vue routing)
+    return send_from_directory("frontend/static", "index.html")
+
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-# crontab(hour=23, minute=39, day_of_month=6)
 

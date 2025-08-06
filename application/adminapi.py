@@ -50,7 +50,7 @@ class AdminUsersAPI(Resource):
     def get(self):
         users = User.query.all()
         return {"users": [
-            {"id": u.id, "name": f"{u.first_name} {u.last_name}", "email": u.email, "active": u.active}
+            {"id": u.id, "name": f"{u.first_name} {u.last_name}", "email": u.email, "roles": [role.name for role in u.roles] if u.roles else [], "active": u.active, "coins": getattr(u, "coins", 0), "tests": getattr(u, "tests", 0),"registered": u.registered.strftime("%Y-%m-%d") if u.registered else None}
             for u in users
         ]}, 200
 
@@ -73,7 +73,24 @@ class AdminUnblockUserAPI(Resource):
             db.session.commit()
             return {"message": "User unblocked"}, 200
         return {"error": "User not found"}, 404
-    
+
+class AdminDeleteUserAPI(Resource):
+    @jwt_required()
+    def delete(self, user_id):
+        try:
+            user = User.query.get(user_id)
+            if not user:
+                return {'message': 'User not found'}, 404
+
+            # Manually delete entries linked to this user in acadteam
+            Acadteam.query.filter_by(user_id=user_id).delete()
+
+            db.session.delete(user)
+            db.session.commit()
+            return {'message': 'User deleted'}, 200
+        except Exception as e:
+            print("Delete error:", str(e))
+            return {'error': 'Internal Server Error'}, 500
 
 class AdminStoriesAPI(Resource):
     @jwt_required()
