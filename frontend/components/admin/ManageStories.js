@@ -1,4 +1,4 @@
-import { getAllStories, updateStoryStatus, deleteStory } from "../utils/api.js";
+import { getAllStories, updateStoryStatus, deleteStory } from "/utils/api.js";
 
 export default {
   name: "ManageStories",
@@ -141,9 +141,14 @@ export default {
                 <button class="btn btn-sm btn-outline-primary me-1" @click="viewStory(story)" title="View Story">
                   <i class="bi bi-eye-fill"></i>
                 </button>
-                <button class="btn btn-sm btn-outline-warning me-1" @click="togglePublish(index)" :title="story.status === 'Published' ? 'Unpublish' : 'Publish'">
-                  <i class="bi bi-toggle-{{ story.status === 'Published' ? 'off' : 'on' }}"></i>
+                <button
+                  class="btn btn-sm btn-outline-warning me-1"
+                  @click="togglePublish(index)"
+                  :title="story.status === 'Published' ? 'Unpublish' : 'Publish'"
+                >
+                  <i :class="'bi bi-toggle-' + (story.status === 'Published' ? 'off' : 'on')"></i>
                 </button>
+
                 <button v-if="story.status !== 'Flagged'" class="btn btn-sm btn-outline-dark me-1" @click="flagStory(index)" title="Flag Story">
                   <i class="bi bi-flag-fill"></i>
                 </button>

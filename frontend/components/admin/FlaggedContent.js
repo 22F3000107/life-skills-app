@@ -1,4 +1,4 @@
-import { getFlaggedContent, unflagContent, deleteFlaggedContent } from "../utils/api.js";
+import { getFlaggedContent, unflagContent, deleteFlaggedContent } from "/utils/api.js";
 
 export default {
   name: "FlaggedContent",
@@ -63,7 +63,65 @@ export default {
   mounted() {
     this.fetchFlaggedContent();
   },
-  template: `<!-- keep your existing template, no change needed -->`
+  template: `
+  <div class="container mt-4">
+    <h3>Flagged Content</h3>
+
+    <div v-if="flaggedStories.length === 0 && flaggedQuizzes.length === 0" class="alert alert-info">
+      No flagged contents available.
+    </div>
+
+    <template v-else>
+      <div class="btn-group mb-3">
+        <button class="btn btn-outline-primary" :class="{ active: activeTab === 'stories' }" @click="setTab('stories')">Stories</button>
+        <button class="btn btn-outline-primary" :class="{ active: activeTab === 'quizzes' }" @click="setTab('quizzes')">Quizzes</button>
+      </div>
+
+      <div v-if="activeTab === 'stories'">
+        <div v-if="flaggedStories.length === 0">No flagged stories available.</div>
+        <ul class="list-group">
+          <li v-for="(story, index) in flaggedStories" :key="story.id" class="list-group-item d-flex justify-content-between align-items-center">
+            {{ story.title }}
+            <div>
+              <button class="btn btn-sm btn-info me-1" @click="viewItem(story)">Preview</button>
+              <button class="btn btn-sm btn-success me-1" @click="unflagItem(story, 'story')">Unflag</button>
+              <button class="btn btn-sm btn-danger" @click="deleteItem(index, 'story')">Delete</button>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div v-if="activeTab === 'quizzes'">
+        <div v-if="flaggedQuizzes.length === 0">No flagged quizzes available.</div>
+        <ul class="list-group">
+          <li v-for="(quiz, index) in flaggedQuizzes" :key="quiz.id" class="list-group-item d-flex justify-content-between align-items-center">
+            {{ quiz.title }}
+            <div>
+              <button class="btn btn-sm btn-info me-1" @click="viewItem(quiz)">Preview</button>
+              <button class="btn btn-sm btn-success me-1" @click="unflagItem(quiz, 'quiz')">Unflag</button>
+              <button class="btn btn-sm btn-danger" @click="deleteItem(index, 'quiz')">Delete</button>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </template>
+
+    <!-- Modal for Preview -->
+    <div class="modal fade" id="flaggedPreviewModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Preview</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <pre>{{ previewItem }}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+`
 };
 
 

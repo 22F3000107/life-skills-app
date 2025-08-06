@@ -122,37 +122,62 @@ const router = new VueRouter({
 // });
 
 // Navigation guard to protect private routes and enforce role-based access
-router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('auth-token');
-  const role = localStorage.getItem('role'); // 'user' or 'admin'
-  const publicPages = ['Login', 'Register'];
+// router.beforeEach((to, from, next) => {
+//   const token = localStorage.getItem('auth-token');
+//   const role = localStorage.getItem('role'); // 'user' or 'admin'
+//   const publicPages = ['Login', 'Register'];
 
-  // Public pages can be accessed without auth
+//   // Public pages can be accessed without auth
+//   if (publicPages.includes(to.name)) {
+//     return next();
+//   }
+
+//   // Block any private route if not logged in
+//   if (!token) {
+//     return next({ name: 'Login' });
+//   }
+
+//   // Admin pages access restriction
+//   if (to.path.startsWith('/admin') && role !== 'admin') {
+//     return next({ name: 'Home' }); // redirect to user dashboard/home
+//   }
+//   next();
+// });
+// // Navigation guard to protect private routes
+// router.beforeEach((to, from, next) => {
+//   const token = localStorage.getItem("auth-token");
+//   const publicPages = ["Login", "Register"];
+
+//   if (!publicPages.includes(to.name) && !token) {
+//     next({ name: "Login" });
+//   } else {
+//     next();
+//   }
+// });
+
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem("auth-token");
+  const role = localStorage.getItem("role"); // 'user', 'admin', 'academic'
+  const publicPages = ["Login", "Register"];
+
   if (publicPages.includes(to.name)) {
     return next();
   }
 
-  // Block any private route if not logged in
   if (!token) {
-    return next({ name: 'Login' });
+    return next({ name: "Login" });
   }
 
-  // Admin pages access restriction
-  if (to.path.startsWith('/admin') && role !== 'admin') {
-    return next({ name: 'Home' }); // redirect to user dashboard/home
+  // Role-based protection
+  if (to.path.startsWith("/admin") && role !== "admin") {
+    return next({ name: "Home" });
   }
+
+  if (to.path.startsWith("/acad") && role !== "academic") {
+    return next({ name: "Home" });
+  }
+
   next();
-});
-// Navigation guard to protect private routes
-router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem("auth-token");
-  const publicPages = ["Login", "Register"];
-
-  if (!publicPages.includes(to.name) && !token) {
-    next({ name: "Login" });
-  } else {
-    next();
-  }
 });
 
 

@@ -1,4 +1,4 @@
-import { registerUser } from '../utils/api.js';
+import { registerUser } from '/utils/api.js';
 
 export default {
   name: "RegistrationPage",

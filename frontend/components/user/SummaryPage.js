@@ -1,4 +1,4 @@
-import { getUserSummary } from "../utils/api.js";
+import { getUserSummary } from "/utils/api.js";
 
 export default {
   name: "SummaryPage",
@@ -70,7 +70,14 @@ export default {
     },
     renderChart() {
       if (this.chart) this.chart.destroy();
-      const ctx = document.getElementById("skillChart").getContext("2d");
+
+      const canvas = this.$refs.skillChart;
+      if (!canvas) {
+        console.error("Canvas not found");
+        return;
+      }
+
+      const ctx = canvas.getContext("2d");
       const labels = this.summaryData.map(item => item.skill);
       const currentData = this.summaryData.map(item => item.current);
       const previousData = this.summaryData.map(item => item.previous);
@@ -107,7 +114,51 @@ export default {
   mounted() {
     this.fetchSummary();
   },
-  template: `<div> ... </div>` // keep the same UI template as before
+  template: `
+    <div class="container mt-4">
+      <h2>User Summary</h2>
+      <p class="text-muted">Last updated: {{ lastUpdated }}</p>
+      <div class="alert alert-info">{{ motivationalMessage }}</div>
+
+      <div class="row mb-4">
+        <div class="col-md-3"><strong>Coins:</strong> {{ coins }}</div>
+        <div class="col-md-3"><strong>Tests Taken:</strong> {{ testsTaken }}</div>
+        <div class="col-md-3"><strong>Current Streak:</strong> {{ currentStreak }} days</div>
+        <div class="col-md-3"><strong>Habits Today:</strong> {{ habitsCompletedToday }}</div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-bordered">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Skill</th>
+              <th>Current Score</th>
+              <th>Previous Score</th>
+              <th>Feedback</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in summaryData" :key="row.id">
+              <td>{{ row.id }}</td>
+              <td>{{ row.skill }}</td>
+              <td :class="trendClass(row.current, row.previous)">{{ row.current }}%</td>
+              <td :class="trendClass(row.previous, row.current)">{{ row.previous }}%</td>
+              <td>{{ getFeedback(row.current, row.previous) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mb-4">
+        <button class="btn btn-primary" @click="exportCSV">Export Summary as CSV</button>
+      </div>
+
+      <div class="card p-3">
+        <canvas ref="skillChart" v-if="summaryData.length"></canvas>
+      </div>
+    </div>
+  `
 };
 
 
