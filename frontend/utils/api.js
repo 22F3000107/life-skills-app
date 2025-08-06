@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:5000/api"; // Change if deployed
+const BASE_URL = "http://127.0.0.1:5000/api"; // Change if deployed
 
 // Helper function for standard POST requests
 async function postData(url = '', data = {}, token = null) {
@@ -84,8 +84,12 @@ export async function registerUser(payload) {
 // User APIs (with token)
 // =======================
 
-export async function getUserProfile() {
-  const token = localStorage.getItem("auth-token");
+export async function getAdminSettings(payload,token) {
+  
+  return await getData("/user-profile", token);
+}
+export async function updateAdminSettings(payload, token) {
+  
   return await getData("/user-profile", token);
 }
 

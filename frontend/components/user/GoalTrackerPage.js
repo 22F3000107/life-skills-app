@@ -1,4 +1,4 @@
-import { getWeeklyGoals, addGoal, updateGoalStatus } from "../utils/api.js";
+import { getWeeklyGoals, addGoal, updateGoalStatus } from "../../utils/api.js";
 
 export default {
   name: "GoalTrackerPage",
