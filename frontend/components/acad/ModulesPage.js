@@ -1,4 +1,4 @@
-import { fetchModules } from "../../services/moduleService.js";
+import { fetchModules,createModule } from "../../services/moduleService.js";
 
 export default {
   name: "ModulesPage",
@@ -42,8 +42,8 @@ export default {
 
         switch (this.sortBy) {
           case "code":
-            aValue = a.mcode;
-            bValue = b.mcode;
+            aValue = a.id;
+            bValue = b.id;
             break;
           case "questions":
             aValue =
@@ -97,25 +97,31 @@ export default {
     },
   },
   methods: {
-    createModule() {
+    async createModule() {
       if (!this.newModule.name.trim()) {
         alert("Module name is required.");
         return;
       }
 
-      const newMod = {
-        mcode: "M" + (this.modules.length + 101),
-        name: this.newModule.name,
-        description: this.newModule.description,
-        approved_count: 0,
-        rejected_count: 0,
-        review_count: 0,
-        concepts_count: 0,
-      };
-      this.modules.push(newMod);
-      this.showCreatePopup = false;
-      this.newModule.name = "";
-      this.newModule.description = "";
+      try {
+        this.isCreating = true;
+
+        await createModule(this.newModule.name, this.newModule.description);
+
+        // Refresh the entire module list from the server
+        this.modules = await fetchModules();
+
+        this.showCreatePopup = false;
+        this.newModule.name = "";
+        this.newModule.description = "";
+
+        alert("Module created successfully!");
+      } catch (error) {
+        console.error("Failed to create module:", error);
+        alert("Failed to create module. Please try again.");
+      } finally {
+        this.isCreating = false;
+      }
     },
     toggleSortOrder() {
       this.sortOrder = this.sortOrder === "asc" ? "desc" : "asc";
@@ -360,9 +366,9 @@ export default {
 
         <!-- Module Cards Grid View -->
         <div v-else-if="viewMode === 'grid'" class="row g-4">
-          <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" v-for="mod in paginatedModules" :key="mod.mcode">
+          <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" v-for="mod in paginatedModules" :key="mod.id">
             <div class="module-card">
-              <router-link :to="'/acad/module/' + mod.mcode + '?filter=all'" class="text-decoration-none">
+              <router-link :to="'/acad/module/' + mod.id + '?filter=all'" class="text-decoration-none">
                 <div class="module-card-inner">
                   
                   <!-- Header -->
@@ -370,7 +376,7 @@ export default {
                     <div class="module-icon">
                       <i :class="getModuleIcon(mod.name)"></i>
                     </div>
-                    <div class="module-code">{{ mod.mcode }}</div>
+                    <div class="module-code">M{{ mod.id }}</div>
                   </div>
 
                   <!-- Content -->
@@ -388,7 +394,7 @@ export default {
                   <!-- Stats -->
                   <div class="module-stats-grid">
                     <router-link
-                      :to="'/acad/module/' + mod.mcode + '?filter=approved'"
+                      :to="'/acad/module/' + mod.id + '?filter=approved'"
                       class="stat-item approved"
                       @click.stop
                     >
@@ -398,7 +404,7 @@ export default {
                     </router-link>
 
                     <router-link
-                      :to="'/acad/module/' + mod.mcode + '?filter=pending'"
+                      :to="'/acad/module/' + mod.id + '?filter=pending'"
                       class="stat-item review"
                       @click.stop
                     >
@@ -408,7 +414,7 @@ export default {
                     </router-link>
 
                     <router-link
-                      :to="'/acad/module/' + mod.mcode + '?filter=rejected'"
+                      :to="'/acad/module/' + mod.id + '?filter=rejected'"
                       class="stat-item rejected"
                       @click.stop
                     >
@@ -418,7 +424,7 @@ export default {
                     </router-link>
 
                     <router-link
-                      :to="'/acad/concepts?module=' + mod.mcode"
+                      :to="'/acad/concepts?module=' + mod.id"
                       class="stat-item concepts"
                       @click.stop
                     >
@@ -448,7 +454,7 @@ export default {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="mod in paginatedModules" :key="mod.mcode" class="module-row">
+                <tr v-for="mod in paginatedModules" :key="mod.id" class="module-row">
                   <td>
                     <div class="d-flex align-items-center">
                       <div class="module-list-icon me-3">
@@ -456,33 +462,33 @@ export default {
                       </div>
                       <div>
                         <h6 class="mb-1">{{ mod.name }}</h6>
-                        <small class="text-muted">{{ mod.mcode }}</small>
+                        <small class="text-muted">{{ mod.id }}</small>
                         <p v-if="mod.description" class="text-muted small mb-0 mt-1">{{ mod.description }}</p>
                       </div>
                     </div>
                   </td>
                   <td class="text-center">
-                    <router-link :to="'/acad/module/' + mod.mcode + '?filter=approved'" class="stat-badge approved">
+                    <router-link :to="'/acad/module/' + mod.id + '?filter=approved'" class="stat-badge approved">
                       {{ mod.approved_count || 0 }}
                     </router-link>
                   </td>
                   <td class="text-center">
-                    <router-link :to="'/acad/module/' + mod.mcode + '?filter=pending'" class="stat-badge review">
+                    <router-link :to="'/acad/module/' + mod.id + '?filter=pending'" class="stat-badge review">
                       {{ mod.review_count || 0 }}
                     </router-link>
                   </td>
                   <td class="text-center">
-                    <router-link :to="'/acad/module/' + mod.mcode + '?filter=rejected'" class="stat-badge rejected">
+                    <router-link :to="'/acad/module/' + mod.id + '?filter=rejected'" class="stat-badge rejected">
                       {{ mod.rejected_count || 0 }}
                     </router-link>
                   </td>
                   <td class="text-center">
-                    <router-link :to="'/acad/concepts?module=' + mod.mcode" class="stat-badge concepts">
+                    <router-link :to="'/acad/concepts?module=' + mod.id" class="stat-badge concepts">
                       {{ mod.concepts_count || 0 }}
                     </router-link>
                   </td>
                   <td class="text-center">
-                    <router-link :to="'/acad/module/' + mod.mcode + '?filter=all'" class="btn btn-sm btn-outline-primary">
+                    <router-link :to="'/acad/module/' + mod.id + '?filter=all'" class="btn btn-sm btn-outline-primary">
                       <i class="fas fa-eye me-1"></i>View
                     </router-link>
                   </td>
@@ -610,10 +616,17 @@ export default {
                 <button class="btn btn-outline-secondary" @click="showCreatePopup = false">
                   <i class="fas fa-times me-2"></i>Cancel
                 </button>
-                <button class="btn btn-success" @click="createModule" :disabled="!newModule.name.trim()">
-                  <i class="fas fa-check me-2"></i>Create Module
+                <button 
+                  class="btn btn-success" 
+                  @click="createModule" 
+                  :disabled="!newModule.name.trim() || isCreating"
+                >
+                  <i v-if="!isCreating" class="fas fa-check me-2"></i>
+                  <div v-else class="spinner-border spinner-border-sm me-2" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  {{ isCreating ? 'Creating...' : 'Create Module' }}
                 </button>
-                
               </div>
             </div>
           </div>

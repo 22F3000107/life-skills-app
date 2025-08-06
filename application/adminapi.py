@@ -14,6 +14,10 @@ from application.sec import datastore
 import uuid
 
 class LoginAPI(Resource):
+
+    def options(self):
+        return {},200
+
     def post(self):
         data = request.get_json()
         email = data.get('email')
@@ -29,8 +33,8 @@ class LoginAPI(Resource):
         
         if not user.check_password(password):
             return {"error": "Invalid credentials"}, 401
-        if not user.active:
-            return {"error": "Account is blocked."}, 403
+        # if not user.active:
+        #     return {"error": "Account is blocked."}, 403
         
         roles = [role.name for role in user.roles]
         

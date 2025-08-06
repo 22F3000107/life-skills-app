@@ -37,7 +37,7 @@ export default {
           if (response.roles === "admin") {
             this.$router.push("/admin");
           } else if (response.roles === "academic") {
-            this.$router.push("/acad-dashboard");
+            this.$router.push("/acad/home");
           } else {
             this.$router.push("/");
           }
@@ -49,7 +49,7 @@ export default {
         console.error("Login error:", err);
         this.error = "Server error. Please try again later.";
       }
-    }
+    },
   },
   template: `
     <div class="d-flex justify-content-center align-items-center vh-100 bg-light">
@@ -100,7 +100,7 @@ export default {
         </p>
       </div>
     </div>
-  `
+  `,
 };
 
 

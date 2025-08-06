@@ -1,22 +1,20 @@
+import { fetchConcepts, createConcept, fetchConceptById } from "../../services/conceptService.js";
+import { fetchQuestionsByModule } from "../../services/questionService.js";
+import { fetchModules } from "../../services/moduleService.js";
+
 export default {
   name: "ConceptsPage",
   data() {
     return {
+      hasSearched: false,
       searchQuery: "",
       selectedModules: [],
       selectedAges: [],
       currentPage: 1,
       conceptsPerPage: 9,
       ageGroups: ["6-8", "9-11", "12-14", "15-18"],
-      moduleOptions: ["Time Management", "Stress Control", "Communication"],
-      concepts: Array.from({ length: 42 }, (_, i) => ({
-        ccode: `C${1000 + i}`,
-        name: `Concept ${i + 1}`,
-        module: ["Time Management", "Stress Control", "Communication"][i % 3],
-        age: ["6-8", "9-11", "12-14", "15-18"][i % 4],
-        questions: Math.floor(Math.random() * 30) + 1,
-        status: i % 2 === 0 ? "LIVE" : "Under Development",
-      })),
+      moduleOptions: [],
+      concepts: [],
       showCreatePopup: false,
       filterType: "",
       filterModule: "",
@@ -116,25 +114,74 @@ export default {
     },
   },
   methods: {
+    async createConcept() {
+      if (!this.newConceptName.trim()) {
+        alert("Please enter a concept name.");
+        return;
+      }
+
+      const payload = {
+        module_id: this.filterModule,
+        name: this.newConceptName.trim(),
+        description: this.newConceptDescription || "", // Optional
+        date: this.newConceptDate || null, // Format: DD-MM-YYYY
+        live: this.isConceptLive || false, // Boolean
+        max_marks: this.newConceptMaxMarks || null, // Optional
+        question_ids: this.selectedQuestionIds,
+      };
+
+      try {
+        this.isLoading = true;
+        await createConcept(payload);
+        alert("Concept created successfully.");
+
+        // Reset fields
+        this.newConceptName = "";
+        this.newConceptDescription = "";
+        this.newConceptDate = "";
+        this.isConceptLive = false;
+        this.newConceptMaxMarks = null;
+        this.showCreatePopup = false;
+
+        this.concepts = await fetchConcepts();
+      } catch (error) {
+        console.error("Create concept failed:", error);
+        alert("Failed to create concept.");
+      } finally {
+        this.isLoading = false;
+      }
+    },
     toggleStatus(concept, event) {
       event.preventDefault();
       event.stopPropagation();
       concept.status = concept.status === "LIVE" ? "Under Development" : "LIVE";
     },
-    fetchQuestions() {
+    async fetchQuestions() {
+      if (!this.filterModule) {
+        alert("Please select a module to search.");
+        return;
+      }
+      this.hasSearched = true;
       this.isLoading = true;
-      setTimeout(() => {
-        this.fetchedQuestions = this.allQuestions.filter((q) => {
-          return (
+      try {
+        const response = await fetchQuestionsByModule(this.filterModule);
+        const questions = response.questions || [];
+
+        this.fetchedQuestions = questions.filter(
+          (q) =>
+            q.concept_id == null &&
+            q.is_archived == false &&
             (!this.filterType || q.type === this.filterType) &&
-            (!this.filterModule || q.module === this.filterModule) &&
-            (!this.filterAge || q.age === this.filterAge) &&
-            !this.liveConceptQuestions.includes(q.qcode)
-          );
-        });
-        this.selectedQuestionIds = [];
+            (!this.filterAge ||
+              (q.age_group.length &&
+                q.age_group[0].split(",").includes(this.filterAge)))
+        );
+      } catch (error) {
+        console.error("Failed to fetch questions:", error);
+        alert("Error fetching questions.");
+      } finally {
         this.isLoading = false;
-      }, 1000);
+      }
     },
     toggleSelection(qcode) {
       const idx = this.selectedQuestionIds.indexOf(qcode);
@@ -187,14 +234,15 @@ export default {
       return status === "LIVE" ? "success" : "warning";
     },
   },
-  created() {
-    this.allQuestions = Array.from({ length: 30 }, (_, i) => ({
-      qcode: `Q10${i + 1}`,
-      question: `Sample question ${i + 1}`,
-      type: ["MCQ", "MSQ", "True/False"][i % 3],
-      age: ["6-8", "9-11", "12-14", "15-18"][i % 4],
-      module: ["Time Management", "Stress Control", "Communication"][i % 3],
-    }));
+  async mounted() {
+    try {
+      this.moduleOptions = await fetchModules();
+      this.concepts = await fetchConcepts();
+    } catch (err) {
+      console.error("Failed to load modules:", err.message);
+    } finally {
+      this.isLoading = false;
+    }
   },
   template: `
     <div class="min-vh-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
@@ -301,15 +349,15 @@ export default {
                         <span v-if="selectedModules.length" class="badge bg-primary ms-2">{{ selectedModules.length }}</span>
                       </button>
                       <div v-show="activeDropdown === 'module'" class="dropdown-menu show p-3 shadow-lg" style="border-radius: 15px; min-width: 200px;">
-                        <div v-for="mod in moduleOptions" :key="mod" class="form-check mb-2">
+                        <div v-for="mod in moduleOptions" :key="mod.id" class="form-check mb-2">
                           <input
                             class="form-check-input"
                             type="checkbox"
-                            :value="mod"
+                            :value="mod.name"
                             v-model="selectedModules"
-                            :id="'mod_' + mod"
+                            :id="'mod_' + mod.id"
                           />
-                          <label class="form-check-label fw-medium" :for="'mod_' + mod">{{ mod }}</label>
+                          <label class="form-check-label fw-medium" :for="'mod_' + mod">{{ mod.name }}</label>
                         </div>
                       </div>
                     </div>
@@ -363,13 +411,12 @@ export default {
                 <div class="row g-4">
                   <div 
                     v-for="(concept, index) in paginatedConcepts" 
-                    :key="concept.ccode" 
+                    :key="concept.id" 
                     class="col-xl-4 col-md-6 col-md-12"
                   >
                     <router-link
                       :to="{
-                        path: '/acad/concept/' + concept.ccode,
-                        query: { module: concept.module }
+                        path: '/acad/concept/' + concept.id,
                       }"
                       class="text-decoration-none"
                       style="display: block;"
@@ -388,22 +435,22 @@ export default {
                           <div class="d-flex align-items-start justify-content-between mb-3">
                             <div class="d-flex align-items-center gap-2">
                               <div class="bg-primary bg-opacity-10 p-3 rounded-circle">
-                                <i :class="'bi ' + getConceptIcon(concept.module) + ' text-primary fs-4'"></i>
+                                <i :class="'bi ' + getConceptIcon(concept.module_id) + ' text-primary fs-4'"></i>
                               </div>
                               <div>
                                 <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill small fw-medium">
-                                  {{ concept.ccode }}
+                                  {{ concept.id }}
                                 </span>
                               </div>
                             </div>
                             <div class="text-end">
                               <span 
                                 class="badge px-3 py-2 fs-6"
-                                :class="'bg-' + getStatusColor(concept.status)"
+                                :class="'bg-' + getStatusColor(concept.live)"
                                 style="border-radius: 20px;"
                               >
-                                <i :class="concept.status === 'LIVE' ? 'bi bi-broadcast' : 'bi bi-tools'" class="me-1"></i>
-                                {{ concept.status }}
+                                <i :class="concept.live === 'LIVE' ? 'bi bi-broadcast' : 'bi bi-tools'" class="me-1"></i>
+                                {{ concept.live ? 'LIVE' : 'Developing' }}
                               </span>
                             </div>
                           </div>
@@ -413,13 +460,13 @@ export default {
                           <div class="row g-3 mb-4">
                             <div class="col-6">
                               <div class="text-center p-2 bg-light rounded-3">
-                                <div class="fs-4 fw-bold text-primary">{{ concept.questions }}</div>
+                                <div class="fs-4 fw-bold text-primary">{{ concept.question_count }}</div>
                                 <small class="text-muted">Questions</small>
                               </div>
                             </div>
                             <div class="col-6">
                               <div class="text-center p-2 bg-light rounded-3">
-                                <div class="fs-6 fw-bold text-secondary">{{ concept.age }}</div>
+                                <div class="fs-6 fw-bold text-secondary">{{ concept.age_groups.join(', ') }}</div>
                                 <small class="text-muted">Age Group</small>
                               </div>
                             </div>
@@ -427,7 +474,7 @@ export default {
                           
                           <div class="mb-3">
                             <small class="text-muted">Module</small>
-                            <div class="fw-medium text-dark">{{ concept.module }}</div>
+                            <div class="fw-medium text-dark">{{ concept.module_id }}</div>
                           </div>
                           
                           <button
@@ -436,8 +483,8 @@ export default {
                             @click="toggleStatus(concept, $event)"
                             style="border-radius: 10px;"
                           >
-                            <i :class="concept.status === 'LIVE' ? 'bi bi-pause-circle' : 'bi bi-play-circle'" class="me-2"></i>
-                            {{ concept.status === 'LIVE' ? 'Make Inactive' : 'Make Live' }}
+                            <i :class="concept.flag === 'LIVE' ? 'bi bi-pause-circle' : 'bi bi-play-circle'" class="me-2"></i>
+                            {{ concept.flag === 'LIVE' ? 'Make Inactive' : 'Make Live' }}
                           </button>
                           
                           <div class="d-flex justify-content-center">
@@ -563,8 +610,10 @@ export default {
                 <div class="col-md-3">
                   <label class="form-label fw-semibold">Module</label>
                   <select v-model="filterModule" class="form-select" style="border-radius: 12px;">
-                    <option value="">All Modules</option>
-                    <option v-for="mod in moduleOptions" :key="mod">{{ mod }}</option>
+                  <option disabled value="">Select module</option>
+                     <option v-for="mod in moduleOptions" :key="mod.id" :value="mod.id">
+                      {{ mod.name }}
+                    </option>
                   </select>
                 </div>
                 <div class="col-md-3">
@@ -604,7 +653,7 @@ export default {
                                 class="form-check-input" 
                                 type="checkbox" 
                                 :checked="selectedQuestionIds.length === fetchedQuestions.length"
-                                @change="selectedQuestionIds = $event.target.checked ? fetchedQuestions.map(q => q.qcode) : []"
+                                @change="selectedQuestionIds = $event.target.checked ? fetchedQuestions.map(q => q.id) : []"
                               />
                             </div>
                           </th>
@@ -615,23 +664,23 @@ export default {
                         </tr>
                       </thead>
                       <tbody>
-                        <tr v-for="q in fetchedQuestions" :key="q.qcode">
+                        <tr v-for="q in fetchedQuestions" :key="q.id">
                           <td class="px-4 py-3">
                             <div class="form-check">
                               <input 
                                 class="form-check-input" 
                                 type="checkbox" 
-                                :value="q.qcode" 
+                                :value="q.id" 
                                 v-model="selectedQuestionIds" 
                               />
                             </div>
                           </td>
                           <td class="px-4 py-3">
                             <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">
-                              {{ q.qcode }}
+                              Q{{ q.id }}
                             </span>
                           </td>
-                          <td class="px-4 py-3">{{ q.question }}</td>
+                          <td class="px-4 py-3">{{ q.question_statement }}</td>
                           <td class="px-4 py-3 text-center">
                             <span class="badge bg-info bg-opacity-20 text-black px-2 py-1 rounded-pill">
                               {{ q.type }}
@@ -639,7 +688,7 @@ export default {
                           </td>
                           <td class="px-4 py-3 text-center">
                             <span class="badge bg-secondary bg-opacity-20 text-white px-2 py-1 rounded-pill">
-                              {{ q.age }}
+                              {{ q.age_group.join(', ') }}
                             </span>
                           </td>
                         </tr>
@@ -649,7 +698,7 @@ export default {
                 </div>
               </div>
               
-              <div v-else-if="!isLoading && fetchedQuestions.length === 0 && (filterType || filterModule || filterAge)" class="text-center py-4">
+              <div v-else-if="hasSearched && !isLoading && fetchedQuestions.length === 0">
                 <div class="text-muted">
                   <i class="bi bi-info-circle fs-3 mb-3 d-block"></i>
                   <p class="mb-0">No matching questions available or already used in live concepts.</p>
@@ -663,7 +712,7 @@ export default {
               <button 
                 class="btn btn-success btn-lg px-4" 
                 :disabled="selectedQuestionIds.length === 0 || !newConceptName.trim()" 
-                @click="confirmAddQuestions"
+                @click="createConcept"
               >
                 <i class="bi bi-check-circle me-2"></i>
                 Create with {{ selectedQuestionIds.length }} Question{{ selectedQuestionIds.length !== 1 ? 's' : '' }}
