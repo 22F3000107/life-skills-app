@@ -1,4 +1,4 @@
-import { getTodayHabits, submitHabits } from "../../utils/api.js";
+import { getTodayHabits, submitHabits } from '/utils/api.js';
 
 export default {
   name: "HealthyHabitsPage",
@@ -14,7 +14,7 @@ export default {
   computed: {
     progressPercent() {
       const completed = this.habits.filter(h => h.completed).length;
-      return Math.round((completed / this.habits.length) * 100);
+      return this.habits.length ? Math.round((completed / this.habits.length) * 100) : 0;
     }
   },
   methods: {
@@ -114,6 +114,11 @@ export default {
         </li>
       </ul>
 
+      <!-- No Habits Available Message -->
+      <div v-if="!loading && habits.length === 0" class="alert alert-info text-center fw-semibold shadow-sm">
+        <i class="bi bi-info-circle me-2"></i>No healthy habits available for today.
+      </div>
+
       <!-- Progress Bar -->
       <div v-if="habits.length" class="mb-4">
         <label class="form-label">
@@ -145,7 +150,6 @@ export default {
     </div>
   `
 };
-
 
 
 // This code defines a Vue.js component for a healthy habits page.

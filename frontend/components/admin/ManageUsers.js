@@ -1,4 +1,4 @@
-import { getAllUsers, blockUser, unblockUser } from '../utils/api.js';
+import { getAllUsers, blockUser, unblockUser, deleteUser } from '/utils/api.js';
 
 export default {
   name: "ManageUsers",
@@ -20,16 +20,18 @@ export default {
     async fetchUsers() {
       try {
         const res = await getAllUsers();
-        this.users = res.users.map(user => ({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: "user", // Adjust when role is added in backend
-          blocked: !user.active,
-          registered: "2025-01-01", // Placeholder date
-          coins: 0,
-          tests: 0
-        }));
+        this.users = res.users.map(user => {
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.roles && user.roles.length > 0 ? user.roles[0].toLowerCase() : "user",
+            blocked: !user.active,
+            registered: user.registered || "2025-01-01",
+            coins: user.coins || 0,
+            tests: user.tests || 0
+          };
+        });
       } catch (err) {
         console.error("Error fetching users:", err);
       }
@@ -45,11 +47,20 @@ export default {
         user.blocked = !user.blocked;
       } catch (err) {
         console.error("Error toggling block status:", err);
+        alert("Failed to change user status. Please check backend logs or endpoint.");
       }
     },
 
-    deleteUser(user) {
-      alert("Delete function not implemented. Please contact backend team.");
+    async deleteUser(user) {
+      try {
+        if (confirm(`Are you sure you want to delete ${user.name}?`)) {
+          await deleteUser(user.id);
+          this.users = this.users.filter(u => u.id !== user.id);
+        }
+      } catch (err) {
+        console.error("Error deleting user:", err);
+        alert("Failed to delete user. Check backend logs.");
+      }
     }
   },
   mounted() {
@@ -67,7 +78,7 @@ export default {
         <span class="input-group-text"><i class="bi bi-search"></i></span>
       </div>
 
-      <!-- Approved Users Table -->
+      <!-- Users Table -->
       <div>
         <h5 class="fw-semibold mb-3"><i class="bi bi-person-check me-2 text-success"></i>All Users</h5>
         <div class="table-responsive">

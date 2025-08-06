@@ -1,4 +1,4 @@
-import { getWeeklyGoals, addGoal, updateGoalStatus } from "../../utils/api.js";
+import { getWeeklyGoals, addGoal, updateGoalStatus } from "/utils/api.js";
 
 export default {
   name: "GoalTrackerPage",
@@ -15,7 +15,7 @@ export default {
       return this.goals.filter(g => g.status === 'active');
     },
     completedGoals() {
-      return this.goals.filter(g => g.status !== 'active');
+      return this.goals.filter(g => g.status === 'done' || g.status === 'failed');
     }
   },
   methods: {
@@ -23,7 +23,7 @@ export default {
       this.isLoading = true;
       try {
         const res = await getWeeklyGoals();
-        this.goals = res.goals;
+        this.goals = res.goals || [];
         this.error = '';
       } catch (err) {
         this.error = err.message || 'Failed to fetch goals.';
@@ -36,7 +36,8 @@ export default {
       if (!this.newGoal.trim()) return;
 
       const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 7); // Default 1-week goal
+      dueDate.setDate(dueDate.getDate() + 7); // 1 week from today
+
       const goalPayload = {
         text: this.newGoal,
         due_date: dueDate.toISOString().split('T')[0]
@@ -46,6 +47,7 @@ export default {
         const response = await addGoal(goalPayload);
         this.goals.push({ ...goalPayload, id: response.goal_id, status: 'active' });
         this.newGoal = '';
+        this.error = '';
       } catch (err) {
         this.error = err.message || 'Failed to add goal.';
       }
@@ -56,7 +58,7 @@ export default {
         await updateGoalStatus(goal.id, { status: 'done' });
         goal.status = 'done';
       } catch (err) {
-        this.error = 'Error updating goal status.';
+        this.error = 'Error marking goal as done.';
       }
     },
 
@@ -65,7 +67,7 @@ export default {
         await updateGoalStatus(goal.id, { status: 'failed' });
         goal.status = 'failed';
       } catch (err) {
-        this.error = 'Error updating goal status.';
+        this.error = 'Error marking goal as failed.';
       }
     },
 
@@ -166,7 +168,6 @@ export default {
     </div>
   `
 };
-
 
 
 

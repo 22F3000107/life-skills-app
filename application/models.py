@@ -47,6 +47,7 @@ class User(db.Model, UserMixin):
     age = db.Column(db.Integer, nullable=True)
     fs_uniquifier = db.Column(db.String(255), unique=True, nullable=False)
     active = db.Column(db.Boolean(), default=True)
+    registered = db.Column(db.DateTime, default=datetime.utcnow)
 
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))

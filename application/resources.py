@@ -6,7 +6,7 @@ from .adminapi import LoginAPI, ModuleAPI, ModuleResource
 from .acadapi import AcademicRegisterAPI, ConceptAPI, ConceptResource, QuestionAPI, QuestionResource,QuestionsByModuleAPI
 from .userapi import RegisterAPI, UserProfile,TodayHabits, SubmitHabits, WeeklyGoals, AddGoal, UpdateGoalStatus
 from .userapi import QuizDetailAPI,QuizListAPI, QuizSubmitAPI, UserSkillSummaryAPI
-from .adminapi import AdminUsersAPI, AdminBlockUserAPI, AdminUnblockUserAPI,AdminStoriesAPI, AdminUpdateStoryAPI, AdminDeleteStoryAPI,AdminGetStoryAPI
+from .adminapi import AdminUsersAPI, AdminBlockUserAPI, AdminUnblockUserAPI, AdminDeleteUserAPI, AdminStoriesAPI, AdminUpdateStoryAPI, AdminDeleteStoryAPI,AdminGetStoryAPI
 from .adminapi import AdminQuizzesAPI, AdminCreateQuizAPI, AdminUpdateQuizAPI, AdminDeleteQuizAPI,AdminEditStoryAPI
 from .adminapi import AdminFlaggedContentAPI,AdminUnflagContentAPI,AdminDeleteFlaggedContentAPI
 from .userapi import ChangePasswordAPI
@@ -29,6 +29,8 @@ api.add_resource(UserSkillSummaryAPI, '/user/summary')
 api.add_resource(AdminUsersAPI, '/admin/users')
 api.add_resource(AdminBlockUserAPI, '/admin/user/<int:user_id>/block')
 api.add_resource(AdminUnblockUserAPI, '/admin/user/<int:user_id>/unblock')
+api.add_resource(AdminDeleteUserAPI, '/admin/user/<int:user_id>/delete')
+
 
 api.add_resource(AdminStoriesAPI, '/admin/stories')
 api.add_resource(AdminGetStoryAPI, '/admin/story/<int:story_id>')

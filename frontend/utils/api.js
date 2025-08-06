@@ -1,4 +1,4 @@
-const BASE_URL = "http://127.0.0.1:5000/api"; // Change if deployed
+const BASE_URL = "http://127.0.0.1:5000/api"; 
 
 // Helper function for standard POST requests
 async function postData(url = '', data = {}, token = null) {
@@ -49,6 +49,26 @@ async function putData(url = '', data = {}, token = null) {
 
 
 // Helper function for GET requests
+// async function getData(url = '', token = null) {
+//   const headers = {
+//     "Content-Type": "application/json",
+//   };
+
+//   if (token) {
+//     headers["Authorization"] = `Bearer ${token}`;
+//   }
+
+//   const response = await fetch(`${BASE_URL}${url}`, {
+//     method: "GET",
+//     headers,
+//   });
+
+//   const json = await response.json();
+//   if (!response.ok) {
+//     throw new Error(json.error || "API error");
+//   }
+//   return json;
+// }
 async function getData(url = '', token = null) {
   const headers = {
     "Content-Type": "application/json",
@@ -58,17 +78,24 @@ async function getData(url = '', token = null) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${BASE_URL}${url}`, {
-    method: "GET",
-    headers,
-  });
+  try {
+    const response = await fetch(`${BASE_URL}${url}`, {
+      method: "GET",
+      headers,
+    });
 
-  const json = await response.json();
-  if (!response.ok) {
-    throw new Error(json.error || "API error");
+    const json = await response.json();
+    if (!response.ok) {
+      console.error("API error response:", json);
+      throw new Error(json.error || "API error");
+    }
+    return json;
+  } catch (err) {
+    console.error("Fetch failed:", err);
+    throw err;
   }
-  return json;
 }
+
 
 // Auth APIs
 export async function loginUser(payload) {
@@ -76,7 +103,7 @@ export async function loginUser(payload) {
 }
 
 export async function registerUser(payload) {
-  return await postData("/register", payload);
+  return await postData("/register/user", payload);
 }
 
 
@@ -84,38 +111,35 @@ export async function registerUser(payload) {
 // User APIs (with token)
 // =======================
 
-export async function getAdminSettings(payload,token) {
-  
-  return await getData("/user-profile", token);
-}
-export async function updateAdminSettings(payload, token) {
-  
-  return await getData("/user-profile", token);
+export async function getUserProfile() {
+  const token = localStorage.getItem("auth-token");
+  console.log("Token used in getUserProfile():", token);
+  return await getData("/user/profile", token);
 }
 
 export async function getTodayHabits() {
   const token = localStorage.getItem("auth-token");
-  return await getData("/today-habits", token);
+  return await getData("/habits/today", token);
 }
 
 export async function submitHabits(habitsPayload) {
   const token = localStorage.getItem("auth-token");
-  return await postData("/submit-habits", habitsPayload, token);
+  return await postData("/habits/submit", habitsPayload, token);
 }
 
 export async function getWeeklyGoals() {
   const token = localStorage.getItem("auth-token");
-  return await getData("/weekly-goals", token);
+  return await getData("/weekly/goals", token);
 }
 
 export async function addGoal(payload) {
   const token = localStorage.getItem("auth-token");
-  return await postData("/add-goal", payload, token);
+  return await postData("/add/goals", payload, token);
 }
 
 export async function updateGoalStatus(goalId, payload) {
   const token = localStorage.getItem("auth-token");
-  return await fetch(`${BASE_URL}/update-goal-status/${goalId}`, {
+  return await fetch(`${BASE_URL}/goals/${goalId}`, {
     method: 'PUT',
     headers: {
       "Content-Type": "application/json",
@@ -126,7 +150,7 @@ export async function updateGoalStatus(goalId, payload) {
 }
 
 export async function getQuizList(token) {
-  return await getData("/quiz-list", token);
+  return await getData("/quizzes", token);
 }
 
 export async function getQuizById(quizId, token) {
@@ -138,15 +162,15 @@ export async function submitQuiz(quizId, answers, token) {
 }
 
 export async function getUserSummary(token) {
-  return await getData("/user-summary", token);
+  return await getData("/user/summary", token);
 }
 
-export async function getUserProfile(token) {
-  return await getData("/user-profile", token);
-}
+// export async function getUserProfile(token) {
+//   return await getData("/user-profile", token);
+// }
 
 export async function updateUserProfile(payload, token) {
-  return await putData("/user-profile", payload, token);
+  return await putData("/user/profile", payload, token);
 }
 
 export async function changePassword(payload, token) {
@@ -166,7 +190,7 @@ export async function fetchAdminStats() {
 
 // Register a new Academic Member
 export async function registerAcademicUser(payload) {
-  return await postData("/academic-register", payload);
+  return await postData("/register/academic", payload);
 }
 
 
@@ -177,23 +201,36 @@ export async function getAllUsers() {
 
 export async function blockUser(userId) {
   const token = localStorage.getItem("auth-token");
-  return await fetch(`${BASE_URL}/admin/block/${userId}`, {
+  return await fetch(`${BASE_URL}/admin/user/${userId}/block`, {
     method: "PUT",
     headers: {
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
     }
   }).then(res => res.json());
 }
 
 export async function unblockUser(userId) {
   const token = localStorage.getItem("auth-token");
-  return await fetch(`${BASE_URL}/admin/unblock/${userId}`, {
+  return await fetch(`${BASE_URL}/admin/user/${userId}/unblock`, {
     method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
+    }
+  }).then(res => res.json());
+}
+
+export async function deleteUser(userId) {
+  const token = localStorage.getItem("auth-token");
+  return await fetch(`${BASE_URL}/admin/user/${userId}/delete`, {
+    method: "DELETE",
     headers: {
       Authorization: `Bearer ${token}`
     }
   }).then(res => res.json());
 }
+
 
 export async function getAllStories(token) {
   return await getData("/admin/stories", token);
@@ -281,17 +318,27 @@ export async function getSkillEngagement(token) {
   return await getData("/admin/skill-engagement", token);
 }
 
-// Fetch current admin settings
-export async function fetchAdminSettings() {
+export async function getAdminSettings() {
   const token = localStorage.getItem("auth-token");
   return await getData("/admin/settings", token);
 }
 
-// Save admin settings
-export async function saveAdminSettings(payload) {
+
+export async function updateAdminSettings(payload) {
   const token = localStorage.getItem("auth-token");
   return await putData("/admin/settings", payload, token);
 }
+
+export async function getReminderSettings(token) {
+  return await getData("/admin/reminder-settings", token);
+}
+
+export async function saveReminderSettings(data, token) {
+  return await postData("/admin/reminder-settings", data, token);
+}
+
+
+
 
 
 // ========== Module APIs ==========

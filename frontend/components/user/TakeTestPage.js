@@ -1,4 +1,8 @@
-import { getQuizList, getQuizById, submitQuiz } from "../../utils/api.js";
+import {
+  getQuizList,
+  getQuizById,
+  submitQuiz
+} from "/utils/api.js";
 
 export default {
   name: "TakeTestPage",
@@ -26,7 +30,15 @@ export default {
     try {
       this.loading = true;
       const data = await getQuizList(this.token);
-      this.quizList = data.quizzes;
+      console.log("Quiz List API Response:", data);
+
+      // Defensive handling
+      if (Array.isArray(data?.quizzes)) {
+        this.quizList = data.quizzes;
+      } else {
+        console.error("Unexpected quiz list format", data);
+        this.quizList = [];
+      }
     } catch (err) {
       console.error("Error fetching quiz list", err.message);
     } finally {
@@ -57,15 +69,14 @@ export default {
     },
     checkAnswer() {
       if (this.selectedOption !== null) {
-        const correctAnswer = this.questions[this.currentQuestionIndex].options.indexOf(
-          this.questions[this.currentQuestionIndex].correct_answer
-        );
+        const current = this.questions[this.currentQuestionIndex];
+        const correctAnswer = current.options.indexOf(current.correct_answer);
 
         const isCorrect = this.selectedOption === correctAnswer;
         this.correct = isCorrect;
         if (isCorrect) this.score++;
 
-        this.answers.push(this.questions[this.currentQuestionIndex].options[this.selectedOption]);
+        this.answers.push(current.options[this.selectedOption]);
         this.showFeedback = true;
       }
     },
@@ -88,9 +99,11 @@ export default {
     },
     async submitQuiz() {
       try {
-        const result = await submitQuiz(this.selectedQuiz.quiz_id, this.answers, this.token);
-        this.feedback = result.feedback;
-        this.coins += result.coins_awarded;
+        const quizId = this.selectedQuiz.quiz_id || this.selectedQuiz.id;
+        const result = await submitQuiz(quizId, this.answers, this.token);
+
+        this.feedback = result.feedback || "Good job!";
+        this.coins += result.coins_awarded || 0;
         this.quizFinished = true;
         this.showResults = true;
       } catch (err) {
@@ -116,6 +129,10 @@ export default {
           <h4 class="fw-bold mb-3">
             <i class="bi bi-list-task text-primary me-2"></i>Select a Quiz
           </h4>
+          <!-- No quizzes available -->
+        <div v-if="quizList.length === 0" class="alert alert-info">
+          <i class="bi bi-info-circle me-1"></i> No quizzes available at the moment.
+        </div>
           <ul class="list-group shadow-sm">
             <li
               v-for="quiz in quizList"

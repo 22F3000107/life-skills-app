@@ -197,7 +197,7 @@
 // };
 
 
-import { fetchAdminStats, registerAcademicUser } from "../utils/api.js";
+import { fetchAdminStats, registerAcademicUser } from "/utils/api.js";
 
 export default {
   name: "AdminDashboard",
