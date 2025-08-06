@@ -350,10 +350,25 @@ class ModuleAPI(Resource):
     def get(self):
         try:
             modules = Module.query.all()
-            if modules:
-                return marshal(modules, module_fields), 200
-            else:
+            if not modules:
                 return {"message": "No modules found."}, 404
+
+            module_data = []
+            for mod in modules:
+                approved = sum(1 for q in mod.questions if q.is_approved is True)
+                rejected = sum(1 for q in mod.questions if q.is_approved is False)
+                review = sum(1 for q in mod.questions if q.is_approved is None)
+                concepts_count = len(mod.concepts)
+                module_data.append({
+                    "id": mod.id,
+                    "name": mod.name,
+                    "approved_count": approved,
+                    "rejected_count": rejected,
+                    "review_count": review,
+                    "concepts_count": concepts_count,
+                })
+
+            return module_data, 200
         except SQLAlchemyError as e:
             return {"error": str(e)}, 500
 
