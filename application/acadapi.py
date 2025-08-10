@@ -421,6 +421,7 @@ class AcademicCreateQuizAPI(Resource):
             question_text = q.get("question", "").strip()
             options = q.get("options", [])
             correct_answer = q.get("correct_answer")
+            hint = q.get("hint", "").strip() 
 
             if not question_text or not options or correct_answer is None:
                 db.session.rollback()
@@ -434,7 +435,8 @@ class AcademicCreateQuizAPI(Resource):
                 quiz_id=new_quiz.id,
                 question=question_text,
                 options=options,
-                correct_answer=correct_answer
+                correct_answer=correct_answer,
+                hint=hint if hint else None  
             )
             db.session.add(quiz_question)
 

@@ -1,3 +1,144 @@
+// import { createAcademicQuiz } from "/utils/api.js";
+
+// export default {
+//   name: "AcademicCreateQuiz",
+//   data() {
+//     return {
+//       title: "",
+//       skill: "",
+//       questions: [
+//         // Sample initial question structure
+//         {
+//           question: "",
+//           options: ["", "", "", ""], // 4 options default
+//           correct_answer: null // index of correct option (0-3)
+//         }
+//       ],
+//       loading: false,
+//       message: null,
+//       error: null
+//     };
+//   },
+//   methods: {
+//     addQuestion() {
+//       this.questions.push({
+//         question: "",
+//         options: ["", "", "", ""],
+//         correct_answer: null
+//       });
+//     },
+//     removeQuestion(index) {
+//       this.questions.splice(index, 1);
+//     },
+//     async submitQuiz() {
+//       this.message = null;
+//       this.error = null;
+
+//       // Basic validation
+//       if (!this.title || !this.skill || this.questions.length === 0) {
+//         this.error = "Please fill in the quiz title, skill, and add at least one question.";
+//         return;
+//       }
+
+//       for (const [i, q] of this.questions.entries()) {
+//         if (!q.question || q.options.some(opt => !opt) || q.correct_answer === null) {
+//           this.error = `Please complete all fields for question ${i + 1}`;
+//           return;
+//         }
+//       }
+
+//       this.loading = true;
+//       try {
+//         const token = localStorage.getItem("auth-token");
+//         const payload = {
+//           title: this.title,
+//           skill: this.skill,
+//           createdBy: localStorage.getItem("user_id"), // store after login
+//           questions: this.questions.map(q => ({
+//             question: q.question,
+//             options: q.options,
+//             correct_answer: q.correct_answer
+//           }))
+//         };
+
+//         const res = await createAcademicQuiz(payload, token);
+//         this.message = res.message || "Quiz created successfully!";
+//         this.title = "";
+//         this.skill = "";
+//         this.questions = [
+//           {
+//             question: "",
+//             options: ["", "", "", ""],
+//             correct_answer: null
+//           }
+//         ];
+//       } catch (err) {
+//         console.error("Error creating quiz:", err);
+//         this.error = "Failed to create quiz.";
+//       } finally {
+//         this.loading = false;
+//       }
+//     }
+//   },
+//   template: `
+//     <div class="container mt-4">
+//       <h2 class="fw-bold mb-3">Create Academic Quiz</h2>
+//       <p>Fill in the details below to create a new quiz.</p>
+
+//       <div v-if="message" class="alert alert-success">{{ message }}</div>
+//       <div v-if="error" class="alert alert-danger">{{ error }}</div>
+
+//       <form @submit.prevent="submitQuiz">
+//         <div class="mb-3">
+//           <label class="form-label">Title</label>
+//           <input v-model="title" type="text" class="form-control" placeholder="Quiz title" required />
+//         </div>
+
+//         <div class="mb-3">
+//           <label class="form-label">Skill</label>
+//           <input v-model="skill" type="text" class="form-control" placeholder="Skill name" required />
+//         </div>
+
+//         <div v-for="(q, index) in questions" :key="index" class="mb-4 border p-3 rounded">
+//           <label class="form-label">Question {{ index + 1 }}</label>
+//           <input v-model="q.question" type="text" class="form-control mb-2" placeholder="Enter question" required />
+
+//           <div v-for="(option, optIndex) in q.options" :key="optIndex" class="input-group mb-2">
+//             <span class="input-group-text">Option {{ optIndex + 1 }}</span>
+//             <input v-model="q.options[optIndex]" type="text" class="form-control" placeholder="Option text" required />
+//           </div>
+
+//           <div class="form-check">
+//             <label class="form-check-label mb-2">Select correct answer:</label>
+//             <div v-for="(option, optIndex) in q.options" :key="'correct-'+optIndex" class="form-check">
+//               <input
+//                 class="form-check-input"
+//                 type="radio"
+//                 :name="'correct-answer-'+index"
+//                 :value="optIndex"
+//                 v-model.number="q.correct_answer"
+//                 required
+//               />
+//               <label class="form-check-label">Option {{ optIndex + 1 }}</label>
+//             </div>
+//           </div>
+
+//           <button type="button" class="btn btn-danger btn-sm mt-2" @click="removeQuestion(index)" v-if="questions.length > 1">
+//             Remove Question
+//           </button>
+//         </div>
+
+//         <button type="button" class="btn btn-secondary mb-3" @click="addQuestion">Add Question</button>
+//         <br />
+
+//         <button type="submit" class="btn btn-primary" :disabled="loading">
+//           {{ loading ? "Creating..." : "Create Quiz" }}
+//         </button>
+//       </form>
+//     </div>
+//   `
+// };
+
 import { createAcademicQuiz } from "/utils/api.js";
 
 export default {
@@ -7,11 +148,11 @@ export default {
       title: "",
       skill: "",
       questions: [
-        // Sample initial question structure
         {
           question: "",
-          options: ["", "", "", ""], // 4 options default
-          correct_answer: null // index of correct option (0-3)
+          options: ["", "", "", ""],
+          correct_answer: null,
+          hint: ""  // Optional hint for each question
         }
       ],
       loading: false,
@@ -24,60 +165,84 @@ export default {
       this.questions.push({
         question: "",
         options: ["", "", "", ""],
-        correct_answer: null
+        correct_answer: null,
+        hint: ""
       });
     },
     removeQuestion(index) {
-      this.questions.splice(index, 1);
+      if (this.questions.length > 1) {
+        this.questions.splice(index, 1);
+      }
+    },
+    validateQuiz() {
+      if (!this.title.trim() || !this.skill.trim()) {
+        this.error = "Quiz title and skill are required.";
+        return false;
+      }
+      if (this.questions.length === 0) {
+        this.error = "At least one question is required.";
+        return false;
+      }
+      for (const [i, q] of this.questions.entries()) {
+        if (!q.question.trim()) {
+          this.error = `Question ${i + 1} cannot be empty.`;
+          return false;
+        }
+        if (q.options.some(opt => !opt.trim())) {
+          this.error = `All options in question ${i + 1} must be filled.`;
+          return false;
+        }
+        if (q.correct_answer === null || q.correct_answer < 0 || q.correct_answer >= q.options.length) {
+          this.error = `Please select a valid correct answer for question ${i + 1}.`;
+          return false;
+        }
+      }
+      return true;
     },
     async submitQuiz() {
       this.message = null;
       this.error = null;
 
-      // Basic validation
-      if (!this.title || !this.skill || this.questions.length === 0) {
-        this.error = "Please fill in the quiz title, skill, and add at least one question.";
+      if (!this.validateQuiz()) {
         return;
-      }
-
-      for (const [i, q] of this.questions.entries()) {
-        if (!q.question || q.options.some(opt => !opt) || q.correct_answer === null) {
-          this.error = `Please complete all fields for question ${i + 1}`;
-          return;
-        }
       }
 
       this.loading = true;
       try {
         const token = localStorage.getItem("auth-token");
         const payload = {
-          title: this.title,
-          skill: this.skill,
-          createdBy: localStorage.getItem("user_id"), // store after login
+          title: this.title.trim(),
+          skill: this.skill.trim(),
+          createdBy: localStorage.getItem("user_id"),
           questions: this.questions.map(q => ({
-            question: q.question,
-            options: q.options,
-            correct_answer: q.correct_answer
+            question: q.question.trim(),
+            options: q.options.map(opt => opt.trim()),
+            correct_answer: q.correct_answer,
+            hint: q.hint.trim() || null
           }))
         };
 
         const res = await createAcademicQuiz(payload, token);
         this.message = res.message || "Quiz created successfully!";
-        this.title = "";
-        this.skill = "";
-        this.questions = [
-          {
-            question: "",
-            options: ["", "", "", ""],
-            correct_answer: null
-          }
-        ];
+        this.resetForm();
       } catch (err) {
         console.error("Error creating quiz:", err);
-        this.error = "Failed to create quiz.";
+        this.error = "Failed to create quiz. Please try again.";
       } finally {
         this.loading = false;
       }
+    },
+    resetForm() {
+      this.title = "";
+      this.skill = "";
+      this.questions = [
+        {
+          question: "",
+          options: ["", "", "", ""],
+          correct_answer: null,
+          hint: ""
+        }
+      ];
     }
   },
   template: `
@@ -85,59 +250,139 @@ export default {
       <h2 class="fw-bold mb-3">Create Academic Quiz</h2>
       <p>Fill in the details below to create a new quiz.</p>
 
-      <div v-if="message" class="alert alert-success">{{ message }}</div>
-      <div v-if="error" class="alert alert-danger">{{ error }}</div>
+      <div v-if="message" class="alert alert-success" role="alert">{{ message }}</div>
+      <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
 
-      <form @submit.prevent="submitQuiz">
+      <form @submit.prevent="submitQuiz" novalidate>
         <div class="mb-3">
-          <label class="form-label">Title</label>
-          <input v-model="title" type="text" class="form-control" placeholder="Quiz title" required />
+          <label for="quizTitle" class="form-label fw-semibold">Title</label>
+          <input
+            id="quizTitle"
+            v-model="title"
+            type="text"
+            class="form-control"
+            placeholder="Quiz title"
+            required
+            autocomplete="off"
+          />
         </div>
 
-        <div class="mb-3">
-          <label class="form-label">Skill</label>
-          <input v-model="skill" type="text" class="form-control" placeholder="Skill name" required />
+        <div class="mb-4">
+          <label for="quizSkill" class="form-label fw-semibold">Skill</label>
+          <input
+            id="quizSkill"
+            v-model="skill"
+            type="text"
+            class="form-control"
+            placeholder="Skill name"
+            required
+            autocomplete="off"
+          />
         </div>
 
-        <div v-for="(q, index) in questions" :key="index" class="mb-4 border p-3 rounded">
-          <label class="form-label">Question {{ index + 1 }}</label>
-          <input v-model="q.question" type="text" class="form-control mb-2" placeholder="Enter question" required />
+        <div
+          v-for="(q, index) in questions"
+          :key="index"
+          class="mb-4 border rounded p-3 shadow-sm"
+          :aria-labelledby="'question-label-' + index"
+        >
+          <label :id="'question-label-' + index" class="form-label fw-semibold">
+            Question {{ index + 1 }}
+          </label>
+          <input
+            v-model="q.question"
+            type="text"
+            class="form-control mb-3"
+            placeholder="Enter question"
+            required
+            autocomplete="off"
+          />
 
           <div v-for="(option, optIndex) in q.options" :key="optIndex" class="input-group mb-2">
-            <span class="input-group-text">Option {{ optIndex + 1 }}</span>
-            <input v-model="q.options[optIndex]" type="text" class="form-control" placeholder="Option text" required />
+            <span class="input-group-text" :id="'option-label-' + index + '-' + optIndex">
+              Option {{ optIndex + 1 }}
+            </span>
+            <input
+              v-model="q.options[optIndex]"
+              type="text"
+              class="form-control"
+              :aria-labelledby="'option-label-' + index + '-' + optIndex"
+              placeholder="Option text"
+              required
+              autocomplete="off"
+            />
           </div>
 
-          <div class="form-check">
-            <label class="form-check-label mb-2">Select correct answer:</label>
-            <div v-for="(option, optIndex) in q.options" :key="'correct-'+optIndex" class="form-check">
+          <fieldset class="mb-3">
+            <legend class="form-label fw-semibold mb-2">Select correct answer</legend>
+            <div
+              v-for="(option, optIndex) in q.options"
+              :key="'correct-' + optIndex"
+              class="form-check"
+            >
               <input
                 class="form-check-input"
                 type="radio"
-                :name="'correct-answer-'+index"
+                :name="'correct-answer-' + index"
+                :id="'correct-answer-' + index + '-' + optIndex"
                 :value="optIndex"
                 v-model.number="q.correct_answer"
                 required
               />
-              <label class="form-check-label">Option {{ optIndex + 1 }}</label>
+              <label
+                class="form-check-label"
+                :for="'correct-answer-' + index + '-' + optIndex"
+              >
+                Option {{ optIndex + 1 }}
+              </label>
             </div>
+          </fieldset>
+
+          <div class="mb-3">
+            <label :for="'hint-' + index" class="form-label fw-semibold">Hint (optional)</label>
+            <input
+              :id="'hint-' + index"
+              v-model="q.hint"
+              type="text"
+              class="form-control"
+              placeholder="Enter a hint for this question"
+              autocomplete="off"
+            />
           </div>
 
-          <button type="button" class="btn btn-danger btn-sm mt-2" @click="removeQuestion(index)" v-if="questions.length > 1">
+          <button
+            type="button"
+            class="btn btn-danger btn-sm"
+            @click="removeQuestion(index)"
+            :disabled="questions.length === 1"
+          >
             Remove Question
           </button>
         </div>
 
-        <button type="button" class="btn btn-secondary mb-3" @click="addQuestion">Add Question</button>
-        <br />
+        <button
+          type="button"
+          class="btn btn-secondary mb-3"
+          @click="addQuestion"
+          :disabled="loading"
+        >
+          Add Question
+        </button>
 
-        <button type="submit" class="btn btn-primary" :disabled="loading">
+        <button
+          type="submit"
+          class="btn btn-primary"
+          :disabled="loading"
+          aria-live="polite"
+          aria-busy="loading"
+        >
           {{ loading ? "Creating..." : "Create Quiz" }}
         </button>
       </form>
     </div>
   `
 };
+
 
 // import { 
 //   fetchAcademicQuizzes, 

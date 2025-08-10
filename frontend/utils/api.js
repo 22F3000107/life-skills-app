@@ -158,8 +158,9 @@ export async function getQuizById(quizId, token) {
 }
 
 export async function submitQuiz(quizId, answers, token) {
-  return await postData(`/quiz/${quizId}`, { answers }, token);
+  return await postData(`/quiz/${quizId}/submit`, { answers }, token);
 }
+
 
 export async function getUserSummary(token) {
   return await getData("/user/summary", token);
@@ -354,7 +355,9 @@ export async function saveReminderSettings(data, token) {
   return await postData("/admin/reminder-settings", data, token);
 }
 
-
+export async function changeAdminPassword(payload, token) {
+  return await putData("/admin/change-password", payload, token);
+}
 
 
 

@@ -8,7 +8,7 @@ from .userapi import RegisterAPI, UserProfile,TodayHabits, SubmitHabits, WeeklyG
 from .userapi import QuizDetailAPI,QuizListAPI, QuizSubmitAPI, UserSkillSummaryAPI
 from .adminapi import AdminUsersAPI, AdminBlockUserAPI, AdminUnblockUserAPI, AdminDeleteUserAPI, AdminStoriesAPI, AdminUpdateStoryAPI, AdminDeleteStoryAPI,AdminGetStoryAPI
 from .adminapi import AdminQuizzesAPI, AdminCreateQuizAPI, AdminUpdateQuizAPI, AdminDeleteQuizAPI,AdminEditStoryAPI
-from .adminapi import AdminFlaggedContentAPI,AdminUnflagContentAPI,AdminDeleteFlaggedContentAPI
+from .adminapi import AdminFlaggedContentAPI,AdminUnflagContentAPI,AdminDeleteFlaggedContentAPI, ChangePasswordAdminAPI
 from .userapi import ChangePasswordAPI
 from .adminapi import AdminStatsAPI,AdminStatsOverviewAPI,AdminQuizAttemptsAPI, AdminSkillEngagementAPI
 api = Api(prefix='/api')
@@ -63,6 +63,7 @@ api.add_resource(AdminStatsAPI, '/admin/stats')
 api.add_resource(AdminStatsOverviewAPI, '/admin/stats-overview')
 api.add_resource(AdminQuizAttemptsAPI, '/admin/quiz-attempts')
 api.add_resource(AdminSkillEngagementAPI, '/admin/skill-engagement')
+api.add_resource(ChangePasswordAdminAPI, '/admin/change-password')
 
 api.add_resource(AcademicCreateStoryAPI, "/academic/story")
 api.add_resource(AcademicStoryListAPI, "/academic/stories")

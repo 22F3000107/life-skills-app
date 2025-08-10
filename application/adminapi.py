@@ -601,4 +601,31 @@ class AdminSkillEngagementAPI(Resource):
         counts = [row[1] for row in results]
 
         return {"skills": skills, "counts": counts}, 200
-    
+
+
+class ChangePasswordAdminAPI(Resource):
+    @jwt_required()
+    def put(self):
+        admin_id = get_jwt_identity()
+        data = request.get_json()
+
+        old_password = data.get("old_password")
+        new_password = data.get("new_password")
+
+        if not old_password or not new_password:
+            return {"error": "Old and new passwords are required"}, 400
+
+        admin = User.query.get(admin_id)
+        if not admin:
+            return {"error": "Admin not found"}, 404
+
+        # Optionally check if the user is actually an admin
+        if not any(role.name == "admin" for role in admin.roles):
+            return {"error": "Not authorized"}, 403
+
+        if not admin.check_password(old_password):
+            return {"error": "Old password does not match"}, 400
+
+        admin.set_password(new_password)
+        db.session.commit()
+        return {"message": "Admin password updated successfully"}, 200

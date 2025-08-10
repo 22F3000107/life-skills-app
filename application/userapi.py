@@ -1,7 +1,7 @@
 from flask import jsonify, current_app
 from flask_restful import Resource, request
 from sqlalchemy.exc import SQLAlchemyError
-from .models import db, User,roles_users,Acadteam,Habit,Goal,Rewards,Scores,Quiz, QuizQuestion
+from .models import db, User,roles_users,Acadteam,Habit,Goal,Rewards,Scores,Quiz, QuizQuestion, QuizAttempt
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash
 import os
@@ -10,7 +10,7 @@ from sqlalchemy import func, select
 from application.sec import datastore
 import uuid
 from datetime import datetime, date
-import json
+import json, pickle
 from sqlalchemy import text
 class RegisterAPI(Resource):
     def post(self):
@@ -46,24 +46,43 @@ class RegisterAPI(Resource):
             "user_id": user.id,
             "email": user.email
         }, 201
-
-
+    
 class UserProfile(Resource):
     @jwt_required()
     def get(self):
-        current_user_id = get_jwt_identity()
-        user = User.query.get(current_user_id)
-        if not user:
-            return {"message": "User not found"}, 404
+        try:
+            current_user_id = get_jwt_identity()
+            user = User.query.get(current_user_id)
+            if not user:
+                return {"message": "User not found"}, 404
 
-        rewards = user.rewards
-        habits_today = Habit.query.filter_by(user_id=user.id, date=date.today()).all()
-        user_profile = {
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "email": user.email
-        }
-        return user_profile, 200
+            # Compose full name
+            name = f"{user.first_name} {user.last_name}"
+
+            # Use age directly from User model
+            age = user.age
+
+            # Get rewards info (coins, streak)
+            rewards = user.rewards
+            coins = rewards.coins if rewards else 0
+            streak = rewards.streak if rewards else 0
+
+            # Count habits completed today for this user
+            habits_completed_today = Habit.query.filter_by(user_id=user.id, completed=True, date=date.today()).count()
+
+            user_profile = {
+                "name": name,
+                "age": age,
+                "coins": coins,
+                "streak": streak,
+                "habitsCompletedToday": habits_completed_today,
+                "email": user.email
+            }
+            return user_profile, 200
+        except Exception as e:
+            print(f"Error in UserProfile.get: {e}")
+            return {"message": "Internal Server Error"}, 500
+
 
 
 class TodayHabits(Resource):
@@ -202,7 +221,6 @@ class QuizListAPI(Resource):
             })
         return {"quizzes": quiz_list}, 200
 
-
 class QuizDetailAPI(Resource):
     @jwt_required()
     def get(self, quiz_id):
@@ -210,21 +228,19 @@ class QuizDetailAPI(Resource):
         if not quiz:
             return {"error": "Quiz not found"}, 404
 
-        rows = db.session.execute(
-            text("SELECT id, question, options FROM quiz_question WHERE quiz_id = :quiz_id"),
-            {"quiz_id": quiz_id}
-        ).mappings().all()
+        questions = QuizQuestion.query.filter_by(quiz_id=quiz_id).all()
 
         questions_data = []
-        for row in rows:
-            try:
-                opts = json.loads(row["options"])
-            except Exception:
-                opts = [row["options"]]
+        for question in questions:
+            options = question.options
+            hint = question.hint or ""
+
             questions_data.append({
-                "id": row["id"],
-                "question": row["question"],
-                "options": opts
+                "id": question.id,
+                "question": question.question,
+                "options": options,
+                "hint": hint,
+                "correct_answer": question.correct_answer  # <-- add this line
             })
 
         return {
@@ -232,7 +248,6 @@ class QuizDetailAPI(Resource):
             "title": quiz.title,
             "questions": questions_data
         }, 200
-
 
 class QuizSubmitAPI(Resource):
     @jwt_required()
@@ -246,16 +261,23 @@ class QuizSubmitAPI(Resource):
 
         questions = quiz.questions
         max_score = len(questions)
-        score = 0
+        correct_count = 0
 
         for idx, question in enumerate(questions):
             if idx < len(answers) and answers[idx] == question.correct_answer:
-                score += 1
+                correct_count += 1
 
-        feedback = "Excellent!" if score == max_score else "Good job!" if score >= max_score // 2 else "Keep practicing!"
-        coins_awarded = score * 5
+        marks = correct_count * 10  # 10 marks per correct answer
+        feedback = (
+            "Excellent!" if correct_count == max_score else
+            "Good job!" if correct_count >= max_score // 2 else
+            "Keep practicing!"
+        )
+        coins_awarded = correct_count * 5
 
         user_id = get_jwt_identity()
+
+        # Update rewards
         rewards = Rewards.query.filter_by(user_id=user_id).first()
         if rewards:
             rewards.coins += coins_awarded
@@ -263,63 +285,109 @@ class QuizSubmitAPI(Resource):
             rewards = Rewards(user_id=user_id, coins=coins_awarded)
             db.session.add(rewards)
 
+        # Save quiz attempt with score only
+        attempt = QuizAttempt(
+            user_id=user_id,
+            quiz_id=quiz_id,
+            score=marks
+        )
+        db.session.add(attempt)
+
         db.session.commit()
 
         return {
-            "score": score,
-            "max_score": max_score,
+            "score": marks,
+            "max_score": max_score * 10,
             "feedback": feedback,
             "coins_awarded": coins_awarded
         }, 200
 
 
-    
-
 class UserSkillSummaryAPI(Resource):
     @jwt_required()
     def get(self):
         user_id = get_jwt_identity()
+
+        # Get rewards info
         rewards = Rewards.query.filter_by(user_id=user_id).first()
         coins = rewards.coins if rewards else 0
         streak = rewards.streak if rewards else 0
         habits_today = Habit.query.filter_by(user_id=user_id, completed=True).count()
-        # replace with actual skill data retrieval logic
-        skills = [
-            {
-                "name": "Healthy Habits",
-                "current": 85,
-                "previous": 70,
-                "feedback": "Improved from last quiz!"
-            },
-            {
-                "name": "Emotional Intelligence",
-                "current": 60,
-                "previous": 68,
-                "feedback": "Slight drop, let’s review again!"
-            }
-        ]
+
+        # Get all quiz attempts by user, join with quiz to get skill
+        attempts = (
+            db.session.query(QuizAttempt, Quiz.skill)
+            .join(Quiz, QuizAttempt.quiz_id == Quiz.id)
+            .filter(QuizAttempt.user_id == user_id)
+            .all()
+        )
+
+        # Aggregate attempts by skill
+        skill_scores = {}
+        for attempt, skill in attempts:
+            if skill not in skill_scores:
+                skill_scores[skill] = []
+            skill_scores[skill].append(attempt.score)
+
+        
+        skills_summary = []
+        for skill, scores in skill_scores.items():
+            mid = len(scores) // 2
+            previous_avg = sum(scores[:mid]) / max(mid, 1)
+            current_avg = sum(scores[mid:]) / max(len(scores) - mid, 1)
+            feedback = "Improved from last quiz!" if current_avg > previous_avg else \
+                       "Slight drop, let’s review again!" if current_avg < previous_avg else \
+                       "Same as before, keep practicing!"
+
+            skills_summary.append({
+                "name": skill,
+                "current": round(current_avg),
+                "previous": round(previous_avg),
+                "feedback": feedback
+            })
+
+        tests_taken = len(attempts)
+
+        # Overall percentage can be computed across all attempts
+        all_scores = [a.score for a, _ in attempts]
+        overall_current = round(sum(all_scores) / max(len(all_scores), 1)) if all_scores else 0
+        overall_previous = overall_current  # Simplification; adjust as needed
 
         return {
-            "skills": skills,
+            "skills": skills_summary,
             "overall": {
-                "current": 72,
-                "previous": 69
+                "current": overall_current,
+                "previous": overall_previous
             },
             "coins": coins,
-            "tests_taken": 5, 
+            "tests_taken": tests_taken,
             "current_streak": streak,
             "habits_completed_today": habits_today
         }, 200
+
 
 class ChangePasswordAPI(Resource):
     @jwt_required()
     def put(self):
         user_id = get_jwt_identity()
         data = request.get_json()
+
+        old_password = data.get("old_password")
         new_password = data.get("new_password")
+
+        if not old_password or not new_password:
+            return {"error": "Old and new passwords are required"}, 400
+
         user = User.query.get(user_id)
         if not user:
             return {"error": "User not found"}, 404
-        user.password = generate_password_hash(new_password)
+
+        # Verify old password
+        if not user.check_password(old_password):
+            return {"error": "Old password does not match"}, 400
+
+        # Update password securely
+        user.set_password(new_password)
         db.session.commit()
+
         return {"message": "Password updated successfully"}, 200

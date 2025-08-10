@@ -164,6 +164,7 @@ class QuizQuestion(db.Model):
     question = db.Column(db.String(255), nullable=False)
     options = db.Column(db.PickleType, nullable=False)  # Store list of options
     correct_answer = db.Column(db.Integer, nullable=False)  # Index of correct answer
+    hint = db.Column(db.String)
 
 class Story(db.Model):
     __tablename__ = 'story'
