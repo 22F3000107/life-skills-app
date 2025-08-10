@@ -37,7 +37,7 @@ export default {
           if (response.roles === "admin") {
             this.$router.push("/admin");
           } else if (response.roles === "academic") {
-            this.$router.push("/acad-dashboard");
+            this.$router.push("/acad/home");
           } else {
             this.$router.push("/");
           }

@@ -20,7 +20,7 @@ new Vue({
       }
       return this.userRole === "admin"
         ? "AdminNavbar"
-        : this.userRole === "acad"
+        : this.userRole === "academic"
         ? "Newbar"
         : "UserNavbar";
     },

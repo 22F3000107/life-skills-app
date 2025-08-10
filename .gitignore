@@ -1,4 +1,9 @@
 __pycache__/
 venv/
-frontend/
+frontend/node_modules/
+dist/
+build/
+*.log
+*.env
+*.DS_Store
 instance/

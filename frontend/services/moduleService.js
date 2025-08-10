@@ -1,5 +1,5 @@
 const MOCK_API_ENABLED = true;
-const BASE_URL = "http://localhost:5001";
+const BASE_URL = "http://localhost:5000/api";
 
 export async function fetchModules() {
   if (MOCK_API_ENABLED) {

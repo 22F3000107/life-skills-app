@@ -247,6 +247,18 @@ export async function updateStoryStatus(storyId, status, token) {
   }).then(res => res.json());
 }
 
+export async function updateStoryStatusWithReason(storyId, status, reason, token) {
+  return await fetch(`${BASE_URL}/admin/story/${storyId}/status`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ status, flag_reason: reason })
+  }).then(res => res.json());
+}
+
+
 export async function deleteStory(storyId, token) {
   return await fetch(`${BASE_URL}/admin/story/${storyId}`, {
     method: "DELETE",
@@ -260,17 +272,22 @@ export async function getAdminQuizzes(token) {
   return await getData("/admin/quizzes", token);
 }
 
-export async function updateQuiz(id, payload) {
+// export async function updateQuiz(id, payload) {
+//   const token = localStorage.getItem("auth-token");
+//   return await fetch(`${BASE_URL}/admin/update-quiz/${id}`, {
+//     method: 'PUT',
+//     headers: {
+//       "Content-Type": "application/json",
+//       "Authorization": `Bearer ${token}`
+//     },
+//     body: JSON.stringify(payload)
+//   }).then(res => res.json());
+// }
+export async function updateQuiz(quizId, payload) {
   const token = localStorage.getItem("auth-token");
-  return await fetch(`${BASE_URL}/admin/update-quiz/${id}`, {
-    method: 'PUT',
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`
-    },
-    body: JSON.stringify(payload)
-  }).then(res => res.json());
+  return await putData(`/admin/update-quiz/${quizId}`, payload, token);
 }
+
 
 export async function deleteQuizById(id) {
   const token = localStorage.getItem("auth-token");
@@ -357,6 +374,36 @@ export async function updateModule(id, payload, token) {
 export async function deleteModule(id, token) {
   return await fetch(`${BASE_URL}/admin/modules/${id}`, {
     method: 'DELETE',
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  }).then(res => res.json());
+}
+
+// ACADEMIC APIs
+
+
+export async function createAcademicStory(payload) {
+  const token = localStorage.getItem("auth-token");
+  return await postData("/academic/story", payload, token);
+}
+
+export async function createAcademicQuiz(payload) {
+  const token = localStorage.getItem("auth-token");
+  return await postData("/academic/quiz", payload, token);
+}
+
+export async function getAcademicQuiz(quizId, token) {
+  return await getData(`/academic/quiz/${quizId}`, token);
+}
+
+export async function updateAcademicQuiz(quizId, payload, token) {
+  return await putData(`/academic/quiz/${quizId}`, payload, token);
+}
+
+export async function deleteAcademicQuiz(quizId, token) {
+  return await fetch(`${BASE_URL}/academic/quiz/${quizId}`, {
+    method: "DELETE",
     headers: {
       "Authorization": `Bearer ${token}`
     }

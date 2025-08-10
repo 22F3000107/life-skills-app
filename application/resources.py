@@ -3,7 +3,7 @@ from .models import User,db
 from flask_security import roles_required,auth_required, current_user
 from .instances import cache
 from .adminapi import LoginAPI, ModuleAPI, ModuleResource
-from .acadapi import AcademicRegisterAPI, ConceptAPI, ConceptResource, QuestionAPI, QuestionResource
+from .acadapi import AcademicRegisterAPI, ConceptAPI, ConceptResource, QuestionAPI, QuestionResource, AcademicCreateStoryAPI, AcademicStoryListAPI, AcademicCreateQuizAPI, AcademicQuizzesAPI, AcademicQuizDetailAPI, AcademicUpdateQuizAPI, AcademicDeleteQuizAPI
 from .userapi import RegisterAPI, UserProfile,TodayHabits, SubmitHabits, WeeklyGoals, AddGoal, UpdateGoalStatus
 from .userapi import QuizDetailAPI,QuizListAPI, QuizSubmitAPI, UserSkillSummaryAPI
 from .adminapi import AdminUsersAPI, AdminBlockUserAPI, AdminUnblockUserAPI, AdminDeleteUserAPI, AdminStoriesAPI, AdminUpdateStoryAPI, AdminDeleteStoryAPI,AdminGetStoryAPI
@@ -40,12 +40,12 @@ api.add_resource(AdminDeleteStoryAPI, '/admin/story/<int:story_id>')
 
 api.add_resource(AdminQuizzesAPI, '/admin/quizzes')
 api.add_resource(AdminCreateQuizAPI, '/admin/quiz')
-api.add_resource(AdminUpdateQuizAPI, '/admin/quiz/<int:quiz_id>')
-api.add_resource(AdminDeleteQuizAPI, '/admin/quiz/<int:quiz_id>')
+api.add_resource(AdminUpdateQuizAPI, '/admin/update-quiz/<int:quiz_id>')
+api.add_resource(AdminDeleteQuizAPI, '/admin/delete-quiz/<int:quiz_id>')
 
 api.add_resource(AdminFlaggedContentAPI, '/admin/flagged-content')
-api.add_resource(AdminUnflagContentAPI, '/admin/flagged-content/<string:content_type>/<int:content_id>/unflag')
-api.add_resource(AdminDeleteFlaggedContentAPI, '/admin/flagged-content/<string:content_type>/<int:content_id>')
+api.add_resource(AdminUnflagContentAPI, '/admin/unflag/<string:content_type>/<int:content_id>')
+api.add_resource(AdminDeleteFlaggedContentAPI, '/admin/delete-flagged/<string:content_type>/<int:content_id>')
 
 #Admin access
 api.add_resource(ModuleAPI, "/module")
@@ -64,4 +64,12 @@ api.add_resource(AdminStatsOverviewAPI, '/admin/stats-overview')
 api.add_resource(AdminQuizAttemptsAPI, '/admin/quiz-attempts')
 api.add_resource(AdminSkillEngagementAPI, '/admin/skill-engagement')
 
+api.add_resource(AcademicCreateStoryAPI, "/academic/story")
+api.add_resource(AcademicStoryListAPI, "/academic/stories")
+
+api.add_resource(AcademicCreateQuizAPI, "/academic/quiz")
+api.add_resource(AcademicQuizzesAPI, "/academic/quizzes")
+api.add_resource(AcademicQuizDetailAPI, "/academic/quiz/<int:quiz_id>")
+api.add_resource(AcademicUpdateQuizAPI, "/academic/quiz/<int:quiz_id>")
+api.add_resource(AcademicDeleteQuizAPI, "/academic/quiz/<int:quiz_id>")
 
