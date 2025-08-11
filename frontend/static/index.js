@@ -5,12 +5,12 @@ import PublicNavbar from "../components/common/PublicNavbar.js";
 import NewBar from "../components/acad/NewBar.js";
 
 new Vue({
-  el: '#app',
+  el: "#app",
   router,
   data() {
     return {
-      userRole: localStorage.getItem('role') || null,
-      publicPages: ['Login', 'Register']
+      userRole: localStorage.getItem("role") || null,
+      publicPages: ["Login", "Register"],
     };
   },
   computed: {

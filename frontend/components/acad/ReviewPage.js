@@ -3,6 +3,7 @@ import {
   fetchAllQuestions,
   updateQuestionStatus,
 } from "../../services/questionService.js";
+import { fetchModules } from "../../services/moduleService.js";
 
 export default {
   name: "ReviewPage",
@@ -20,12 +21,7 @@ export default {
       selectedStatus: "Pending",
 
       questionTypes: ["MCQ", "MSQ", "True/False", "Matching"],
-      moduleOptions: [
-        "Time Management",
-        "Stress Control",
-        "Communication",
-        "Leadership",
-      ],
+      moduleOptions: [],
       ageGroups: ["6-8", "9-11", "12-14", "15-18"],
       statusOptions: [
         {
@@ -154,6 +150,7 @@ export default {
 
   async mounted() {
     await this.loadQuestions();
+    this.moduleOptions = await fetchModules();
   },
 
   methods: {
@@ -184,7 +181,15 @@ export default {
       this.stats = this.questions.reduce(
         (acc, q) => {
           acc.total++;
-          acc[q.status] = (acc[q.status] || 0) + 1;
+
+          if (q.is_approved === true) {
+            acc.approved++;
+          } else if (q.is_approved === false) {
+            acc.rejected++;
+          } else {
+            acc.pending++;
+          }
+
           return acc;
         },
         {
@@ -202,8 +207,8 @@ export default {
           this.selectedStatus === "all" || q.status === this.selectedStatus;
         const matchesSearch =
           !this.searchQuery ||
-          q.qcode.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          q.question_text
+          q.id.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          q.question_statement
             .toLowerCase()
             .includes(this.searchQuery.toLowerCase());
         const matchesModule =
@@ -261,7 +266,7 @@ export default {
 
       try {
         this.isSaving = true;
-        await updateQuestionStatus(questionToApprove.qcode, {
+        await updateQuestionStatus(questionToApprove.id, {
           status: "Approved",
           review_comment: this.reviewComment,
           reviewer: "Current User", // Replace with actual user
@@ -296,7 +301,7 @@ export default {
 
       try {
         this.isSaving = true;
-        await updateQuestionStatus(questionToReject.qcode, {
+        await updateQuestionStatus(questionToReject.id, {
           status: "Rejected",
           review_comment: this.reviewComment,
           reviewer: "Current User", // Replace with actual user
@@ -328,8 +333,8 @@ export default {
 
       try {
         this.isSaving = true;
-        const promises = this.selectedQuestions.map((qcode) =>
-          updateQuestionStatus(qcode, {
+        const promises = this.selectedQuestions.map((id) =>
+          updateQuestionStatus(id, {
             status: "Approved",
             review_comment: this.bulkComment,
             reviewer: "Current User",
@@ -340,8 +345,8 @@ export default {
         await Promise.all(promises);
 
         // Update local data
-        this.selectedQuestions.forEach((qcode) => {
-          const question = this.questions.find((q) => q.qcode === qcode);
+        this.selectedQuestions.forEach((id) => {
+          const question = this.questions.find((q) => q.id === id);
           if (question) {
             question.status = "Approved";
             question.review_comment = this.bulkComment;
@@ -370,8 +375,8 @@ export default {
 
       try {
         this.isSaving = true;
-        const promises = this.selectedQuestions.map((qcode) =>
-          updateQuestionStatus(qcode, {
+        const promises = this.selectedQuestions.map((id) =>
+          updateQuestionStatus(id, {
             status: "Rejected",
             review_comment: this.bulkComment,
             reviewer: "Current User",
@@ -382,8 +387,8 @@ export default {
         await Promise.all(promises);
 
         // Update local data
-        this.selectedQuestions.forEach((qcode) => {
-          const question = this.questions.find((q) => q.qcode === qcode);
+        this.selectedQuestions.forEach((id) => {
+          const question = this.questions.find((q) => q.id === id);
           if (question) {
             question.status = "Rejected";
             question.review_comment = this.bulkComment;
@@ -404,17 +409,17 @@ export default {
       }
     },
 
-    toggleQuestionSelection(qcode) {
-      const index = this.selectedQuestions.indexOf(qcode);
+    toggleQuestionSelection(id) {
+      const index = this.selectedQuestions.indexOf(id);
       if (index > -1) {
         this.selectedQuestions.splice(index, 1);
       } else {
-        this.selectedQuestions.push(qcode);
+        this.selectedQuestions.push(id);
       }
     },
 
     selectAllFiltered() {
-      this.selectedQuestions = this.filteredQuestions.map((q) => q.qcode);
+      this.selectedQuestions = this.filteredQuestions.map((q) => q.id);
     },
 
     clearSelection() {
@@ -639,7 +644,7 @@ export default {
                       style="border-radius: 12px;"
                     >
                       <option value="">All Modules</option>
-                      <option v-for="module in moduleOptions" :key="module" :value="module">{{ module }}</option>
+                      <option v-for="module in moduleOptions" :key="module.id" :value="module.id">{{ module.name }}</option>
                     </select>
                   </div>
                   
@@ -717,14 +722,14 @@ export default {
               <div class="card-header bg-transparent border-0 p-4">
                 <div class="d-flex justify-content-between align-items-center">
                   <div>
-                    <h5 class="mb-1 fw-bold">{{ currentQuestion.qcode }}</h5>
+                    <h5 class="mb-1 fw-bold">{{ currentQuestion.id }}</h5>
                     <div class="d-flex align-items-center gap-3">
                       <span class="badge" :class="getStatusBadgeClass(currentQuestion.status)">
                         {{ currentQuestion.status }}
                       </span>
                       <span class="badge bg-info bg-opacity-20 text-black">
-                        <i :class="getTypeIcon(currentQuestion.question_type)" class="me-1"></i>
-                        {{ currentQuestion.question_type }}
+                        <i :class="getTypeIcon(currentQuestion.type)" class="me-1"></i>
+                        {{ currentQuestion.type }}
                       </span>
                       <span class="badge bg-secondary bg-opacity-20 text-white">
                         {{ currentQuestion.module_name }}
@@ -745,7 +750,7 @@ export default {
                 <div class="mb-4">
                   <h6 class="text-muted mb-3">Question</h6>
                   <div class="bg-light p-4 rounded-3">
-                    <p class="mb-0 fs-6">{{ currentQuestion.question_text }}</p>
+                    <p class="mb-0 fs-6">{{ currentQuestion.question_statement }}</p>
                   </div>
                 </div>
 
@@ -770,12 +775,19 @@ export default {
                 <!-- Answer Options -->
                 <div v-if="showAnswers" class="mb-4">
                   <h6 class="text-muted mb-3">Answer Options</h6>
-                  
+                                    
                   <!-- MCQ/MSQ Options -->
-                  <div v-if="currentQuestion.question_type === 'MCQ' || currentQuestion.question_type === 'MSQ'">
+                  <div v-if="currentQuestion.type === 'MCQ' || currentQuestion.type === 'MSQ'">
                     <div class="row g-3">
-                      <div v-for="(option, index) in currentQuestion.options" :key="index" class="col-md-6">
-                        <div class="option-card p-3 rounded-3" :class="{ 'border-success bg-success bg-opacity-10': option.correct }">
+                      <div 
+                        v-for="(option, index) in currentQuestion.answers" 
+                        :key="index" 
+                        class="col-md-6"
+                      >
+                        <div 
+                          class="option-card p-3 rounded-3"
+                          :class="{ 'border-success bg-success bg-opacity-10': option.correct }"
+                        >
                           <div class="d-flex align-items-center">
                             <input 
                               type="checkbox" 
@@ -976,20 +988,20 @@ export default {
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-for="(question, index) in filteredQuestions" :key="question.qcode">
+                      <tr v-for="(question, index) in filteredQuestions" :key="question.id">
                         <td class="px-4 py-3">
                           <input 
                             type="checkbox" 
                             class="form-check-input"
-                            :checked="selectedQuestions.includes(question.qcode)"
-                            @change="toggleQuestionSelection(question.qcode)"
+                            :checked="selectedQuestions.includes(question.id)"
+                            @change="toggleQuestionSelection(question.id)"
                           />
                         </td>
                         <td class="px-4 py-3">
                           <div class="d-flex align-items-start gap-3">
-                            <span class="badge bg-primary bg-opacity-10 text-primary px-2 py-1">{{ question.qcode }}</span>
+                            <span class="badge bg-primary bg-opacity-10 text-primary px-2 py-1">{{ question.id }}</span>
                             <div class="flex-grow-1">
-                              <div class="fw-medium mb-1">{{ question.question_text.substring(0, 100) }}{{ question.question_text.length > 100 ? '...' : '' }}</div>
+                              <div class="fw-medium mb-1">{{ question.question_statement.substring(0, 100) }}{{ question.question_statement.length > 100 ? '...' : '' }}</div>
                               <div v-if="question.review_comment" class="text-mute
 
 d small">

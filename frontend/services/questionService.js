@@ -1,5 +1,5 @@
-const MOCK_API_ENABLED = true;
-const BASE_URL = "http://localhost:5000/api";
+const MOCK_API_ENABLED = false;
+const BASE_URL = "http://127.0.0.1:5000";
 
 // 1. Fetch All Questions
 export async function fetchAllQuestions() {
@@ -8,23 +8,36 @@ export async function fetchAllQuestions() {
       res.json()
     );
   } else {
-    const res = await fetch(`${BASE_URL}/api/questions`);
+    const res = await fetch(`${BASE_URL}/api/question`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
+      },
+    });
     if (!res.ok) throw new Error("Failed to fetch questions");
     return res.json();
   }
 }
 
-// 2. Fetch a Single Question by qcode
-export async function fetchQuestionById(qcode) {
+
+// 2. Fetch a Single Question by id
+export async function fetchQuestionById(id) {
   if (MOCK_API_ENABLED) {
     const all = await fetch("/frontend/public/mock-data/questions.json").then(
       (res) => res.json()
     );
-    const found = all.find((q) => q.qcode === qcode);
+    const found = all.find((q) => q.id === id);
     if (!found) throw new Error("Mock question not found");
     return found;
   } else {
-    const res = await fetch(`${BASE_URL}/api/questions/${qcode}`);
+    const res = await fetch(`${BASE_URL}/api/question/${id}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
+      },
+    });
     if (!res.ok) throw new Error("Question not found");
     return res.json();
   }
@@ -53,9 +66,12 @@ export async function createQuestion(data) {
       data,
     };
   } else {
-    const res = await fetch(`${BASE_URL}/api/questions`, {
+    const res = await fetch(`${BASE_URL}/api/question`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
+      },
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error("Failed to create question");
@@ -63,14 +79,18 @@ export async function createQuestion(data) {
   }
 }
 
-// 4. Archive a Question by qcode
-export async function archiveQuestion(qcode) {
+// 4. Archive a Question by id
+export async function archiveQuestion(id) {
   if (MOCK_API_ENABLED) {
-    console.log(`Mock archive for question ${qcode}`);
-    return { message: `Mock question ${qcode} archived` };
+    console.log(`Mock archive for question ${id}`);
+    return { message: `Mock question ${id} archived` };
   } else {
-    const res = await fetch(`${BASE_URL}/api/questions/${qcode}/archive`, {
+    const res = await fetch(`${BASE_URL}/api/question/${id}`, {
       method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
+      },
     });
     if (!res.ok) throw new Error("Failed to archive question");
     return res.json();
@@ -87,20 +107,30 @@ export async function fetchQuestionsByModule(mcode) {
     const allQuestions = await res.json();
     return allQuestions.filter((q) => q.mcode === mcode);
   } else {
-    const res = await fetch(`${BASE_URL}/api/module/${mcode}/questions`);
+    const res = await fetch(`${BASE_URL}/api/module/${mcode}/questions`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
+      },
+    });
     if (!res.ok) throw new Error("Failed to fetch questions");
     return res.json();
   }
 }
 
-// 6. edit a Question by qcode
-export async function updateQuestion(qcode, data) {
+// 6. edit a Question by id
+export async function updateQuestion(id, data) {
   if (MOCK_API_ENABLED) {
-    console.log(`Mock edit for question ${qcode}`);
-    return { message: `Mock question ${qcode} editted` };
+    console.log(`Mock edit for question ${id}`);
+    return { message: `Mock question ${id} editted` };
   } else {
-    const res = await fetch(`${BASE_URL}/api/questions/${qcode}/edit`, {
-      method: "PATCH",
+    const res = await fetch(`${BASE_URL}/api/question/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
+      },
     });
     if (!res.ok) throw new Error("Failed to archive question");
     return res.json();
@@ -108,20 +138,20 @@ export async function updateQuestion(qcode, data) {
 }
 
 // 7. Update Question Status
-export async function updateQuestionStatus(qcode, statusData) {
+export async function updateQuestionStatus(id, statusData) {
   if (MOCK_API_ENABLED) {
-    console.log(`Mock status update for question ${qcode}:`, statusData);
+    console.log(`Mock status update for question ${id}:`, statusData);
     await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate delay
     return {
-      message: `Question ${qcode} status updated to ${statusData.status}`,
-      qcode: qcode,
+      message: `Question ${id} status updated to ${statusData.status}`,
+      id: id,
       status: statusData.status,
       review_comment: statusData.review_comment,
       reviewer: statusData.reviewer,
       review_date: statusData.review_date,
     };
   } else {
-    const res = await fetch(`${BASE_URL}/api/questions/${qcode}/status`, {
+    const res = await fetch(`${BASE_URL}/api/question/${id}/`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(statusData),
@@ -133,39 +163,44 @@ export async function updateQuestionStatus(qcode, statusData) {
 }
 
 // Restore an archived question
-export async function restoreQuestion(qcode, restoreData) {
+export async function restoreQuestion(id, restoreData) {
   if (MOCK_API_ENABLED) {
-    console.log(`Mock restore for question ${qcode}:`, restoreData);
+    console.log(`Mock restore for question ${id}:`, restoreData);
     await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate delay
     return {
-      message: `Question ${qcode} restored successfully`,
-      qcode: qcode,
+      message: `Question ${id} restored successfully`,
+      id: id,
       status: "Draft",
       restored_by: restoreData.restored_by,
       restored_date: restoreData.restored_date,
       restore_comment: restoreData.restore_comment,
     };
   } else {
-    const res = await fetch(`${BASE_URL}/api/questions/${qcode}/restore`, {
+    const res = await fetch(`${BASE_URL}/api/question/${id}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(restoreData),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
+      },
     });
-
-    if (!res.ok) throw new Error("Failed to restore question");
+    if (!res.ok) throw new Error("Failed to unarchive question");
     return res.json();
   }
 }
 
 // Permanently delete a question
-export async function deleteQuestion(qcode) {
+export async function deleteQuestion(id) {
   if (MOCK_API_ENABLED) {
-    console.log(`Mock permanent delete for question ${qcode}`);
+    console.log(`Mock permanent delete for question ${id}`);
     await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate delay
-    return { message: `Question ${qcode} permanently deleted` };
+    return { message: `Question ${id} permanently deleted` };
   } else {
-    const res = await fetch(`${BASE_URL}/api/questions/${qcode}`, {
+    const res = await fetch(`${BASE_URL}/api/question/${id}`, {
       method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
+      },
     });
     if (!res.ok) throw new Error("Failed to delete question");
     return res.json();
@@ -188,7 +223,7 @@ export async function getArchiveStatistics() {
       },
     };
   } else {
-    const res = await fetch(`${BASE_URL}/api/questions/archive/statistics`);
+    const res = await fetch(`${BASE_URL}/api/question/archive/statistics`);
     if (!res.ok) throw new Error("Failed to fetch archive statistics");
     return res.json();
   }

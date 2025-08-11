@@ -15,6 +15,7 @@ from application.instances import cache
 from flask_security import hash_password
 from werkzeug.security import generate_password_hash
 import uuid
+from flask_cors import CORS
 
 def create_app():
     app = Flask(__name__, static_folder="frontend", static_url_path='') 
@@ -22,6 +23,7 @@ def create_app():
     app.config.from_object(DevelopmentConfig)
     db.init_app(app)
     api.init_app(app)
+    CORS(app, resources={r"/api/*": {"origins": "http://localhost:5500"}}, supports_credentials=True)
     # Initialize JWT after app configuration
     jwt = JWTManager(app)
     # excel.init_excel(app)

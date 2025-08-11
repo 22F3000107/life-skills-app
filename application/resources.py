@@ -3,7 +3,22 @@ from .models import User,db
 from flask_security import roles_required,auth_required, current_user
 from .instances import cache
 from .adminapi import LoginAPI, ModuleAPI, ModuleResource
-from .acadapi import AcademicRegisterAPI, ConceptAPI, ConceptResource, QuestionAPI, QuestionResource, AcademicCreateStoryAPI, AcademicStoryListAPI, AcademicCreateQuizAPI, AcademicQuizzesAPI, AcademicQuizDetailAPI, AcademicUpdateQuizAPI, AcademicDeleteQuizAPI
+from .acadapi import (
+    AcademicRegisterAPI,
+    ConceptAPI,
+    ConceptResource,
+    QuestionAPI,
+    QuestionResource,
+    QuestionsByModuleAPI,
+    AcademicCreateStoryAPI,
+    AcademicStoryListAPI,
+    AcademicCreateQuizAPI,
+    AcademicQuizzesAPI,
+    AcademicQuizDetailAPI,
+    AcademicUpdateQuizAPI,
+    AcademicDeleteQuizAPI
+)
+
 from .userapi import RegisterAPI, UserProfile,TodayHabits, SubmitHabits, WeeklyGoals, AddGoal, UpdateGoalStatus
 from .userapi import QuizDetailAPI,QuizListAPI, QuizSubmitAPI, UserSkillSummaryAPI
 from .adminapi import AdminUsersAPI, AdminBlockUserAPI, AdminUnblockUserAPI, AdminDeleteUserAPI, AdminStoriesAPI, AdminUpdateStoryAPI, AdminDeleteStoryAPI,AdminGetStoryAPI
@@ -57,6 +72,7 @@ api.add_resource(ConceptResource, "/concept/<int:concept_id>")
 
 api.add_resource(QuestionAPI, "/question")
 api.add_resource(QuestionResource, "/question/<int:question_id>")
+api.add_resource(QuestionsByModuleAPI, "/module/<string:module_id>/questions")
 # addition api required for user and admin
 api.add_resource(ChangePasswordAPI, '/change-password')#for user and admin
 api.add_resource(AdminStatsAPI, '/admin/stats')

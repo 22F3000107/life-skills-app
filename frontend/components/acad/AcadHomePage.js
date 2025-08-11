@@ -1,4 +1,6 @@
-import { fetchAcadHomeModules } from "../../services/acadService.js";
+import { fetchModules}  from "../../services/moduleService.js";
+import {fetchAllQuestions} from "../../services/questionService.js";
+import { fetchConcepts } from "../../services/conceptService.js";
 
 export default {
   name: "AcadHomePage",
@@ -8,25 +10,95 @@ export default {
       currentPage: 1,
       rowsPerPage: 9,
       modules: [],
+      questions: [],
+      concepts: [],
       sortKey: "name",
       sortOrder: "asc",
       isLoading: false,
       viewMode: "grid", // grid or list
       selectedFilter: "all",
-      statsData: {
-        totalQuestions: 1240,
-        approvedPercentage: 82,
-        rejectedPercentage: 18,
-        totalModules: 0,
-      },
     };
   },
   computed: {
-    filteredModules() {
-      let filtered = this.modules.filter((mod) =>
-        mod.mcode.toLowerCase().includes(this.searchQuery.toLowerCase())
+    // Module Statistics - simplified
+    moduleStats() {
+      const totalModules = this.modules.length;
+      const totalConcepts = this.concepts.length;
+
+      return {
+        totalModules,
+        totalConcepts,
+      };
+    },
+
+    // Question Statistics (assuming you have question status data)
+    questionStats() {
+      // You'll need to modify this based on your actual question data structure
+      const totalQuestions = this.questions.length;
+      const approvedQuestions = this.questions.filter(
+        (q) => q.is_approved === true
+      ).length;
+
+      const rejectedQuestions = this.questions.filter(
+        (q) => q.is_approved === false
+      ).length;
+
+      const pendingQuestions = this.questions.filter(
+        (q) => q.is_approved === null
+      ).length;
+
+      return {
+        totalQuestions,
+        approvedQuestions,
+        rejectedQuestions,
+        pendingQuestions,
+        approvedPercentage:
+          totalQuestions > 0
+            ? ((approvedQuestions / totalQuestions) * 100).toFixed(1)
+            : 0,
+        rejectedPercentage:
+          totalQuestions > 0
+            ? ((rejectedQuestions / totalQuestions) * 100).toFixed(1)
+            : 0,
+        pendingPercentage:
+          totalQuestions > 0
+            ? ((pendingQuestions / totalQuestions) * 100).toFixed(1)
+            : 0,
+      };
+    },
+
+    // Concept Statistics - updated as requested
+    conceptStats() {
+      const totalConcepts = this.concepts.length;
+      const totalQuestions = this.concepts.reduce(
+        (acc, c) => acc + (c.question_count || 0),
+        0
       );
 
+      // Sample data for live/developing concepts - replace with actual API data
+      const liveConcepts = this.concepts.filter((c) => c.live === true).length;
+      const developingConcepts = totalConcepts - liveConcepts; // remaining developing
+
+      return {
+        totalConcepts,
+        totalQuestions, // total questions in concepts
+        liveConcepts,
+        developingConcepts,
+        livePercentage:
+          totalConcepts > 0
+            ? ((liveConcepts / totalConcepts) * 100).toFixed(1)
+            : 0,
+        developingPercentage:
+          totalConcepts > 0
+            ? ((developingConcepts / totalConcepts) * 100).toFixed(1)
+            : 0,
+      };
+    },
+
+    filteredModules() {
+      let filtered = this.modules.filter((mod) =>
+        mod.id.toString().includes(this.searchQuery.toLowerCase())
+      );
       if (this.selectedFilter === "active") {
         filtered = filtered.filter((mod) => mod.questions > 0);
       } else if (this.selectedFilter === "empty") {
@@ -54,7 +126,6 @@ export default {
       const delta = 2;
       const range = [];
       const rangeWithDots = [];
-
       for (
         let i = Math.max(2, this.currentPage - delta);
         i <= Math.min(this.totalPages - 1, this.currentPage + delta);
@@ -81,8 +152,8 @@ export default {
     },
   },
   methods: {
-    goToModule(mcode) {
-      this.$router.push(`/acad/module/${mcode}`);
+    goToModule(id) {
+      this.$router.push(`/acad/module/${id}`);
     },
     sortBy(key) {
       if (this.sortKey === key) {
@@ -124,7 +195,7 @@ export default {
         "bi-puzzle",
         "bi-compass",
       ];
-      return icons[Math.abs(module.mcode.charCodeAt(0) % icons.length)];
+      return icons[Math.abs(module.id.toString().charCodeAt(0) % icons.length)];
     },
     getProgressColor(questions) {
       if (questions >= 100) return "success";
@@ -135,8 +206,9 @@ export default {
   async mounted() {
     try {
       this.isLoading = true;
-      this.modules = await fetchAcadHomeModules();
-      this.statsData.totalModules = this.modules.length;
+      this.modules = await fetchModules();
+      this.questions = await fetchAllQuestions();
+      this.concepts = await fetchConcepts();
     } catch (err) {
       console.error("Failed to load academic modules:", err.message);
     } finally {
@@ -164,65 +236,153 @@ export default {
         </div>
 
         <!-- Statistics Cards -->
-        <div class="row g-3 mb-4">
-          <div class="col-xl-3 col-md-6">
-            <div class="card border-0 shadow-sm" style="border-radius: 15px; background: rgba(255, 255, 255, 0.95);">
-              <div class="card-body p-3">
-                <div class="d-flex align-items-center">
-                  <div class="bg-primary bg-opacity-10 p-2 rounded-circle me-3">
-                    <i class="bi bi-journal-text text-primary fs-5"></i>
+        <div class="row g-4 mb-4">
+          <!-- Module Statistics Card -->
+          <div class="col-lg-4">
+            <div class="card border-0 shadow-lg h-100" style="border-radius: 20px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px);">
+              <div class="card-header bg-transparent border-0 pb-0">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="bg-primary bg-opacity-10 p-3 rounded-circle">
+                    <i class="bi bi-collection text-primary fs-4"></i>
                   </div>
                   <div>
-                    <p class="text-muted mb-0 small">Total Questions</p>
-                    <h5 class="fw-bold mb-0 text-primary">{{ statsData.totalQuestions.toLocaleString() }}</h5>
+                    <h5 class="mb-0 fw-bold text-dark">Modules Overview</h5>
+                    <small class="text-muted">Total modules and concepts</small>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body pt-3">
+                <!-- Total Modules -->
+                <div class="row text-center">
+                  <div class="col-6">
+                    <div class="bg-light rounded p-3 mb-3">
+                      <div class="fs-2 fw-bold text-primary mb-1">{{ moduleStats.totalModules }}</div>
+                      <div class="text-muted small">Total Modules</div>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="bg-light rounded p-3 mb-3">
+                      <div class="fs-2 fw-bold text-info mb-1">{{ moduleStats.totalConcepts }}</div>
+                      <div class="text-muted small">Total Concepts</div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="col-xl-3 col-md-6">
-            <div class="card border-0 shadow-sm" style="border-radius: 15px; background: rgba(255, 255, 255, 0.95);">
-              <div class="card-body p-3">
-                <div class="d-flex align-items-center">
-                  <div class="bg-success bg-opacity-10 p-2 rounded-circle me-3">
-                    <i class="bi bi-check2-circle text-success fs-5"></i>
+          <!-- Questions Statistics Card -->
+          <div class="col-lg-4">
+            <div class="card border-0 shadow-lg h-100" style="border-radius: 20px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px);">
+              <div class="card-header bg-transparent border-0 pb-0">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="bg-success bg-opacity-10 p-3 rounded-circle">
+                    <i class="bi bi-patch-question text-success fs-4"></i>
                   </div>
                   <div>
-                    <p class="text-muted mb-0 small">Approved</p>
-                    <h5 class="fw-bold mb-0 text-success">{{ statsData.approvedPercentage }}%</h5>
+                    <h5 class="mb-0 fw-bold text-dark">Questions Status</h5>
+                    <small class="text-muted">Question approval status</small>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body pt-2">
+                <!-- Total Questions -->
+                <div class="mb-3">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">Total Questions</span>
+                    <span class="fs-4 fw-bold text-primary">{{ questionStats.totalQuestions }}</span>
+                  </div>
+                  <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-primary" style="width: 100%;"></div>
+                  </div>
+                </div>
+
+                <!-- Approved Questions -->
+                <div class="mb-3">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">Approved</span>
+                    <span class="fs-5 fw-semibold text-success">{{ questionStats.approvedQuestions }} ({{ questionStats.approvedPercentage }}%)</span>
+                  </div>
+                  <div class="progress" style="height: 4px;">
+                    <div class="progress-bar bg-success" :style="{width: questionStats.approvedPercentage + '%'}"></div>
+                  </div>
+                </div>
+
+                <!-- Rejected Questions -->
+                <div class="mb-3">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">Rejected</span>
+                    <span class="fs-5 fw-semibold text-danger">{{ questionStats.rejectedQuestions }} ({{ questionStats.rejectedPercentage }}%)</span>
+                  </div>
+                  <div class="progress" style="height: 4px;">
+                    <div class="progress-bar bg-danger" :style="{width: questionStats.rejectedPercentage + '%'}"></div>
+                  </div>
+                </div>
+
+                <!-- Pending Questions -->
+                <div class="mb-3">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">Pending Review</span>
+                    <span class="fs-5 fw-semibold text-warning">{{ questionStats.pendingQuestions }} ({{ questionStats.pendingPercentage }}%)</span>
+                  </div>
+                  <div class="progress" style="height: 4px;">
+                    <div class="progress-bar bg-warning" :style="{width: questionStats.pendingPercentage + '%'}"></div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="col-xl-3 col-md-6">
-            <div class="card border-0 shadow-sm" style="border-radius: 15px; background: rgba(255, 255, 255, 0.95);">
-              <div class="card-body p-3">
-                <div class="d-flex align-items-center">
-                  <div class="bg-warning bg-opacity-10 p-2 rounded-circle me-3">
-                    <i class="bi bi-clock text-warning fs-5"></i>
+          <!-- Concepts Statistics Card -->
+          <div class="col-lg-4">
+            <div class="card border-0 shadow-lg h-100" style="border-radius: 20px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px);">
+              <div class="card-header bg-transparent border-0 pb-0">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="bg-info bg-opacity-10 p-3 rounded-circle">
+                    <i class="bi bi-diagram-3 text-info fs-4"></i>
                   </div>
                   <div>
-                    <p class="text-muted mb-0 small">Pending Review</p>
-                    <h5 class="fw-bold mb-0 text-warning">{{ statsData.rejectedPercentage }}%</h5>
+                    <h5 class="mb-0 fw-bold text-dark">Concepts Overview</h5>
+                    <small class="text-muted">Concept status and questions</small>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          <div class="col-xl-3 col-md-6">
-            <div class="card border-0 shadow-sm" style="border-radius: 15px; background: rgba(255, 255, 255, 0.95);">
-              <div class="card-body p-3">
-                <div class="d-flex align-items-center">
-                  <div class="bg-info bg-opacity-10 p-2 rounded-circle me-3">
-                    <i class="bi bi-collection text-info fs-5"></i>
+              <div class="card-body pt-2">
+                <!-- Total Concepts and Questions -->
+                <div class="row text-center mb-3">
+                  <div class="col-6">
+                    <div class="bg-light rounded p-2">
+                      <div class="fs-4 fw-bold text-primary">{{ conceptStats.totalConcepts }}</div>
+                      <small class="text-muted">Total Concepts</small>
+                    </div>
                   </div>
-                  <div>
-                    <p class="text-muted mb-0 small">Total Modules</p>
-                    <h5 class="fw-bold mb-0 text-info">{{ statsData.totalModules }}</h5>
+                  <div class="col-6">
+                    <div class="bg-light rounded p-2">
+                      <div class="fs-4 fw-bold text-secondary">{{ conceptStats.totalQuestions }}</div>
+                      <small class="text-muted">Total Questions</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Live Concepts -->
+                <div class="mb-3">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">Live Concepts</span>
+                    <span class="fs-5 fw-semibold text-success">{{ conceptStats.liveConcepts }} ({{ conceptStats.livePercentage }}%)</span>
+                  </div>
+                  <div class="progress" style="height: 4px;">
+                    <div class="progress-bar bg-success" :style="{width: conceptStats.livePercentage + '%'}"></div>
+                  </div>
+                </div>
+
+                <!-- Developing Concepts -->
+                <div class="mb-3">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">Developing</span>
+                    <span class="fs-5 fw-semibold text-warning">{{ conceptStats.developingConcepts }} ({{ conceptStats.developingPercentage }}%)</span>
+                  </div>
+                  <div class="progress" style="height: 4px;">
+                    <div class="progress-bar bg-warning" :style="{width: conceptStats.developingPercentage + '%'}"></div>
                   </div>
                 </div>
               </div>
@@ -232,70 +392,67 @@ export default {
 
         <!-- Modules Section -->
         <div class="card border-0 shadow-lg" style="border-radius: 20px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px);">
-       <!-- Card Header -->
-<div class="card-header bg-transparent border-0 p-2">
-  <div class="row align-items-center">
-    <div class="col-lg-6">
-      <h6 class="mb-1 fw-bold text-dark">
-        <i class="bi bi-kanban me-2 text-primary"></i>
-        Module Overview
-      </h6>
-      <p class="text-muted mb-0 small">Manage and monitor your educational modules</p>
-    </div>
-    <div class="col-lg-6">
-      <div class="d-flex gap-2 justify-content-lg-end mt-2 mt-lg-0 align-items-center">
-        
-        <!-- Search Input -->
-        <div style="max-width: 240px;">
-          <div class="position-relative">
-            <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-2 text-muted"></i>
-            <input
-              v-model="searchQuery"
-              type="text"
-              class="form-control form-control-sm ps-4"
-              placeholder="Search modules..."
-              style="border-radius: 10px; border: 1px solid #dee2e6;"
-            />
+          <!-- Card Header -->
+          <div class="card-header bg-transparent border-0 p-2">
+            <div class="row align-items-center">
+              <div class="col-lg-6">
+                <h6 class="mb-1 fw-bold text-dark">
+                  <i class="bi bi-kanban me-2 text-primary"></i>
+                  Module Overview
+                </h6>
+                <p class="text-muted mb-0 small">Manage and monitor your educational modules</p>
+              </div>
+              <div class="col-lg-6">
+                <div class="d-flex gap-2 justify-content-lg-end mt-2 mt-lg-0 align-items-center">
+                  
+                  <!-- Search Input -->
+                  <div style="max-width: 240px;">
+                    <div class="position-relative">
+                      <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-2 text-muted"></i>
+                      <input
+                        v-model="searchQuery"
+                        type="text"
+                        class="form-control form-control-sm ps-4"
+                        placeholder="Search modules..."
+                        style="border-radius: 10px; border: 1px solid #dee2e6;"
+                      />
+                    </div>
+                  </div>
+                  <!-- Filter Dropdown -->
+                  <select 
+                    v-model="selectedFilter" 
+                    class="form-select form-select-sm" 
+                    style="border-radius: 10px; border: 1px solid #dee2e6; min-width: 150px;"
+                  >
+                    <option value="all">All Modules</option>
+                    <option value="active">With Questions</option>
+                    <option value="empty">Empty Modules</option>
+                  </select>
+                  <!-- View Toggle -->
+                  <div class="btn-group btn-group-sm" role="group">
+                    <button 
+                      type="button" 
+                      class="btn btn-outline-primary"
+                      :class="{ 'active btn-primary': viewMode === 'grid' }"
+                      @click="viewMode = 'grid'"
+                      style="border-radius: 8px 0 0 8px;"
+                    >
+                      <i class="bi bi-grid-3x3-gap"></i>
+                    </button>
+                    <button 
+                      type="button" 
+                      class="btn btn-outline-primary"
+                      :class="{ 'active btn-primary': viewMode === 'list' }"
+                      @click="viewMode = 'list'"
+                      style="border-radius: 0 8px 8px 0;"
+                    >
+                      <i class="bi bi-list-ul"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-
-        <!-- Filter Dropdown -->
-        <select 
-          v-model="selectedFilter" 
-          class="form-select form-select-sm" 
-          style="border-radius: 10px; border: 1px solid #dee2e6; min-width: 150px;"
-        >
-          <option value="all">All Modules</option>
-          <option value="active">With Questions</option>
-          <option value="empty">Empty Modules</option>
-        </select>
-
-        <!-- View Toggle -->
-        <div class="btn-group btn-group-sm" role="group">
-          <button 
-            type="button" 
-            class="btn btn-outline-primary"
-            :class="{ 'active btn-primary': viewMode === 'grid' }"
-            @click="viewMode = 'grid'"
-            style="border-radius: 8px 0 0 8px;"
-          >
-            <i class="bi bi-grid-3x3-gap"></i>
-          </button>
-          <button 
-            type="button" 
-            class="btn btn-outline-primary"
-            :class="{ 'active btn-primary': viewMode === 'list' }"
-            @click="viewMode = 'list'"
-            style="border-radius: 0 8px 8px 0;"
-          >
-            <i class="bi bi-list-ul"></i>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 
           <!-- Card Body -->
           <div class="card-body p-0">
@@ -304,16 +461,15 @@ export default {
               <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
               <p class="mt-3 text-muted">Loading modules...</p>
             </div>
-
             <!-- Grid View -->
             <div v-else-if="viewMode === 'grid'" class="p-4">
               <div class="row g-3">
-                <div v-for="(mod, index) in paginatedModules" :key="mod.mcode" class="col-xl-4 col-lg-6">
+                <div v-for="(mod, index) in paginatedModules" :key="mod.id" class="col-xl-4 col-lg-6">
                   <div 
                     class="card border-0 shadow-sm module-card"
                     style="border-radius: 12px; cursor: pointer; transition: all 0.3s ease;"
                     :style="{  'animation-delay': (index * 0.1) + 's' }"
-                    @click="goToModule(mod.mcode)"
+                    @click="goToModule(mod.id)"
                   >
                     <div class="card-body p-3">
                       <div class="d-flex align-items-center justify-content-between mb-3">
@@ -322,7 +478,7 @@ export default {
                             <i :class="'bi ' + getModuleIcon(mod) + ' text-primary'"></i>
                           </div>
                           <span class="badge bg-primary bg-opacity-10 text-primary px-2 py-1 rounded-pill small fw-medium">
-                            {{ mod.mcode }}
+                            {{ mod.id }}
                           </span>
                         </div>
                         <button class="btn btn-sm btn-primary" style="border-radius: 8px;">
@@ -335,15 +491,15 @@ export default {
                       <div class="row g-0 text-center">
                         <div class="col-6 border-end">
                           <div class="p-2">
-                            <div class="fs-5 fw-bold" :class="'text-' + getProgressColor(mod.questions)">
-                              {{ mod.questions }}
+                            <div class="fs-5 fw-bold" :class="'text-' + getProgressColor(mod.approved_count + mod.review_count + mod.rejected_count)">
+                              {{ mod.approved_count + mod.review_count + mod.rejected_count }}
                             </div>
                             <small class="text-muted">Questions</small>
                           </div>
                         </div>
                         <div class="col-6">
                           <div class="p-2">
-                            <div class="fs-5 fw-bold text-info">{{ mod.concepts }}</div>
+                            <div class="fs-5 fw-bold text-info">{{ mod.concepts_count }}</div>
                             <small class="text-muted">Concepts</small>
                           </div>
                         </div>
@@ -359,11 +515,11 @@ export default {
               <table class="table table-hover align-middle mb-0">
                 <thead style="background: linear-gradient(45deg, #667eea, #764ba2); color: white;">
                   <tr>
-                    <th class="px-4 py-3 border-0" @click="sortBy('mcode')" style="cursor: pointer;">
+                    <th class="px-4 py-3 border-0" @click="sortBy('id')" style="cursor: pointer;">
                       <div class="d-flex align-items-center gap-2">
                         <i class="bi bi-code-slash"></i>
                         <span class="fw-semibold">Module Code</span>
-                        <i :class="sortKey === 'mcode' ? (sortOrder === 'asc' ? 'bi bi-caret-up-fill' : 'bi bi-caret-down-fill') : 'bi bi-arrows-expand'"></i>
+                        <i :class="sortKey === 'id' ? (sortOrder === 'asc' ? 'bi bi-caret-up-fill' : 'bi bi-caret-down-fill') : 'bi bi-arrows-expand'"></i>
                       </div>
                     </th>
                     <th class="px-4 py-3 border-0" @click="sortBy('name')" style="cursor: pointer;">
@@ -395,8 +551,8 @@ export default {
                 <tbody>
                   <tr
                     v-for="(mod, index) in paginatedModules"
-                    :key="mod.mcode"
-                    @click="goToModule(mod.mcode)"
+                    :key="mod.id"
+                    @click="goToModule(mod.id)"
                     class="module-row"
                     style="cursor: pointer; transition: all 0.3s ease;"
                     :style="{ 'animation-delay': (index * 0.05) + 's' }"
@@ -407,7 +563,7 @@ export default {
                           <i :class="'bi ' + getModuleIcon(mod) + ' text-primary'"></i>
                         </div>
                         <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-medium">
-                          {{ mod.mcode }}
+                          {{ mod.id }}
                         </span>
                       </div>
                     </td>
@@ -417,21 +573,21 @@ export default {
                     <td class="px-4 py-4 text-center">
                       <span 
                         class="badge px-3 py-2 fs-6"
-                        :class="'bg-' + getProgressColor(mod.questions)"
+                        :class="'bg-' + getProgressColor(mod.approved_count + mod.review_count + mod.rejected_count)"
                         style="border-radius: 20px;"
                       >
-                        {{ mod.questions }}
+                        {{ mod.approved_count + mod.review_count + mod.rejected_count }}
                       </span>
                     </td>
                     <td class="px-4 py-4 text-center">
                       <span class="badge bg-info px-3 py-2 fs-6" style="border-radius: 20px;">
-                        {{ mod.concepts }}
+                        {{ mod.concepts_count }}
                       </span>
                     </td>
                     <td class="px-4 py-4 text-center">
                       <button
                         class="btn btn-primary btn-sm"
-                        @click.stop="goToModule(mod.mcode)"
+                        @click.stop="goToModule(mod.id)"
                         style="border-radius: 10px;"
                       >
                         <i class="bi bi-eye me-2"></i>View
@@ -454,53 +610,49 @@ export default {
                 </tbody>
               </table>
             </div>
-
-           <!-- Pagination -->
-<div v-if="!isLoading && totalPages > 1" class="px-3 py-3 border-top">
-  <div class="row align-items-center">
-    <div class="col-md-6">
-      <p class="text-muted mb-0 small">{{ showingRangeText }}</p>
-    </div>
-    <div class="col-md-6">
-      <nav class="d-flex justify-content-md-end justify-content-center mt-2 mt-md-0">
-        <ul class="pagination pagination-sm mb-0">
-          <!-- Previous Button -->
-          <li class="page-item" :class="{ disabled: currentPage === 1 }">
-            <button class="page-link px-2 py-1" @click="changePage(currentPage - 1)" :disabled="currentPage === 1">
-              <i class="bi bi-chevron-left small"></i>
-            </button>
-          </li>
-
-          <!-- Page Numbers -->
-          <li 
-            v-for="page in visiblePages" 
-            :key="page"
-            class="page-item"
-            :class="{ active: page === currentPage, disabled: page === '...' }"
-          >
-            <button 
-              v-if="page !== '...'"
-              class="page-link px-2 py-1 small"
-              @click="changePage(page)"
-              :style="page === currentPage ? 'background: linear-gradient(45deg, #667eea, #764ba2); border-color: #667eea; color: white;' : ''"
-            >
-              {{ page }}
-            </button>
-            <span v-else class="page-link px-2 py-1 small">...</span>
-          </li>
-
-          <!-- Next Button -->
-          <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-            <button class="page-link px-2 py-1" @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">
-              <i class="bi bi-chevron-right small"></i>
-            </button>
-          </li>
-        </ul>
-      </nav>
-    </div>
-  </div>
-</div>
-
+            <!-- Pagination -->
+            <div v-if="!isLoading && totalPages > 1" class="px-3 py-3 border-top">
+              <div class="row align-items-center">
+                <div class="col-md-6">
+                  <p class="text-muted mb-0 small">{{ showingRangeText }}</p>
+                </div>
+                <div class="col-md-6">
+                  <nav class="d-flex justify-content-md-end justify-content-center mt-2 mt-md-0">
+                    <ul class="pagination pagination-sm mb-0">
+                      <!-- Previous Button -->
+                      <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                        <button class="page-link px-2 py-1" @click="changePage(currentPage - 1)" :disabled="currentPage === 1">
+                          <i class="bi bi-chevron-left small"></i>
+                        </button>
+                      </li>
+                      <!-- Page Numbers -->
+                      <li 
+                        v-for="page in visiblePages" 
+                        :key="page"
+                        class="page-item"
+                        :class="{ active: page === currentPage, disabled: page === '...' }"
+                      >
+                        <button 
+                          v-if="page !== '...'"
+                          class="page-link px-2 py-1 small"
+                          @click="changePage(page)"
+                          :style="page === currentPage ? 'background: linear-gradient(45deg, #667eea, #764ba2); border-color: #667eea; color: white;' : ''"
+                        >
+                          {{ page }}
+                        </button>
+                        <span v-else class="page-link px-2 py-1 small">...</span>
+                      </li>
+                      <!-- Next Button -->
+                      <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                        <button class="page-link px-2 py-1" @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">
+                          <i class="bi bi-chevron-right small"></i>
+                        </button>
+                      </li>
+                    </ul>
+                  </nav>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

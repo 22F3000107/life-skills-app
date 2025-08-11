@@ -1,16 +1,40 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import UserMixin, RoleMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.ext.declarative import declared_attr
 
 from datetime import date,datetime
+from flask import g
 import uuid
 
 db = SQLAlchemy()
+
 
 roles_users = db.Table('roles_users',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
     db.Column('role_id', db.Integer, db.ForeignKey('role.id'))
 )
+class TimestampMixin(object):
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class UserTrackingMixin(object):
+
+    @declared_attr
+    def created_by_id(cls):
+        return db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+
+    @declared_attr
+    def updated_by_id(cls):
+        return db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+
+    @declared_attr
+    def created_by(cls):
+        return db.relationship('User', foreign_keys=[cls.created_by_id], lazy='joined')
+
+    @declared_attr
+    def updated_by(cls):
+        return db.relationship('User', foreign_keys=[cls.updated_by_id], lazy='joined')
 
 class User(db.Model, UserMixin):
     __tablename__ = 'user'
@@ -93,13 +117,13 @@ class Goal(db.Model):
     def __repr__(self):
         return f"<Goal {self.text} ({self.status}) for User {self.user_id}>"
 
-class Module(db.Model):
+class Module(db.Model, TimestampMixin, UserTrackingMixin):
     __tablename__ = 'module'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String(255), nullable=False)
 
-class Concept(db.Model):
+class Concept(db.Model, TimestampMixin, UserTrackingMixin):
     __tablename__ = 'concept'
     id = db.Column(db.Integer, primary_key=True)
     module_id = db.Column(db.Integer, db.ForeignKey('module.id'), nullable=False)
@@ -107,7 +131,7 @@ class Concept(db.Model):
     description = db.Column(db.String(255))
     date = db.Column(db.Date)
     live = db.Column(db.Boolean, default=False)
-    created_by = db.Column(db.Integer, db.ForeignKey('acadteam.id'))
+    created_by_team_id = db.Column(db.Integer, db.ForeignKey('acadteam.id'))  # Renamed
     flag = db.Column(db.Boolean, default=False)
     max_marks = db.Column(db.Integer)
 
@@ -115,23 +139,24 @@ class Concept(db.Model):
     created_by_team = db.relationship('Acadteam', backref=db.backref('concepts', lazy=True))
     questions = db.relationship('Question', back_populates='concept')
 
-class Question(db.Model):
+class Question(db.Model,TimestampMixin, UserTrackingMixin):
     __tablename__ = 'question'
     id = db.Column(db.Integer, primary_key=True)
     question_id = db.Column(db.Integer, db.ForeignKey('question.id'), nullable=True)
     module_id = db.Column(db.Integer, db.ForeignKey('module.id'), nullable=False)
-    concept_id = db.Column(db.Integer, db.ForeignKey('concept.id'), nullable=False)
-    age_group = db.Column(db.String(20))
+    concept_id = db.Column(db.Integer, db.ForeignKey('concept.id'), nullable=True)
+    age_group = db.Column(db.JSON)
     type = db.Column(db.String(20))
     question_statement = db.Column(db.String(255))
-    answers = db.Column(db.String(255))
-    approvals = db.Column(db.String(255))
-    rejections = db.Column(db.String(255))
+    answers = db.Column(db.JSON)
+    is_approved = db.Column(db.Boolean, nullable=True)
     marks = db.Column(db.Integer)
-    flag = db.Column(db.Boolean, default=False)
+    is_archived = db.Column(db.Boolean, default=False)
     audio_url = db.Column(db.String(255))
-    img_url = db.Column(db.String(255))
+    image_url = db.Column(db.String(255))
+    created_by_team_id = db.Column(db.Integer, db.ForeignKey('acadteam.id'), nullable=True)
 
+    created_by_team = db.relationship('Acadteam', backref=db.backref('questions_created', lazy=True))
     parent = db.relationship('Question', remote_side=[id], backref='sub_questions')
     module = db.relationship('Module', backref=db.backref('questions', lazy=True))
     concept = db.relationship('Concept', back_populates='questions')

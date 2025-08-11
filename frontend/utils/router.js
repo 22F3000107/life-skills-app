@@ -75,9 +75,9 @@ const routes = [
   { path: "/acad/concepts", name: "ConceptPage", component: ConceptPage },
 
   {
-    path: "/acad/concept/:ccode",
+    path: "/acad/concept/:id",
     component: ConceptQuestionsPage,
-    props: (route) => ({ ccode: route.params.ccode }),
+    props: (route) => ({ ccode: route.params.id }),
   },
   {
     path: "/acad/question/create",
