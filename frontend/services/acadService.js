@@ -17,3 +17,4 @@ export async function fetchAcadHomeModules() {
     return res.json();
   }
 }
+

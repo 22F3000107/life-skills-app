@@ -33,7 +33,7 @@ export default {
           skill: q.skill,
           createdBy: q.created_by,
           status: q.status === "draft" ? "Unpublished" : q.status.charAt(0).toUpperCase() + q.status.slice(1),
-          questions: q.questions?.length || 0  // If your API supports it
+          questions: q.questions_count || 0  
         }));
       } catch (err) {
         console.error("Failed to fetch quizzes:", err.message);
@@ -68,14 +68,36 @@ export default {
         console.error(err);
       }
     },
-    flagQuiz(index) {
-      if (this.quizzes[index].status !== 'Flagged') {
-        if (confirm("Do you want to flag this quiz?")) {
-          this.quizzes[index].status = 'Flagged';
-          alert("Quiz flagged successfully.");
-        }
-      }
+      async flagQuiz(index) {
+  const quiz = this.quizzes[index];
+  if (quiz.status !== 'Flagged') {
+    const confirmFlag = confirm("Do you want to flag this quiz?");
+    if (!confirmFlag) return;
+
+    const reason = prompt("Please enter a reason for flagging this quiz:");
+    if (!reason || reason.trim() === "") {
+      alert("Flag reason is required.");
+      return;
     }
+
+    try {
+      await updateQuiz(quiz.id, {
+        status: 'flagged',
+        flag: 1, // <-- This makes it 1 in the DB
+        flag_reason: reason
+      });
+      this.quizzes[index].status = 'Flagged';
+      this.quizzes[index].flag_reason = reason;
+      this.quizzes[index].flag = 1;
+      alert("Quiz flagged successfully.");
+    } catch (err) {
+      alert("Failed to flag quiz.");
+      console.error(err);
+    }
+  }
+}
+
+
   },
   mounted() {
     this.fetchQuizzes();
@@ -109,6 +131,7 @@ export default {
               <th>Title</th>
               <th>Skill</th>
               <th>Questions</th>
+              <th>Created By</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
@@ -119,6 +142,7 @@ export default {
               <td>{{ quiz.title }}</td>
               <td><span class="badge bg-info text-dark">{{ quiz.skill }}</span></td>
               <td>{{ quiz.questions }}</td>
+              <td>{{ quiz.createdBy }}</td>
               <td>
                 <span :class="{
                   'badge bg-success': quiz.status === 'Published',

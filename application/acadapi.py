@@ -1,7 +1,7 @@
 from flask import jsonify, current_app
 from flask_restful import Resource, request, reqparse, fields, marshal
 from sqlalchemy.exc import SQLAlchemyError
-from .models import db, User,roles_users,Acadteam, Role, Concept, Module, Question
+from .models import db, User,roles_users,Acadteam, Role, Concept, Module, Question, Story, Quiz, QuizQuestion
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash
 import os
@@ -579,4 +579,210 @@ class QuestionsByModuleAPI(Resource):
 }, 200
 
         except SQLAlchemyError as e:
+    return {"error": str(e)}, 500
+
+# Deepak Kumar
+# SE May 34
+# Soft Engg Project May 2025
+# acadapi.py
+
+class AcademicCreateStoryAPI(Resource):
+    @jwt_required()
+    def post(self):
+        data = request.get_json()
+        
+        title = data.get("title")
+        skill = data.get("skill")
+        content = data.get("content")
+        created_by = data.get("createdBy")
+
+        if not title or not skill or not content:
+            return {"error": "Missing required fields"}, 400
+        
+        try:
+            story = Story(
+                title=title,
+                skill=skill,
+                content=content,
+                created_by=created_by
+            )
+            db.session.add(story)
+            db.session.commit()
+
+            return {"message": "Story created successfully", "id": story.id}, 201
+        except SQLAlchemyError as e:
+            db.session.rollback()
             return {"error": str(e)}, 500
+
+class AcademicStoryListAPI(Resource):
+    @jwt_required()
+    def get(self):
+        try:
+            stories = Story.query.all()
+            result = [
+                {
+                    "id": s.id,
+                    "title": s.title,
+                    "skill": s.skill,
+                    "created_by": s.created_by,
+                    "status": s.status
+                }
+                for s in stories
+            ]
+            return {"stories": result}, 200
+        except SQLAlchemyError as e:
+            return {"error": str(e)}, 500
+
+class AcademicCreateQuizAPI(Resource):
+    @jwt_required()
+    def post(self):
+        user_id = get_jwt_identity()  # logged in user id from token
+        data = request.get_json(silent=True) or {}
+
+        title = data.get("title", "").strip()
+        skill = data.get("skill", "").strip()
+        questions_data = data.get("questions", [])
+
+        if not title or not skill or not questions_data:
+            return {"error": "Title, skill and questions are required"}, 400
+
+        # Create new quiz object
+        new_quiz = Quiz(
+            title=title,
+            skill=skill,
+            created_by=user_id,
+            status="draft",  # created quizzes start as draft
+            flag=False
+        )
+        db.session.add(new_quiz)
+        db.session.flush()  # flush to get new_quiz.id
+
+        # Create QuizQuestion entries
+        for q in questions_data:
+            question_text = q.get("question", "").strip()
+            options = q.get("options", [])
+            correct_answer = q.get("correct_answer")
+            hint = q.get("hint", "").strip() 
+
+            if not question_text or not options or correct_answer is None:
+                db.session.rollback()
+                return {"error": "Each question requires question text, options and correct answer"}, 400
+
+            if not isinstance(options, list) or len(options) < 2:
+                db.session.rollback()
+                return {"error": "Options must be a list with at least two items"}, 400
+
+            quiz_question = QuizQuestion(
+                quiz_id=new_quiz.id,
+                question=question_text,
+                options=options,
+                correct_answer=correct_answer,
+                hint=hint if hint else None  
+            )
+            db.session.add(quiz_question)
+
+        db.session.commit()
+
+        return {"message": "Quiz created successfully", "quiz_id": new_quiz.id}, 201
+    
+class AcademicQuizzesAPI(Resource):
+    @jwt_required()
+    def get(self):
+        user_id = get_jwt_identity()
+        quizzes = Quiz.query.filter_by(created_by=user_id).all()
+
+        return [
+            {
+                "id": q.id,
+                "title": q.title,
+                "skill": q.skill,
+                "status": q.status,
+                "flag": q.flag
+            }
+            for q in quizzes
+        ], 200
+
+class AcademicQuizDetailAPI(Resource):
+    @jwt_required()
+    def get(self, quiz_id):
+        user_id = get_jwt_identity()
+        quiz = Quiz.query.filter_by(id=quiz_id, created_by=user_id).first()
+        if not quiz:
+            return {"error": "Quiz not found or access denied"}, 404
+
+        return {
+            "id": quiz.id,
+            "title": quiz.title,
+            "skill": quiz.skill,
+            "status": quiz.status,
+            "flag": quiz.flag,
+            "questions": [
+                {
+                    "id": q.id,
+                    "question": q.question,
+                    "options": q.options,
+                    "correct_answer": q.correct_answer
+                }
+                for q in quiz.questions
+            ]
+        }, 200
+
+class AcademicUpdateQuizAPI(Resource):
+    @jwt_required()
+    def put(self, quiz_id):
+        user_id = get_jwt_identity()
+        data = request.get_json(silent=True) or {}
+
+        quiz = Quiz.query.filter_by(id=quiz_id, created_by=user_id).first()
+        if not quiz:
+            return {"error": "Quiz not found or access denied"}, 404
+
+        title = data.get("title", "").strip()
+        skill = data.get("skill", "").strip()
+        questions_data = data.get("questions", [])
+
+        if not title or not skill or not questions_data:
+            return {"error": "Title, skill and questions are required"}, 400
+
+        # Update quiz fields
+        quiz.title = title
+        quiz.skill = skill
+
+        # Delete existing questions
+        QuizQuestion.query.filter_by(quiz_id=quiz.id).delete()
+
+        # Add new questions
+        for q in questions_data:
+            question_text = q.get("question", "").strip()
+            options = q.get("options", [])
+            correct_answer = q.get("correct_answer")
+
+            if not question_text or not options or correct_answer is None:
+                db.session.rollback()
+                return {"error": "Each question requires question text, options and correct answer"}, 400
+
+            quiz_question = QuizQuestion(
+                quiz_id=quiz.id,
+                question=question_text,
+                options=options,
+                correct_answer=correct_answer
+            )
+            db.session.add(quiz_question)
+
+        db.session.commit()
+        return {"message": "Quiz updated successfully"}, 200
+
+class AcademicDeleteQuizAPI(Resource):
+    @jwt_required()
+    def delete(self, quiz_id):
+        user_id = get_jwt_identity()
+        quiz = Quiz.query.filter_by(id=quiz_id, created_by=user_id).first()
+        if not quiz:
+            return {"error": "Quiz not found or access denied"}, 404
+
+        # Delete all quiz questions first
+        QuizQuestion.query.filter_by(quiz_id=quiz.id).delete()
+        db.session.delete(quiz)
+        db.session.commit()
+
+        return {"message": "Quiz deleted successfully"}, 200

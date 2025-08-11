@@ -1,244 +1,4 @@
-// export default {
-//   name: "AdminSettings",
-//   data() {
-//     return {
-//       admin: {
-//         name: "Admin",
-//         email: "admin@lifeskillsapp.com",
-//         password: "",
-//         confirmPassword: ""
-//       },
-//       darkMode: false,
-//       twoFactorAuth: true,
-//       maintenanceMode: false,
-//       userApprovalRequired: true,
-//       message: ""
-//     };
-//   },
-//   methods: {
-//     saveSettings() {
-//       if (this.admin.password !== this.admin.confirmPassword) {
-//         this.message = "❌ Passwords do not match.";
-//         return;
-//       }
-//       // Placeholder for real backend save
-//       this.message = "✅ Settings saved successfully.";
-//     }
-//   },
-//   template: `
-//     <div class="container mt-4 mb-5">
-//       <div class="text-center mb-4">
-//         <i class="bi bi-gear-fill fs-1 text-primary"></i>
-//         <h2 class="fw-bold mt-2">Admin Settings</h2>
-//         <p class="text-muted">Manage your admin preferences and system settings.</p>
-//       </div>
-
-//       <div class="card shadow-sm p-4">
-//         <!-- Admin Profile -->
-//         <h5 class="mb-3">
-//           <i class="bi bi-person-fill-gear me-2 text-secondary"></i>Admin Profile
-//         </h5>
-//         <div class="row mb-3">
-//           <div class="col-md-6">
-//             <label class="form-label">Name</label>
-//             <input v-model="admin.name" class="form-control" type="text" />
-//           </div>
-//           <div class="col-md-6">
-//             <label class="form-label">Email</label>
-//             <input v-model="admin.email" class="form-control" type="email" />
-//           </div>
-//         </div>
-
-//         <!-- Password Section -->
-//         <div class="row mb-3">
-//           <div class="col-md-6">
-//             <label class="form-label">New Password</label>
-//             <input v-model="admin.password" class="form-control" type="password" placeholder="Enter new password" />
-//           </div>
-//           <div class="col-md-6">
-//             <label class="form-label">Confirm Password</label>
-//             <input v-model="admin.confirmPassword" class="form-control" type="password" placeholder="Re-enter password" />
-//           </div>
-//         </div>
-
-//         <hr />
-
-//         <!-- Preferences -->
-//         <h5 class="mb-3">
-//           <i class="bi bi-sliders2-vertical me-2 text-secondary"></i>Preferences
-//         </h5>
-//         <div class="form-check form-switch mb-2">
-//           <input class="form-check-input" type="checkbox" v-model="darkMode" id="darkModeSwitch" />
-//           <label class="form-check-label" for="darkModeSwitch">
-//             <i class="bi bi-moon-stars-fill me-1"></i> Enable Dark Mode
-//           </label>
-//         </div>
-//         <div class="form-check form-switch mb-2">
-//           <input class="form-check-input" type="checkbox" v-model="twoFactorAuth" id="twoFASwitch" />
-//           <label class="form-check-label" for="twoFASwitch">
-//             <i class="bi bi-shield-lock-fill me-1"></i> Enable Two-Factor Authentication
-//           </label>
-//         </div>
-
-//         <hr />
-
-//         <!-- App Controls -->
-//         <h5 class="mb-3">
-//           <i class="bi bi-tools me-2 text-secondary"></i>App Controls
-//         </h5>
-//         <div class="form-check form-switch mb-2">
-//           <input class="form-check-input" type="checkbox" v-model="maintenanceMode" id="maintenanceSwitch" />
-//           <label class="form-check-label" for="maintenanceSwitch">
-//             <i class="bi bi-wrench-adjustable-circle-fill me-1"></i> Put App in Maintenance Mode
-//           </label>
-//         </div>
-//         <div class="form-check form-switch mb-4">
-//           <input class="form-check-input" type="checkbox" v-model="userApprovalRequired" id="approvalSwitch" />
-//           <label class="form-check-label" for="approvalSwitch">
-//             <i class="bi bi-person-check-fill me-1"></i> Require Admin Approval for New Academic Users
-//           </label>
-//         </div>
-
-//         <!-- Save Button -->
-//         <div class="d-grid">
-//           <button class="btn btn-primary" @click="saveSettings">
-//             <i class="bi bi-save2 me-1"></i> Save Settings
-//           </button>
-//         </div>
-
-//         <!-- Message -->
-//         <p class="mt-3 text-center" 
-//            :class="{ 'text-success': message.includes('✅'), 'text-danger': message.includes('❌') }">
-//           <i v-if="message.includes('✅')" class="bi bi-check-circle-fill me-1"></i>
-//           <i v-if="message.includes('❌')" class="bi bi-x-circle-fill me-1"></i>
-//           {{ message }}
-//         </p>
-//       </div>
-//     </div>
-//   `
-// };
-
-// import { getAdminSettings, updateAdminSettings } from "/utils/api.js";
-
-// export default {
-//   name: "AdminSettings",
-//   data() {
-//     return {
-//       admin: {
-//         name: "",
-//         email: "",
-//         password: "",
-//         confirmPassword: ""
-//       },
-//       darkMode: false,
-//       twoFactorAuth: false,
-//       maintenanceMode: false,
-//       userApprovalRequired: false,
-//       message: ""
-//     };
-//   },
-//   methods: {
-//     async loadSettings() {
-//       try {
-//         const token = localStorage.getItem("auth-token");
-//         const res = await getAdminSettings(token);
-//         this.admin.name = res.name || "";
-//         this.admin.email = res.email || "";
-//         this.darkMode = res.preferences?.darkMode || false;
-//         this.twoFactorAuth = res.preferences?.twoFactorAuth || false;
-//         this.maintenanceMode = res.preferences?.maintenanceMode || false;
-//         this.userApprovalRequired = res.preferences?.userApprovalRequired || false;
-//       } catch (err) {
-//         this.message = "❌ Failed to load settings.";
-//         console.error(err);
-//       }
-//     },
-
-//     async saveSettings() {
-//       if (this.admin.password && this.admin.password !== this.admin.confirmPassword) {
-//         this.message = "❌ Passwords do not match.";
-//         return;
-//       }
-
-//       try {
-//         const token = localStorage.getItem("auth-token");
-//         const payload = {
-//           name: this.admin.name,
-//           email: this.admin.email,
-//           password: this.admin.password || null,
-//           preferences: {
-//             darkMode: this.darkMode,
-//             twoFactorAuth: this.twoFactorAuth,
-//             maintenanceMode: this.maintenanceMode,
-//             userApprovalRequired: this.userApprovalRequired
-//           }
-//         };
-
-//         await updateAdminSettings(payload, token);
-//         this.message = "✅ Settings saved successfully.";
-//       } catch (err) {
-//         console.error(err);
-//         this.message = "❌ Failed to save settings.";
-//       }
-//     }
-//   },
-//   mounted() {
-//     this.loadSettings();
-//   },
-//   template: `
-//     <div class="container mt-4">
-//       <h3>Admin Settings</h3>
-
-//       <div class="alert" v-if="message" :class="message.startsWith('✅') ? 'alert-success' : 'alert-danger'">
-//         {{ message }}
-//       </div>
-
-//       <div class="mb-3">
-//         <label class="form-label">Name</label>
-//         <input type="text" class="form-control" v-model="admin.name" placeholder="Enter name" />
-//       </div>
-
-//       <div class="mb-3">
-//         <label class="form-label">Email</label>
-//         <input type="email" class="form-control" v-model="admin.email" placeholder="Enter email" />
-//       </div>
-
-//       <div class="mb-3">
-//         <label class="form-label">New Password</label>
-//         <input type="password" class="form-control" v-model="admin.password" placeholder="Enter new password" />
-//       </div>
-
-//       <div class="mb-3">
-//         <label class="form-label">Confirm Password</label>
-//         <input type="password" class="form-control" v-model="admin.confirmPassword" placeholder="Confirm password" />
-//       </div>
-
-//       <div class="form-check form-switch mb-2">
-//         <input class="form-check-input" type="checkbox" v-model="darkMode" id="darkModeSwitch" />
-//         <label class="form-check-label" for="darkModeSwitch">Enable Dark Mode</label>
-//       </div>
-
-//       <div class="form-check form-switch mb-2">
-//         <input class="form-check-input" type="checkbox" v-model="twoFactorAuth" id="twoFactorSwitch" />
-//         <label class="form-check-label" for="twoFactorSwitch">Enable Two-Factor Authentication</label>
-//       </div>
-
-//       <div class="form-check form-switch mb-2">
-//         <input class="form-check-input" type="checkbox" v-model="maintenanceMode" id="maintenanceSwitch" />
-//         <label class="form-check-label" for="maintenanceSwitch">Maintenance Mode</label>
-//       </div>
-
-//       <div class="form-check form-switch mb-4">
-//         <input class="form-check-input" type="checkbox" v-model="userApprovalRequired" id="approvalSwitch" />
-//         <label class="form-check-label" for="approvalSwitch">Require Admin Approval for Users</label>
-//       </div>
-
-//       <button class="btn btn-primary" @click="saveSettings">Save Settings</button>
-//     </div>
-//   `
-// };
-
-import { changePassword } from "/utils/api.js";
+import { changeAdminPassword } from "/utils/api.js";
 
 export default {
   name: "AdminSettings",
@@ -247,18 +7,30 @@ export default {
       oldPassword: "",
       password: "",
       confirmPassword: "",
-      message: ""
+      message: "",
+      messageType: "", // "success" or "error"
+      showOldPassword: false,
+      showPassword: false,
+      showConfirmPassword: false,
     };
   },
   methods: {
+    toggleVisibility(field) {
+      this[field] = !this[field];
+    },
     async updatePassword() {
+      this.message = "";
+      this.messageType = "";
+
       if (!this.oldPassword || !this.password || !this.confirmPassword) {
-        this.message = "❌ Please fill in all fields.";
+        this.message = "Please fill in all fields.";
+        this.messageType = "error";
         return;
       }
 
       if (this.password !== this.confirmPassword) {
-        this.message = "❌ New passwords do not match.";
+        this.message = "New passwords do not match.";
+        this.messageType = "error";
         return;
       }
 
@@ -266,39 +38,102 @@ export default {
         const token = localStorage.getItem("auth-token");
         const payload = {
           old_password: this.oldPassword,
-          new_password: this.password
+          new_password: this.password,
         };
 
-        await changePassword(payload, token);
-        this.message = "✅ Password updated successfully.";
+        const response = await changeAdminPassword(payload, token);
 
-        // Clear the form
+        if (response.error) {
+          this.message = response.error;
+          this.messageType = "error";
+          return;
+        }
+
+        this.message = "Password updated successfully.";
+        this.messageType = "success";
+
         this.oldPassword = "";
         this.password = "";
         this.confirmPassword = "";
+        this.showOldPassword = false;
+        this.showPassword = false;
+        this.showConfirmPassword = false;
       } catch (err) {
         console.error(err);
-        this.message = "❌ Failed to update password. Check your old password.";
+        this.message = "Failed to update password. Please check your old password.";
+        this.messageType = "error";
       }
-    }
+    },
   },
   template: `
-    <div class="admin-settings container p-4">
-      <h2 class="mb-3">Change Admin Password</h2>
-      <div class="form-group mb-2">
-        <input type="password" class="form-control" v-model="oldPassword" placeholder="Old Password" />
+    <div class="admin-settings container p-4" style="max-width: 400px;">
+      <h2 class="mb-4">Change Admin Password</h2>
+
+      <div class="mb-3 position-relative">
+        <input
+          :type="showOldPassword ? 'text' : 'password'"
+          class="form-control"
+          v-model="oldPassword"
+          placeholder="Old Password"
+          autocomplete="current-password"
+        />
+        <span
+          class="password-toggle"
+          @click="toggleVisibility('showOldPassword')"
+          style="position: absolute; top: 50%; right: 12px; transform: translateY(-50%); cursor: pointer;"
+          :title="showOldPassword ? 'Hide Password' : 'Show Password'"
+        >
+          <i :class="showOldPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+        </span>
       </div>
-      <div class="form-group mb-2">
-        <input type="password" class="form-control" v-model="password" placeholder="New Password" />
+
+      <div class="mb-3 position-relative">
+        <input
+          :type="showPassword ? 'text' : 'password'"
+          class="form-control"
+          v-model="password"
+          placeholder="New Password"
+          autocomplete="new-password"
+        />
+        <span
+          class="password-toggle"
+          @click="toggleVisibility('showPassword')"
+          style="position: absolute; top: 50%; right: 12px; transform: translateY(-50%); cursor: pointer;"
+          :title="showPassword ? 'Hide Password' : 'Show Password'"
+        >
+          <i :class="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+        </span>
       </div>
-      <div class="form-group mb-2">
-        <input type="password" class="form-control" v-model="confirmPassword" placeholder="Confirm New Password" />
+
+      <div class="mb-3 position-relative">
+        <input
+          :type="showConfirmPassword ? 'text' : 'password'"
+          class="form-control"
+          v-model="confirmPassword"
+          placeholder="Confirm New Password"
+          autocomplete="new-password"
+        />
+        <span
+          class="password-toggle"
+          @click="toggleVisibility('showConfirmPassword')"
+          style="position: absolute; top: 50%; right: 12px; transform: translateY(-50%); cursor: pointer;"
+          :title="showConfirmPassword ? 'Hide Password' : 'Show Password'"
+        >
+          <i :class="showConfirmPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+        </span>
       </div>
-      <button class="btn btn-primary" @click="updatePassword">Update Password</button>
-      <p class="mt-3">{{ message }}</p>
+
+      <button class="btn btn-primary w-100" @click="updatePassword">Update Password</button>
+
+      <div v-if="message" class="mt-3" :class="{'text-success': messageType === 'success', 'text-danger': messageType === 'error'}">
+        <i :class="messageType === 'success' ? 'bi bi-check-circle-fill' : 'bi bi-exclamation-triangle-fill'"></i>
+        <span class="ms-2">{{ message }}</span>
+      </div>
     </div>
   `
 };
+
+
 
 
 

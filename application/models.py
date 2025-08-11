@@ -179,7 +179,8 @@ class Quiz(db.Model):
     status = db.Column(db.String(20), default="draft")  # draft|published|flagged
     flag_reason = db.Column(db.String(255))
     flag = db.Column(db.Boolean, default=False)
-    questions = db.relationship('QuizQuestion', backref='quiz', lazy=True)
+    questions = db.relationship('QuizQuestion', backref='quiz', lazy=True, cascade="all, delete-orphan")
+    
 
 class QuizQuestion(db.Model):
     __tablename__ = 'quiz_question'
@@ -188,11 +189,13 @@ class QuizQuestion(db.Model):
     question = db.Column(db.String(255), nullable=False)
     options = db.Column(db.PickleType, nullable=False)  # Store list of options
     correct_answer = db.Column(db.Integer, nullable=False)  # Index of correct answer
+    hint = db.Column(db.String)
 
 class Story(db.Model):
     __tablename__ = 'story'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
+    skill = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=False)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # optional
     status = db.Column(db.String(20), default="draft")  # draft|published|

@@ -20,6 +20,7 @@ export async function fetchAllQuestions() {
   }
 }
 
+
 // 2. Fetch a Single Question by id
 export async function fetchQuestionById(id) {
   if (MOCK_API_ENABLED) {

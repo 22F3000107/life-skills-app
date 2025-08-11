@@ -1,4 +1,4 @@
-import { getAllStories, updateStoryStatus, deleteStory } from "/utils/api.js";
+import { getAllStories, updateStoryStatus, updateStoryStatusWithReason, deleteStory } from "/utils/api.js";
 
 export default {
   name: "ManageStories",
@@ -33,7 +33,8 @@ export default {
           title: s.title,
           skill: s.skill || "N/A",
           createdBy: s.created_by || "Unknown",
-          status: s.status.charAt(0).toUpperCase() + s.status.slice(1)
+          status: s.status.charAt(0).toUpperCase() + s.status.slice(1),
+          content: s.content || "No content available"
         }));
       } catch (err) {
         console.error("Failed to load stories:", err);
@@ -62,11 +63,19 @@ export default {
 
     async flagStory(index) {
       const story = this.stories[index];
+      const reason = prompt("Please enter the reason for flagging this story:");
+
+      if (!reason || reason.trim() === "") {
+        alert("Flag reason is required to flag the story.");
+        return;
+      }
+
       try {
         const token = localStorage.getItem("auth-token");
-        await updateStoryStatus(story.id, "flagged", token);
+        await updateStoryStatusWithReason(story.id, "flagged", reason, token);
         story.status = "Flagged";
         alert("Story flagged successfully.");
+        this.fetchStories(); // Refresh stories list to update UI
       } catch (err) {
         console.error("Error flagging story:", err);
         alert("Failed to flag story.");
@@ -185,6 +194,10 @@ export default {
                   'text-danger': previewStory.status === 'Flagged'
                 }">{{ previewStory.status }}</span>
               </p>
+              <p><strong>Content:</strong></p>
+              <div class="border rounded p-2" style="white-space: pre-wrap;">
+                {{ previewStory.content }}
+              </div>
             </div>
           </div>
         </div>

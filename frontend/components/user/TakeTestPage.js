@@ -19,11 +19,13 @@ export default {
       quizFinished: false,
       hintUsed: false,
       coins: 10,
+      feedbackCoins: 0,
       answers: [],
       loading: false,
       token: localStorage.getItem("auth-token"),
       feedback: "",
-      showResults: false
+      showResults: false,
+      currentHint: null,
     };
   },
   async mounted() {
@@ -32,7 +34,6 @@ export default {
       const data = await getQuizList(this.token);
       console.log("Quiz List API Response:", data);
 
-      // Defensive handling
       if (Array.isArray(data?.quizzes)) {
         this.quizList = data.quizzes;
       } else {
@@ -45,78 +46,105 @@ export default {
       this.loading = false;
     }
   },
-  methods: {
-    async startQuiz(quiz) {
-      try {
-        this.loading = true;
-        const data = await getQuizById(quiz.id, this.token);
-        this.questions = data.questions;
-        this.selectedQuiz = data;
-        this.currentQuestionIndex = 0;
-        this.selectedOption = null;
-        this.showFeedback = false;
-        this.quizFinished = false;
-        this.answers = [];
-        this.score = 0;
-        this.hintUsed = false;
-        this.coins = 10;
-        this.showResults = false;
-      } catch (err) {
-        console.error("Failed to fetch quiz", err.message);
-      } finally {
-        this.loading = false;
-      }
-    },
-    checkAnswer() {
-      if (this.selectedOption !== null) {
-        const current = this.questions[this.currentQuestionIndex];
-        const correctAnswer = current.options.indexOf(current.correct_answer);
-
-        const isCorrect = this.selectedOption === correctAnswer;
-        this.correct = isCorrect;
-        if (isCorrect) this.score++;
-
-        this.answers.push(current.options[this.selectedOption]);
-        this.showFeedback = true;
-      }
-    },
-    nextQuestion() {
+    methods: {
+  async startQuiz(quiz) {
+    try {
+      this.loading = true;
+      const data = await getQuizById(quiz.id, this.token);
+      this.questions = data.questions;
+      this.selectedQuiz = data;
+      this.currentQuestionIndex = 0;
       this.selectedOption = null;
       this.showFeedback = false;
-      this.hintUsed = false;
-      if (this.currentQuestionIndex < this.questions.length - 1) {
-        this.currentQuestionIndex++;
-      } else {
-        this.submitQuiz();
-      }
-    },
-    useHint() {
-      const hintCost = 3;
-      if (this.coins >= hintCost && !this.hintUsed) {
-        this.coins -= hintCost;
-        this.hintUsed = true;
-      }
-    },
-    async submitQuiz() {
-      try {
-        const quizId = this.selectedQuiz.quiz_id || this.selectedQuiz.id;
-        const result = await submitQuiz(quizId, this.answers, this.token);
-
-        this.feedback = result.feedback || "Good job!";
-        this.coins += result.coins_awarded || 0;
-        this.quizFinished = true;
-        this.showResults = true;
-      } catch (err) {
-        console.error("Quiz submission failed", err.message);
-      }
-    },
-    restartQuiz() {
-      this.selectedQuiz = null;
-      this.questions = [];
+      this.quizFinished = false;
       this.answers = [];
+      this.score = 0;
+      this.hintUsed = false;
+      this.coins = 10;
       this.showResults = false;
+      this.currentHint = null;
+    } catch (err) {
+      console.error("Failed to fetch quiz", err.message);
+    } finally {
+      this.loading = false;
     }
   },
+
+  selectOption(index) {
+    this.selectedOption = Number(index);
+  },
+
+  checkAnswer() {
+  if (this.selectedOption !== null) {
+    const current = this.questions[this.currentQuestionIndex];
+    const correctAnswerIndex = current.correct_answer; // e.g., 2
+
+    const isCorrect = this.selectedOption === correctAnswerIndex;
+    this.correct = isCorrect;
+    if (isCorrect) this.score++;
+
+    // Push the index (not the option text) for backend
+    this.answers.push(this.selectedOption);
+
+    this.showFeedback = true;
+  }
+},
+
+
+
+  nextQuestion() {
+    this.selectedOption = null;
+    this.showFeedback = false;
+    this.hintUsed = false;
+    this.currentHint = null;
+    if (this.currentQuestionIndex < this.questions.length - 1) {
+      this.currentQuestionIndex++;
+    } else {
+      this.submitQuiz();
+    }
+  },
+
+  useHint() {
+    const hintCost = 3;
+    if (this.coins >= hintCost && !this.hintUsed) {
+      this.coins -= hintCost;
+      this.hintUsed = true;
+      this.currentHint = this.questions[this.currentQuestionIndex].hint || null;
+    }
+  },
+
+  async submitQuiz() {
+  try {
+    const quizId = this.selectedQuiz.quiz_id || this.selectedQuiz.id;
+    const result = await submitQuiz(quizId, this.answers, this.token);
+
+    this.feedback = result.feedback || "Good job!";
+    this.feedbackCoins = result.coins_awarded || 0;
+    this.coins += this.feedbackCoins;
+    this.quizFinished = true;
+    this.showResults = true;
+  } catch (err) {
+    console.error("Quiz submission failed", err.message);
+  }
+},
+
+  restartQuiz() {
+    this.selectedQuiz = null;
+    this.questions = [];
+    this.answers = [];
+    this.showResults = false;
+    this.score = 0;
+    this.coins = 10;
+    this.currentHint = null;
+    this.currentQuestionIndex = 0;
+    this.selectedOption = null;
+    this.showFeedback = false;
+    this.correct = false;
+    this.quizFinished = false;
+    this.hintUsed = false;
+    this.feedback = "";
+  }
+},
   template: `
     <div class="container mt-4 mb-5">
       <div v-if="loading" class="text-center my-5">
@@ -129,10 +157,11 @@ export default {
           <h4 class="fw-bold mb-3">
             <i class="bi bi-list-task text-primary me-2"></i>Select a Quiz
           </h4>
-          <!-- No quizzes available -->
-        <div v-if="quizList.length === 0" class="alert alert-info">
-          <i class="bi bi-info-circle me-1"></i> No quizzes available at the moment.
-        </div>
+
+          <div v-if="quizList.length === 0" class="alert alert-info">
+            <i class="bi bi-info-circle me-1"></i> No quizzes available at the moment.
+          </div>
+
           <ul class="list-group shadow-sm">
             <li
               v-for="quiz in quizList"
@@ -162,7 +191,7 @@ export default {
                 class="list-group-item"
                 :class="{ 'active': selectedOption === index }"
                 style="cursor: pointer;"
-                @click="selectedOption = index"
+                @click="selectOption(index)"
               >
                 {{ option }}
               </li>
@@ -182,8 +211,9 @@ export default {
               </button>
             </div>
 
-            <div v-if="hintUsed" class="alert alert-warning mt-3">
-              <i class="bi bi-info-circle me-1"></i>Hint not available from backend.
+            <div v-if="hintUsed" class="alert mt-3" :class="currentHint ? 'alert-info' : 'alert-warning'">
+              <i class="bi bi-info-circle me-1"></i>
+              {{ currentHint || "Hint not available from backend." }}
             </div>
 
             <div v-if="showFeedback" class="mt-3">
@@ -202,7 +232,8 @@ export default {
           <h3 class="mb-3"><i class="bi bi-flag-fill text-success me-2"></i>Quiz Completed!</h3>
           <p class="fs-5">Your Score: <strong>{{ score }} / {{ questions.length }}</strong></p>
           <p class="text-info"><i class="bi bi-star-fill me-1"></i>{{ feedback }}</p>
-          <p class="text-warning"><i class="bi bi-coin me-1"></i>Coins Earned: {{ coins }}</p>
+          <p class="text-warning"><i class="bi bi-coin me-1"></i>Coins Earned: {{ feedbackCoins }}</p>
+
 
           <button class="btn btn-success mt-3" @click="restartQuiz">
             <i class="bi bi-arrow-repeat me-1"></i>Back to Quiz List

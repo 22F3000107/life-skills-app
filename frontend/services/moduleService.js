@@ -12,11 +12,13 @@ export async function fetchModules() {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
-      }});
+      },
+    });
     if (!response.ok) throw new Error("Failed to fetch modules");
     return response.json();
   }
 }
+
 
 export async function createModule(name, description) {
   if (MOCK_API_ENABLED) {

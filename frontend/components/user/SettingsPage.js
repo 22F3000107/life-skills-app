@@ -8,11 +8,15 @@ export default {
         name: "",
         email: ""
       },
-      password: '',
-      confirmPassword: '',
+      oldPassword: "",
+      password: "",
+      confirmPassword: "",
       profileSaved: false,
       passwordSaved: false,
-      passwordError: ''
+      passwordError: "",
+      showOldPassword: false,
+      showPassword: false,
+      showConfirmPassword: false
     };
   },
   async created() {
@@ -26,6 +30,9 @@ export default {
     }
   },
   methods: {
+    toggleVisibility(field) {
+      this[field] = !this[field];
+    },
     async saveProfile() {
       try {
         const token = localStorage.getItem("auth-token");
@@ -37,28 +44,49 @@ export default {
       }
     },
     async savePassword() {
+      this.passwordError = "";
+      this.passwordSaved = false;
+
+      if (!this.oldPassword || !this.password || !this.confirmPassword) {
+        this.passwordError = "Please fill in all password fields.";
+        return;
+      }
+
       if (this.password !== this.confirmPassword) {
         this.passwordError = "Passwords do not match.";
-        this.passwordSaved = false;
         return;
       }
       if (this.password.length < 6) {
         this.passwordError = "Password must be at least 6 characters.";
-        this.passwordSaved = false;
         return;
       }
 
       try {
         const token = localStorage.getItem("auth-token");
-        await changePassword({ new_password: this.password }, token);
+        const payload = {
+          old_password: this.oldPassword,
+          new_password: this.password
+        };
+        const response = await changePassword(payload, token);
+
+        if (response.error) {
+          this.passwordError = response.error;
+          return;
+        }
+
         this.passwordSaved = true;
-        this.passwordError = '';
-        this.password = '';
-        this.confirmPassword = '';
+        this.passwordError = "";
+        this.oldPassword = "";
+        this.password = "";
+        this.confirmPassword = "";
+        this.showOldPassword = false;
+        this.showPassword = false;
+        this.showConfirmPassword = false;
+
         setTimeout(() => (this.passwordSaved = false), 2000);
       } catch (error) {
         console.error("Password change failed:", error.message);
-        this.passwordError = error.message;
+        this.passwordError = "Failed to change password. Please check your old password.";
       }
     }
   },
@@ -101,14 +129,60 @@ export default {
           <i class="bi bi-lock-fill me-2"></i>Change Password
         </div>
         <div class="card-body">
-          <div class="mb-3">
+          <div class="mb-3 position-relative">
+            <label class="form-label">Old Password</label>
+            <input
+              :type="showOldPassword ? 'text' : 'password'"
+              v-model="oldPassword"
+              class="form-control"
+              autocomplete="current-password"
+            />
+            <span
+              class="password-toggle"
+              @click="toggleVisibility('showOldPassword')"
+              style="position: absolute; top: 50%; right: 12px; transform: translateY(-50%); cursor: pointer;"
+              :title="showOldPassword ? 'Hide Password' : 'Show Password'"
+            >
+              <i :class="showOldPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+            </span>
+          </div>
+
+          <div class="mb-3 position-relative">
             <label class="form-label">New Password</label>
-            <input v-model="password" type="password" class="form-control" />
+            <input
+              :type="showPassword ? 'text' : 'password'"
+              v-model="password"
+              class="form-control"
+              autocomplete="new-password"
+            />
+            <span
+              class="password-toggle"
+              @click="toggleVisibility('showPassword')"
+              style="position: absolute; top: 50%; right: 12px; transform: translateY(-50%); cursor: pointer;"
+              :title="showPassword ? 'Hide Password' : 'Show Password'"
+            >
+              <i :class="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+            </span>
           </div>
-          <div class="mb-3">
+
+          <div class="mb-3 position-relative">
             <label class="form-label">Confirm Password</label>
-            <input v-model="confirmPassword" type="password" class="form-control" />
+            <input
+              :type="showConfirmPassword ? 'text' : 'password'"
+              v-model="confirmPassword"
+              class="form-control"
+              autocomplete="new-password"
+            />
+            <span
+              class="password-toggle"
+              @click="toggleVisibility('showConfirmPassword')"
+              style="position: absolute; top: 50%; right: 12px; transform: translateY(-50%); cursor: pointer;"
+              :title="showConfirmPassword ? 'Hide Password' : 'Show Password'"
+            >
+              <i :class="showConfirmPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+            </span>
           </div>
+
           <button class="btn btn-primary" @click="savePassword">
             <i class="bi bi-key-fill me-1"></i>Update Password
           </button>
