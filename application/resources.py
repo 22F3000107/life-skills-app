@@ -26,7 +26,7 @@ from .acadapi import (
     
 )
 
-from .userapi import RegisterAPI, UserProfile,TodayHabits, SubmitHabits, WeeklyGoals, AddGoal, UpdateGoalStatus
+from .userapi import RegisterAPI, UserProfile,TodayHabits, SubmitHabits, WeeklyGoals, AddGoal, UpdateGoalStatus, StoriesListAPI
 from .userapi import QuizDetailAPI,QuizListAPI, QuizSubmitAPI, UserSkillSummaryAPI
 from .adminapi import AdminUsersAPI, AdminBlockUserAPI, AdminUnblockUserAPI, AdminDeleteUserAPI, AdminStoriesAPI, AdminUpdateStoryAPI, AdminDeleteStoryAPI,AdminGetStoryAPI
 from .adminapi import AdminQuizzesAPI, AdminCreateQuizAPI, AdminUpdateQuizAPI, AdminDeleteQuizAPI,AdminEditStoryAPI
@@ -42,6 +42,7 @@ api.add_resource(TodayHabits, "/habits/today")
 api.add_resource(SubmitHabits, "/habits/submit")
 api.add_resource(WeeklyGoals, "/weekly/goals")
 api.add_resource(AddGoal, "/add/goals")
+api.add_resource(StoriesListAPI, '/stories')
 
 api.add_resource(UpdateGoalStatus, "/goals/<int:goal_id>")
 api.add_resource(QuizListAPI, '/quizzes')

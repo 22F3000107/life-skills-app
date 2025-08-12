@@ -187,6 +187,7 @@ class Quiz(db.Model):
 
     concept = db.relationship('Concept', back_populates='quiz')
     # author = db.relationship('User', backref='quizzes', foreign_keys=[created_by])
+    quiz_questions = db.relationship('QuizQuestion', backref='quiz', lazy=True)
 
 class QuizQuestion(db.Model):
     __tablename__ = 'quiz_question'

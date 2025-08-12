@@ -1,7 +1,7 @@
 from flask import jsonify, current_app
 from flask_restful import Resource, request, reqparse, fields, marshal
 from sqlalchemy.exc import SQLAlchemyError
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from sqlalchemy import func
 
 from .models import db, User,roles_users,Acadteam,Habit,Goal,Rewards,Scores,Quiz, QuizQuestion, Story,Module,QuizAttempt
@@ -96,18 +96,7 @@ class AdminDeleteUserAPI(Resource):
             print("Delete error:", str(e))
             return {'error': 'Internal Server Error'}, 500
 
-# class AdminStoriesAPI(Resource):
-#     @jwt_required()
-#     def get(self):
-#         stories = Story.query.all()
-#         return [{
-#             "id": s.id,
-#             "title": s.title,
-#             "status": s.status,
-#             "created_by": s.created_by,
-#             "flag": s.flag,
-#             "flag_reason": s.flag_reason
-#         } for s in stories], 200
+
 
 class AdminStoriesAPI(Resource):
     @jwt_required()
@@ -151,26 +140,6 @@ class AdminGetStoryAPI(Resource):
             "flag_reason": story.flag_reason
         }, 200
 
-
-
-# class AdminUpdateStoryAPI(Resource):
-#     @jwt_required()
-#     def put(self, story_id):
-#         payload = request.get_json(silent=True) or {}
-#         new_status = (payload.get("status") or "").strip().lower()
-
-#         allowed = {"draft", "published", "flagged"}
-#         if new_status not in allowed:
-#             return {"error": "Invalid status. Allowed: draft, published, flagged"}, 400
-
-#         story = Story.query.get(story_id)
-#         if story is None:
-#             return {"error": "Story not found"}, 404
-
-#         story.status = new_status
-#         db.session.commit()
-
-#         return {"message": "Story status updated", "id": story.id, "status": story.status}, 200
 
 class AdminUpdateStoryAPI(Resource):
     @jwt_required()
@@ -257,19 +226,27 @@ class AdminQuizzesAPI(Resource):
         result = []
 
         for q in quizzes:
+            # Fetch creator details
+            creator = User.query.get(q.created_by) if q.created_by else None
+            creator_name = f"{creator.first_name} {creator.last_name}" if creator else "N/A"
+
+            # Handle quiz questions safely
+            questions_count = len(q.quiz_questions) if hasattr(q, 'quiz_questions') and q.quiz_questions else 0
+
             quiz_data = {
                 "id": q.id,
                 "title": q.title,
                 "skill": q.skill,
-                "created_by": q.created_by if q.created_by else "N/A",
+                "created_by": creator_name,
                 "status": q.status,
                 "flag": q.flag,
                 "flag_reason": q.flag_reason,
-                "questions": len(q.questions) if hasattr(q, 'questions') else 0
+                "questions": questions_count
             }
             result.append(quiz_data)
 
         return {"quizzes": result}, 200
+
     
 
 class AdminUpdateQuizAPI(Resource):
@@ -307,19 +284,7 @@ class AdminCreateQuizAPI(Resource):
         return {"message": "Quiz created successfully", "id": quiz.id}, 201
 
 
-# class AdminUpdateQuizAPI(Resource):
-#     @jwt_required()
-#     def put(self, quiz_id):
-#         quiz = Quiz.query.get(quiz_id)
-#         if not quiz:
-#             return {"error": "Quiz not found"}, 404
 
-#         data = request.get_json()
-#         quiz.title = data.get("title", quiz.title)
-#         quiz.skill = data.get("skill", quiz.skill)
-#         quiz.status = data.get("status", quiz.status)
-#         db.session.commit()
-#         return {"message": "Quiz updated successfully"}, 200
 
 
 class AdminDeleteQuizAPI(Resource):
@@ -529,12 +494,16 @@ class AdminStatsAPI(Resource):
         stories_added = Story.query.filter(Story.status.in_(["draft", "published"])).count()
         academic_members = Acadteam.query.count()
 
+        
+
+
         return {
             "total_users": total_users,
             "total_quizzes": total_quizzes,
             "flagged_items": flagged_items,
             "stories_added": stories_added,
             "academic_members": academic_members
+            
         }, 200
 
 class AdminStatsOverviewAPI(Resource):

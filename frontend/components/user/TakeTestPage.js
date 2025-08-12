@@ -1,11 +1,12 @@
-import { getQuizList, getQuizById, submitQuiz } from "../../utils/api.js";
+import { getQuizList, getStoriesList, getQuizById, submitQuiz } from "../../utils/api.js";
 
 export default {
   name: "TakeTestPage",
   data() {
     return {
-      quizList: [],
+      learningItems: [],
       selectedQuiz: null,
+      selectedStory: null,
       questions: [],
       currentQuestionIndex: 0,
       selectedOption: null,
@@ -24,123 +25,140 @@ export default {
       currentHint: null,
     };
   },
+
   async mounted() {
     try {
       this.loading = true;
-      const data = await getQuizList(this.token);
-      console.log("Quiz List API Response:", data);
 
-      if (Array.isArray(data?.quizzes)) {
-        this.quizList = data.quizzes;
-      } else {
-        console.error("Unexpected quiz list format", data);
-        this.quizList = [];
-      }
+      // Fetch quizzes
+      const quizData = await getQuizList(this.token);
+      const quizzes = Array.isArray(quizData?.quizzes) ? quizData.quizzes : [];
+
+      // Fetch stories
+      const storyData = await getStoriesList(this.token);
+      const stories = Array.isArray(storyData?.stories) ? storyData.stories : [];
+
+      // Combine with type
+      this.learningItems = [
+        ...quizzes.map(q => ({
+          ...q,
+          type: "quiz",
+          is_flagged: q.is_flagged === true // ensure boolean
+        })),
+        ...stories.map(s => ({ ...s, type: "story" })),
+      ];
     } catch (err) {
-      console.error("Error fetching quiz list", err.message);
+      console.error("Error fetching learning materials", err.message);
+      this.learningItems = [];
     } finally {
       this.loading = false;
     }
   },
-    methods: {
-  async startQuiz(quiz) {
-    try {
-      this.loading = true;
-      const data = await getQuizById(quiz.id, this.token);
-      this.questions = data.questions;
-      this.selectedQuiz = data;
+
+  methods: {
+    async startQuiz(quiz) {
+      if (quiz.is_flagged) return; // prevent starting locked quiz
+      try {
+        this.loading = true;
+        const data = await getQuizById(quiz.id, this.token);
+        this.questions = data.questions || [];
+        this.selectedQuiz = data;
+        this.selectedStory = null;
+        this.currentQuestionIndex = 0;
+        this.selectedOption = null;
+        this.showFeedback = false;
+        this.quizFinished = false;
+        this.answers = [];
+        this.score = 0;
+        this.hintUsed = false;
+        this.coins = 10;
+        this.showResults = false;
+        this.currentHint = null;
+      } catch (err) {
+        console.error("Failed to fetch quiz", err.message);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    readStory(story) {
+      this.selectedStory = story;
+      this.selectedQuiz = null;
+    },
+
+    selectOption(index) {
+      this.selectedOption = Number(index);
+    },
+
+    checkAnswer() {
+      if (this.selectedOption !== null) {
+        const current = this.questions[this.currentQuestionIndex];
+        const isCorrect = this.selectedOption === current.correct_answer;
+        this.correct = isCorrect;
+        if (isCorrect) this.score++;
+        this.answers.push(this.selectedOption);
+        this.showFeedback = true;
+      }
+    },
+
+    nextQuestion() {
+      this.selectedOption = null;
+      this.showFeedback = false;
+      this.hintUsed = false;
+      this.currentHint = null;
+      if (this.currentQuestionIndex < this.questions.length - 1) {
+        this.currentQuestionIndex++;
+      } else {
+        this.submitQuiz();
+      }
+    },
+
+    useHint() {
+      const hintCost = 3;
+      if (this.coins >= hintCost && !this.hintUsed) {
+        this.coins -= hintCost;
+        this.hintUsed = true;
+        this.currentHint = this.questions[this.currentQuestionIndex].hint || null;
+      }
+    },
+
+    async submitQuiz() {
+      try {
+        const quizId = this.selectedQuiz.quiz_id || this.selectedQuiz.id;
+        const result = await submitQuiz(quizId, this.answers, this.token);
+        this.feedback = result.feedback || "Good job!";
+        this.feedbackCoins = result.coins_awarded || 0;
+        this.coins += this.feedbackCoins;
+        this.quizFinished = true;
+        this.showResults = true;
+      } catch (err) {
+        console.error("Quiz submission failed", err.message);
+      }
+    },
+
+    restartQuiz() {
+      this.selectedQuiz = null;
+      this.selectedStory = null;
+      this.questions = [];
+      this.answers = [];
+      this.showResults = false;
+      this.score = 0;
+      this.coins = 10;
+      this.currentHint = null;
       this.currentQuestionIndex = 0;
       this.selectedOption = null;
       this.showFeedback = false;
+      this.correct = false;
       this.quizFinished = false;
-      this.answers = [];
-      this.score = 0;
       this.hintUsed = false;
-      this.coins = 10;
-      this.showResults = false;
-      this.currentHint = null;
-    } catch (err) {
-      console.error("Failed to fetch quiz", err.message);
-    } finally {
-      this.loading = false;
+      this.feedback = "";
+    },
+
+    closeStory() {
+      this.selectedStory = null;
     }
   },
 
-  selectOption(index) {
-    this.selectedOption = Number(index);
-  },
-
-  checkAnswer() {
-  if (this.selectedOption !== null) {
-    const current = this.questions[this.currentQuestionIndex];
-    const correctAnswerIndex = current.correct_answer; // e.g., 2
-
-    const isCorrect = this.selectedOption === correctAnswerIndex;
-    this.correct = isCorrect;
-    if (isCorrect) this.score++;
-
-    // Push the index (not the option text) for backend
-    this.answers.push(this.selectedOption);
-
-    this.showFeedback = true;
-  }
-},
-
-
-
-  nextQuestion() {
-    this.selectedOption = null;
-    this.showFeedback = false;
-    this.hintUsed = false;
-    this.currentHint = null;
-    if (this.currentQuestionIndex < this.questions.length - 1) {
-      this.currentQuestionIndex++;
-    } else {
-      this.submitQuiz();
-    }
-  },
-
-  useHint() {
-    const hintCost = 3;
-    if (this.coins >= hintCost && !this.hintUsed) {
-      this.coins -= hintCost;
-      this.hintUsed = true;
-      this.currentHint = this.questions[this.currentQuestionIndex].hint || null;
-    }
-  },
-
-  async submitQuiz() {
-  try {
-    const quizId = this.selectedQuiz.quiz_id || this.selectedQuiz.id;
-    const result = await submitQuiz(quizId, this.answers, this.token);
-
-    this.feedback = result.feedback || "Good job!";
-    this.feedbackCoins = result.coins_awarded || 0;
-    this.coins += this.feedbackCoins;
-    this.quizFinished = true;
-    this.showResults = true;
-  } catch (err) {
-    console.error("Quiz submission failed", err.message);
-  }
-},
-
-  restartQuiz() {
-    this.selectedQuiz = null;
-    this.questions = [];
-    this.answers = [];
-    this.showResults = false;
-    this.score = 0;
-    this.coins = 10;
-    this.currentHint = null;
-    this.currentQuestionIndex = 0;
-    this.selectedOption = null;
-    this.showFeedback = false;
-    this.correct = false;
-    this.quizFinished = false;
-    this.hintUsed = false;
-    this.feedback = "";
-  }
-},
   template: `
     <div class="container mt-4 mb-5">
       <div v-if="loading" class="text-center my-5">
@@ -148,41 +166,61 @@ export default {
       </div>
 
       <div v-else>
-        <!-- Quiz Selection -->
-        <div v-if="!selectedQuiz">
+        <!-- Learning Materials List -->
+        <div v-if="!selectedQuiz && !selectedStory">
           <h4 class="fw-bold mb-3">
-            <i class="bi bi-list-task text-primary me-2"></i>Select a Quiz
+            <i class="bi bi-list-task text-primary me-2"></i>Select a Quiz or Story
           </h4>
 
-          <div v-if="quizList.length === 0" class="alert alert-info">
-            <i class="bi bi-info-circle me-1"></i> No quizzes available at the moment.
+          <div v-if="learningItems.length === 0" class="alert alert-info">
+            <i class="bi bi-info-circle me-1"></i> No learning materials available at the moment.
           </div>
 
           <ul class="list-group shadow-sm">
             <li
-              v-for="quiz in quizList"
-              :key="quiz.id"
+              v-for="item in learningItems"
+              :key="item.id"
               class="list-group-item d-flex justify-content-between align-items-center"
+              :class="{ 'opacity-50': item.is_flagged && item.type === 'quiz' }"
             >
-              <span>{{ quiz.title }} <span class="badge bg-info text-dark ms-2">{{ quiz.skill }}</span></span>
-              <button class="btn btn-sm btn-primary" @click="startQuiz(quiz)">
-                Start
-              </button>
+              <div>
+                <strong>{{ item.title }}</strong> 
+                <span class="badge" :class="item.type === 'quiz' ? 'bg-info text-dark' : 'bg-success text-light'">
+                  {{ item.type.toUpperCase() }}
+                </span>
+                <span v-if="item.is_flagged && item.type === 'quiz'" class="text-danger ms-2">
+                  <i class="bi bi-lock-fill"></i> Locked
+                </span>
+              </div>
+              <div>
+                <button v-if="item.type === 'quiz'" 
+        class="btn btn-sm" 
+        :class="item.flag ? 'btn-secondary disabled' : 'btn-primary'"
+        :disabled="item.flag"
+        @click="!item.flag && startQuiz(item)">
+  {{ item.flag ? 'Locked' : 'Attempt Quiz' }}
+</button>
+
+                <button v-else class="btn btn-sm btn-success" @click="readStory(item)">
+                  Read Story
+                </button>
+              </div>
             </li>
           </ul>
         </div>
 
+        
         <!-- Quiz Panel -->
         <div v-if="selectedQuiz && !quizFinished" class="card shadow-sm mt-4">
           <div class="card-body">
             <h5 class="card-title mb-3">
               <i class="bi bi-question-circle me-2 text-dark"></i>
-              Q{{ currentQuestionIndex + 1 }}. {{ questions[currentQuestionIndex].question }}
+              Q{{ currentQuestionIndex + 1 }}. {{ questions[currentQuestionIndex]?.question || 'Question text missing' }}
             </h5>
 
             <ul class="list-group mb-3">
               <li
-                v-for="(option, index) in questions[currentQuestionIndex].options"
+                v-for="(option, index) in questions[currentQuestionIndex]?.options || []"
                 :key="index"
                 class="list-group-item"
                 :class="{ 'active': selectedOption === index }"
@@ -230,15 +268,27 @@ export default {
           <p class="text-info"><i class="bi bi-star-fill me-1"></i>{{ feedback }}</p>
           <p class="text-warning"><i class="bi bi-coin me-1"></i>Coins Earned: {{ feedbackCoins }}</p>
 
-
           <button class="btn btn-success mt-3" @click="restartQuiz">
             <i class="bi bi-arrow-repeat me-1"></i>Back to Quiz List
           </button>
         </div>
+
+        <!-- Story Panel -->
+        <div v-if="selectedStory" class="card shadow-sm mt-4">
+          <div class="card-body">
+            <h4>{{ selectedStory.title }}</h4>
+            <p>{{ selectedStory.content || "Story content is not available." }}</p>
+
+            <button class="btn btn-secondary mt-3" @click="closeStory">
+              Back to List
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-  `
+  `,
 };
+
 
 
 // This code defines a Vue.js component for a quiz page in a life skills application.

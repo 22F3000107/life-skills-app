@@ -177,6 +177,14 @@ export async function updateUserProfile(payload, token) {
 export async function changePassword(payload, token) {
   return await putData("/change-password", payload, token);
 }
+export async function getStoriesList(token) {
+  const response = await fetch('/api/stories', {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return response.json();
+}
 
 
 // =======================

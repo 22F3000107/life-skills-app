@@ -1,7 +1,7 @@
 from flask import jsonify, current_app
 from flask_restful import Resource, request
 from sqlalchemy.exc import SQLAlchemyError
-from .models import db, User,roles_users,Acadteam,Habit,Goal,Rewards,Scores,Quiz, QuizQuestion, QuizAttempt
+from .models import db, User,roles_users,Acadteam,Habit,Goal,Rewards,Scores,Quiz, QuizQuestion, QuizAttempt, Story
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash
 import os
@@ -206,6 +206,21 @@ class UpdateGoalStatus(Resource):
         return {"message": "Goal marked as done."}, 200
     
 
+# class QuizListAPI(Resource):
+#     @jwt_required()
+#     def get(self):
+#         quizzes = Quiz.query.all()
+#         quiz_list = []
+#         for quiz in quizzes:
+#             question_count = db.session.query(QuizQuestion).filter_by(quiz_id=quiz.id).count()
+#             quiz_list.append({
+#                 "id": quiz.id,
+#                 "title": quiz.title,
+#                 "skill": quiz.skill,
+#                 "questions": question_count
+#             })
+#         return {"quizzes": quiz_list}, 200
+
 class QuizListAPI(Resource):
     @jwt_required()
     def get(self):
@@ -217,9 +232,40 @@ class QuizListAPI(Resource):
                 "id": quiz.id,
                 "title": quiz.title,
                 "skill": quiz.skill,
-                "questions": question_count
+                "questions": question_count,
+                "status": quiz.status,   # Add status
+                "flag": quiz.flag        # Add flag
             })
         return {"quizzes": quiz_list}, 200
+
+
+# class QuizDetailAPI(Resource):
+#     @jwt_required()
+#     def get(self, quiz_id):
+#         quiz = Quiz.query.get(quiz_id)
+#         if not quiz:
+#             return {"error": "Quiz not found"}, 404
+
+#         questions = QuizQuestion.query.filter_by(quiz_id=quiz_id).all()
+
+#         questions_data = []
+#         for q in questions:
+#             # Convert each option (which is a dict) to just the text string
+#             options_text = [opt['text'] if isinstance(opt, dict) else str(opt) for opt in q.options]
+
+#             questions_data.append({
+#                 "id": q.id,
+#                 "question": q.question,
+#                 "options": options_text,
+#                 "hint": q.hint or "",
+#                 "correct_answer": q.correct_answer
+#             })
+
+#         return {
+#             "quiz_id": quiz.id,
+#             "title": quiz.title,
+#             "questions": questions_data
+#         }, 200
 
 class QuizDetailAPI(Resource):
     @jwt_required()
@@ -228,19 +274,20 @@ class QuizDetailAPI(Resource):
         if not quiz:
             return {"error": "Quiz not found"}, 404
 
+        if quiz.flag:  # If flagged, lock it
+            return {"error": "This quiz is currently unavailable."}, 403
+
         questions = QuizQuestion.query.filter_by(quiz_id=quiz_id).all()
 
         questions_data = []
-        for question in questions:
-            options = question.options
-            hint = question.hint or ""
-
+        for q in questions:
+            options_text = [opt['text'] if isinstance(opt, dict) else str(opt) for opt in q.options]
             questions_data.append({
-                "id": question.id,
-                "question": question.question,
-                "options": options,
-                "hint": hint,
-                "correct_answer": question.correct_answer  # <-- add this line
+                "id": q.id,
+                "question": q.question,
+                "options": options_text,
+                "hint": q.hint or "",
+                "correct_answer": q.correct_answer
             })
 
         return {
@@ -248,6 +295,9 @@ class QuizDetailAPI(Resource):
             "title": quiz.title,
             "questions": questions_data
         }, 200
+
+
+
 
 class QuizSubmitAPI(Resource):
     @jwt_required()
@@ -259,7 +309,7 @@ class QuizSubmitAPI(Resource):
         if not quiz:
             return {"message": "Quiz not found"}, 404
 
-        questions = quiz.questions
+        questions = quiz.quiz_questions
         max_score = len(questions)
         correct_count = 0
 
@@ -391,3 +441,22 @@ class ChangePasswordAPI(Resource):
         db.session.commit()
 
         return {"message": "Password updated successfully"}, 200
+    
+
+class StoriesListAPI(Resource):
+    @jwt_required()
+    def get(self):
+        # Query all published stories
+        stories = Story.query.filter_by(status="published").all()
+
+        # Serialize to list of dicts
+        stories_data = []
+        for story in stories:
+            stories_data.append({
+                "id": story.id,
+                "title": story.title,
+                "content": story.content,
+                "skill": story.skill,  # if you have a skill field
+            })
+
+        return jsonify({"stories": stories_data})

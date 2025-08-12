@@ -68,6 +68,7 @@ export default {
         this.stats.flaggedItems = response.flagged_items;
         this.stats.storiesAdded = response.stories_added;
         this.stats.academicMembers = response.academic_members;
+        this.stats.activeToday = response.active_today || 0; // Fallback if not provided
       } catch (err) {
         console.error("Failed to load admin stats:", err.message);
       }
