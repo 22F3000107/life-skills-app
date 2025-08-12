@@ -151,11 +151,14 @@ export async function updateQuestionStatus(id, statusData) {
       review_date: statusData.review_date,
     };
   } else {
-    const res = await fetch(`${BASE_URL}/api/question/${id}/`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(statusData),
-    });
+    const res = await fetch(`${BASE_URL}/api/question/${id}`, {
+  method: "PATCH",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
+  },
+  body: JSON.stringify(statusData),
+});
 
     if (!res.ok) throw new Error("Failed to update question status");
     return res.json();

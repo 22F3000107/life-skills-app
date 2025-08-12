@@ -91,6 +91,8 @@ class Rewards(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
     coins = db.Column(db.Integer, default=0, nullable=False)
     streak = db.Column(db.Integer, default=0, nullable=False)
+    last_completed_date = db.Column(db.Date, nullable=True)
+
 
     def __repr__(self):
         return f"<Rewards User ID: {self.user_id}, Coins: {self.coins}, Streak: {self.streak}>"

@@ -499,26 +499,44 @@ class QuestionResource(Resource):
             db.session.rollback()
             return {"error": str(e)}, 500
         
+    # @jwt_required()
+    # def patch(self, question_id):
+    #     current_user_id = get_jwt_identity()
+
+    #     try:
+    #         question = Question.query.get(question_id)
+    #         if not question:
+    #             return {"message": "Question not found."}, 404
+
+    #         # Toggle the archived status
+    #         question.is_archived = not question.is_archived
+    #         question.updated_by_id = current_user_id
+    #         db.session.commit()
+
+    #         status_msg = "archived" if question.is_archived else "unarchived"
+    #         return {"message": f"Question {status_msg} successfully."}, 200
+
+    #     except SQLAlchemyError as e:
+    #         db.session.rollback()
+    #         return {"error": str(e)}, 500
     @jwt_required()
     def patch(self, question_id):
-        current_user_id = get_jwt_identity()
+       data = request.get_json()
+       current_user_id = get_jwt_identity()
+    
+       question = Question.query.get(question_id)
+       if not question:
+          return {"message": "Question not found."}, 404
 
-        try:
-            question = Question.query.get(question_id)
-            if not question:
-                return {"message": "Question not found."}, 404
+       if "is_approved" in data:
+           question.is_approved = data["is_approved"]
+       if "review_comment" in data:
+           question.review_comment = data["review_comment"]
 
-            # Toggle the archived status
-            question.is_archived = not question.is_archived
-            question.updated_by_id = current_user_id
-            db.session.commit()
+       question.updated_by_id = current_user_id
+       db.session.commit()
+       return {"message": "Question updated successfully."}, 200
 
-            status_msg = "archived" if question.is_archived else "unarchived"
-            return {"message": f"Question {status_msg} successfully."}, 200
-
-        except SQLAlchemyError as e:
-            db.session.rollback()
-            return {"error": str(e)}, 500
 
     @jwt_required()
     def delete(self, question_id):
@@ -579,7 +597,7 @@ class QuestionsByModuleAPI(Resource):
 }, 200
 
         except SQLAlchemyError as e:
-    return {"error": str(e)}, 500
+            return {"error": str(e)}, 500
 
 # Deepak Kumar
 # SE May 34
