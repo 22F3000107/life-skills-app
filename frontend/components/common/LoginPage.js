@@ -1,4 +1,4 @@
-import { loginUser } from '/utils/api.js';  
+import { loginUser } from "../../utils/api.js";
 
 export default {
   name: "LoginPage",

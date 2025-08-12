@@ -1,4 +1,4 @@
-import { saveReminderSettings, getReminderSettings } from '/utils/api.js';
+import { saveReminderSettings, getReminderSettings } from "../../utils/api.js";
 
 export default {
   name: "ReminderSettings",

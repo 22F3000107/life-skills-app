@@ -16,7 +16,14 @@ from .acadapi import (
     AcademicQuizzesAPI,
     AcademicQuizDetailAPI,
     AcademicUpdateQuizAPI,
-    AcademicDeleteQuizAPI
+    AcademicDeleteQuizAPI,
+    StoryAPI,
+    StoryResource,
+    StoriesByConceptAPI,
+    QuizAPI,
+    QuizResource,
+    QuizzesByConceptAPI,
+    
 )
 
 from .userapi import RegisterAPI, UserProfile,TodayHabits, SubmitHabits, WeeklyGoals, AddGoal, UpdateGoalStatus
@@ -90,3 +97,12 @@ api.add_resource(AcademicQuizDetailAPI, "/academic/quiz/<int:quiz_id>")
 api.add_resource(AcademicUpdateQuizAPI, "/academic/quiz/<int:quiz_id>")
 api.add_resource(AcademicDeleteQuizAPI, "/academic/quiz/<int:quiz_id>")
 
+# Story routes
+api.add_resource(StoryAPI, '/acad/stories')
+api.add_resource(StoryResource, '/acad/stories/<int:story_id>')
+api.add_resource(StoriesByConceptAPI, '/concepts/<int:concept_id>/story')
+
+# Quiz routes  
+api.add_resource(QuizAPI, '/acad/quizzes')
+api.add_resource(QuizResource, '/acad/quizzes/<int:quiz_id>')
+api.add_resource(QuizzesByConceptAPI, '/concepts/<int:concept_id>/quiz')

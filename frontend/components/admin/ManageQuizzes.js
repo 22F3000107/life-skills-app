@@ -1,4 +1,8 @@
-import { getAdminQuizzes, updateQuiz, deleteQuizById } from '/utils/api.js';
+import {
+  getAdminQuizzes,
+  updateQuiz,
+  deleteQuizById,
+} from "../../utils/api.js";
 
 export default {
   name: "ManageQuizzes",

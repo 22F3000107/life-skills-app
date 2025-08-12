@@ -131,13 +131,17 @@ class Concept(db.Model, TimestampMixin, UserTrackingMixin):
     description = db.Column(db.String(255))
     date = db.Column(db.Date)
     live = db.Column(db.Boolean, default=False)
-    created_by_team_id = db.Column(db.Integer, db.ForeignKey('acadteam.id'))  # Renamed
+    created_by_team_id = db.Column(db.Integer, db.ForeignKey('acadteam.id'))
     flag = db.Column(db.Boolean, default=False)
     max_marks = db.Column(db.Integer)
+    type = db.Column(db.Enum("quiz", "story", name="concept_type"), nullable=False)
 
     module = db.relationship('Module', backref=db.backref('concepts', lazy=True))
     created_by_team = db.relationship('Acadteam', backref=db.backref('concepts', lazy=True))
     questions = db.relationship('Question', back_populates='concept')
+
+    quiz = db.relationship('Quiz', back_populates='concept', uselist=False)
+    story = db.relationship('Story', back_populates='concept', uselist=False)
 
 class Question(db.Model,TimestampMixin, UserTrackingMixin):
     __tablename__ = 'question'
@@ -173,14 +177,16 @@ class Scores(db.Model):
 class Quiz(db.Model):
     __tablename__ = 'quiz'
     id = db.Column(db.Integer, primary_key=True)
+    concept_id = db.Column(db.Integer, db.ForeignKey('concept.id'), nullable=False, unique=True)
     title = db.Column(db.String(100), nullable=False)
     skill = db.Column(db.String(100), nullable=False)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    status = db.Column(db.String(20), default="draft")  # draft|published|flagged
+    status = db.Column(db.String(20), default="draft")
     flag_reason = db.Column(db.String(255))
     flag = db.Column(db.Boolean, default=False)
-    questions = db.relationship('QuizQuestion', backref='quiz', lazy=True, cascade="all, delete-orphan")
-    
+
+    concept = db.relationship('Concept', back_populates='quiz')
+    # author = db.relationship('User', backref='quizzes', foreign_keys=[created_by])
 
 class QuizQuestion(db.Model):
     __tablename__ = 'quiz_question'
@@ -194,13 +200,17 @@ class QuizQuestion(db.Model):
 class Story(db.Model):
     __tablename__ = 'story'
     id = db.Column(db.Integer, primary_key=True)
+    concept_id = db.Column(db.Integer, db.ForeignKey('concept.id'), nullable=False, unique=True)
     title = db.Column(db.String(200), nullable=False)
     skill = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # optional
-    status = db.Column(db.String(20), default="draft")  # draft|published|
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    status = db.Column(db.String(20), default="draft")
     flag_reason = db.Column(db.String(255))
     flag = db.Column(db.Boolean, default=False)
+
+    concept = db.relationship('Concept', back_populates='story')
+    # author = db.relationship('User', backref='stories', foreign_keys=[created_by])
 
 class QuizAttempt(db.Model):
     __tablename__ = 'quiz_attempt'

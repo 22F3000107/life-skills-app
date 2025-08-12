@@ -1,4 +1,4 @@
-// import { createAcademicQuiz } from "/utils/api.js";
+// import { createAcademicQuiz } from "../../utils/api.js";
 
 // export default {
 //   name: "AcademicCreateQuiz",
@@ -139,7 +139,7 @@
 //   `
 // };
 
-import { createAcademicQuiz } from "/utils/api.js";
+import { createAcademicQuiz } from "../../utils/api.js";
 
 export default {
   name: "AcademicCreateQuiz",

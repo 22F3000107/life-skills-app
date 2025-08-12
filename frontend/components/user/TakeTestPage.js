@@ -1,8 +1,4 @@
-import {
-  getQuizList,
-  getQuizById,
-  submitQuiz
-} from "/utils/api.js";
+import { getQuizList, getQuizById, submitQuiz } from "../../utils/api.js";
 
 export default {
   name: "TakeTestPage",

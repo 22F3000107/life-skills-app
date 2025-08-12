@@ -1,4 +1,4 @@
-import { changeAdminPassword } from "/utils/api.js";
+import { changeAdminPassword } from "../../utils/api.js";
 
 export default {
   name: "AdminSettings",

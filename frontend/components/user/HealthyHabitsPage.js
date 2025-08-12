@@ -1,4 +1,4 @@
-import { getTodayHabits, submitHabits } from '/utils/api.js';
+import { getTodayHabits, submitHabits } from "../../utils/api.js";
 
 export default {
   name: "HealthyHabitsPage",

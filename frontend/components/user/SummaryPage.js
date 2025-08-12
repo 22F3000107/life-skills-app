@@ -1,4 +1,4 @@
-import { getUserSummary } from "/utils/api.js";
+import { getUserSummary } from "../../utils/api.js";
 
 export default {
   name: "SummaryPage",

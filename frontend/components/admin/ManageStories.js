@@ -1,4 +1,9 @@
-import { getAllStories, updateStoryStatus, updateStoryStatusWithReason, deleteStory } from "/utils/api.js";
+import {
+  getAllStories,
+  updateStoryStatus,
+  updateStoryStatusWithReason,
+  deleteStory,
+} from "../../utils/api.js";
 
 export default {
   name: "ManageStories",
