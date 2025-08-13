@@ -19,22 +19,22 @@ export default {
   },
   methods: {
     async fetchHabits() {
-      this.loading = true;
-      try {
-        const res = await getTodayHabits();
-        this.habits = res.habits.map(h => ({
-          name: h.name,
-          completed: h.completed,
-          icon: this.mapIcon(h.name)
-        }));
-      } catch (err) {
-        console.error("Error fetching habits:", err);
-        this.error = "Failed to load habits.";
-      } finally {
-        this.loading = false;
-      }
-    },
-
+    this.loading = true;
+    try {
+      const res = await getTodayHabits();
+      // Access habits inside data
+      this.habits = res.data.habits.map(h => ({
+        name: h.name,
+        completed: h.completed,
+        icon: this.mapIcon(h.name)
+      }));
+    } catch (err) {
+      console.error("Error fetching habits:", err);
+      this.error = "Failed to load habits.";
+    } finally {
+      this.loading = false;
+    }
+  },
     async submitHabits() {
       try {
         const payload = {
