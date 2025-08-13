@@ -18,7 +18,7 @@ export default {
       currentPage: 1,
       conceptsPerPage: 9,
       ageGroups: ["6-8", "9-11", "12-14", "15-18"],
-      conceptTypes: ["quiz", "story"], // New concept types
+      conceptTypes: ["quiz", "story","habits"], // New concept types
       moduleOptions: [],
       concepts: [],
       showCreatePopup: false,

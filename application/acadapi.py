@@ -1,14 +1,14 @@
 from flask import jsonify, current_app
 from flask_restful import Resource, request, reqparse, fields, marshal
 from sqlalchemy.exc import SQLAlchemyError
-from .models import db, User,roles_users,Acadteam, Role, Concept, Module, Question, Story, Quiz, QuizQuestion
+from .models import db, User,roles_users,Acadteam, Role, Concept, Module, Question, Story, Quiz, QuizQuestion, Habit
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash
 import os
 from sqlalchemy import func
 from application.sec import datastore
 import uuid
-from datetime import datetime
+from datetime import date,datetime
 import json
 
 class AcademicRegisterAPI(Resource):
@@ -302,6 +302,9 @@ class ConceptAPI(Resource):
                     created_by=current_user_id
                 )
                 db.session.add(new_story)
+            # For habits type, no additional table entry is needed
+            elif concept_type == "habits":
+                pass  # Habits are stored only in the concept table
 
             db.session.commit()
 
@@ -1256,3 +1259,341 @@ class QuizzesByConceptAPI(Resource):
                 
         except SQLAlchemyError as e:
             return {"message": "Internal server error."}, 500
+
+
+# Response fields for habits (basic info)
+habits_fields = {
+    'id': fields.Integer,
+    'module_id': fields.Integer,
+    'name': fields.String,
+    'description': fields.String,
+    'date': fields.DateTime(dt_format='iso8601'),
+    'live': fields.Boolean,
+    'created_by_id': fields.Integer,
+    'updated_by_id': fields.Integer,
+    'created_at': fields.DateTime(dt_format='iso8601'),
+    'updated_at': fields.DateTime(dt_format='iso8601'),
+    'flag': fields.Boolean,
+    'max_marks': fields.Integer,
+    'question_count': fields.Integer,
+    'age_groups': fields.List(fields.String),
+    'type': fields.String
+}
+
+# Response fields for individual habit with questions
+habit_detail_fields = {
+    'id': fields.Integer,
+    'module_id': fields.Integer,
+    'name': fields.String,
+    'description': fields.String,
+    'date': fields.DateTime(dt_format='iso8601'),
+    'live': fields.Boolean,
+    'created_by_id': fields.Integer,
+    'updated_by_id': fields.Integer,
+    'created_at': fields.DateTime(dt_format='iso8601'),
+    'updated_at': fields.DateTime(dt_format='iso8601'),
+    'flag': fields.Boolean,
+    'max_marks': fields.Integer,
+    'question_count': fields.Integer,
+    'age_groups': fields.List(fields.String),
+    'type': fields.String,
+    'questions': fields.List(fields.Nested(question_fields))
+}
+
+class HabitsAPI(Resource):
+    """API for getting all habits"""
+    
+    def options(self):
+        return {}, 200
+    
+    @jwt_required()
+    def get(self):
+        """Get all habits with basic information"""
+        try:
+            # Filter concepts to only get habits type
+            habits = Concept.query.filter_by(type='habits').all()
+            
+            if habits:
+                enriched_habits = []
+                for habit in habits:
+                    habit_data = marshal(habit, habits_fields)
+                    habit_data['question_count'] = len(habit.questions)
+                    
+                    # Extract unique age groups from associated questions
+                    age_groups = list({
+                        age.strip()
+                        for q in habit.questions if q.age_group
+                        for group in q.age_group if isinstance(group, str)
+                        for age in group.split(",")
+                    })
+                    habit_data['age_groups'] = sorted(age_groups) if age_groups else []
+                    enriched_habits.append(habit_data)
+
+                return {
+                    "status": "success",
+                    "message": "Habits retrieved successfully",
+                    "data": {
+                        "habits": enriched_habits,
+                        "total_count": len(enriched_habits)
+                    }
+                }, 200
+            else:
+                return {
+                    "status": "success", 
+                    "message": "No habits found",
+                    "data": {
+                        "habits": [], 
+                        "total_count": 0
+                    }
+                }, 200
+                
+        except SQLAlchemyError as e:
+            return {
+                "status": "error",
+                "message": "Internal server error",
+                "error": str(e)
+            }, 500
+
+
+class HabitDetailAPI(Resource):
+    """API for getting individual habit with full question details"""
+    
+    def options(self, habit_id):
+        return {}, 200
+    
+    @jwt_required()
+    def get(self, habit_id):
+        """Get a specific habit by ID with all associated questions"""
+        try:
+            habit = Concept.query.filter_by(id=habit_id, type='habits').first()
+            
+            if not habit:
+                return {
+                    "status": "error",
+                    "message": "Habit not found"
+                }, 404
+
+            # Marshal the habit with questions
+            habit_data = marshal(habit, habit_detail_fields)
+            
+            # Add question count
+            habit_data['question_count'] = len(habit.questions)
+            
+            # Extract and add age groups from questions
+            age_set = set()
+            for question in habit.questions:
+                if question.age_group:
+                    if isinstance(question.age_group, list):
+                        for group in question.age_group:
+                            if isinstance(group, str):
+                                age_set.update([age.strip() for age in group.split(",")])
+                            else:
+                                age_set.add(str(group).strip())
+                    elif isinstance(question.age_group, str):
+                        age_set.update([age.strip() for age in question.age_group.split(",")])
+            
+            habit_data['age_groups'] = sorted(list(age_set)) if age_set else []
+            
+            return {
+                "status": "success",
+                "message": "Habit retrieved successfully",
+                "data": {
+                    "habit": habit_data
+                }
+            }, 200
+            
+        except SQLAlchemyError as e:
+            return {
+                "status": "error",
+                "message": "Internal server error",
+                "error": str(e)
+            }, 500
+# Request parser for date parameter (optional)
+user_habits_parser = reqparse.RequestParser()
+user_habits_parser.add_argument('date', type=str, required=False, help='Date in YYYY-MM-DD format (default: today)')
+
+# Response fields for user habits
+user_habit_fields = {
+    'id': fields.Integer,
+    'user_id': fields.Integer,
+    'name': fields.String,
+    'completed': fields.Boolean,
+    'date': fields.DateTime(dt_format='iso8601')
+}
+
+class UserHabitsAPI(Resource):
+    """API for getting user's habits for a specific date (default: today)"""
+    
+    def options(self):
+        return {}, 200
+    
+    @jwt_required()
+    def get(self):
+        """Get user's habits for current date or specified date"""
+        args = user_habits_parser.parse_args()
+        current_user_id = get_jwt_identity()
+        
+        # Parse date or use today
+        try:
+            if args.get('date'):
+                target_date = datetime.strptime(args['date'], "%Y-%m-%d").date()
+            else:
+                target_date = date.today()
+        except ValueError:
+            return {
+                "status": "error",
+                "message": "Invalid date format. Use YYYY-MM-DD format."
+            }, 400
+        
+        try:
+            # Get all habits for the user on the target date
+            user_habits = Habit.query.filter_by(
+                user_id=current_user_id,
+                date=target_date
+            ).all()
+            
+            if user_habits:
+                habits_data = marshal(user_habits, user_habit_fields)
+                
+                # Separate completed and not completed
+                completed_habits = [h for h in habits_data if h['completed']]
+                pending_habits = [h for h in habits_data if not h['completed']]
+                
+                return {
+                    "status": "success",
+                    "message": "User habits retrieved successfully",
+                    "data": {
+                        "date": target_date.isoformat(),
+                        "all_habits": habits_data,
+                        "completed_habits": completed_habits,
+                        "pending_habits": pending_habits,
+                        "total_count": len(habits_data),
+                        "completed_count": len(completed_habits),
+                        "pending_count": len(pending_habits)
+                    }
+                }, 200
+            else:
+                return {
+                    "status": "success",
+                    "message": f"No habits found for {target_date.isoformat()}",
+                    "data": {
+                        "date": target_date.isoformat(),
+                        "all_habits": [],
+                        "completed_habits": [],
+                        "pending_habits": [],
+                        "total_count": 0,
+                        "completed_count": 0,
+                        "pending_count": 0
+                    }
+                }, 200
+                
+        except SQLAlchemyError as e:
+            return {
+                "status": "error",
+                "message": "Internal server error",
+                "error": str(e)
+            }, 500
+
+
+class UserCompletedHabitsAPI(Resource):
+    """API for getting only completed habits for user"""
+    
+    def options(self):
+        return {}, 200
+    
+    @jwt_required()
+    def get(self):
+        """Get user's completed habits for current date or specified date"""
+        args = user_habits_parser.parse_args()
+        current_user_id = get_jwt_identity()
+        
+        # Parse date or use today
+        try:
+            if args.get('date'):
+                target_date = datetime.strptime(args['date'], "%Y-%m-%d").date()
+            else:
+                target_date = date.today()
+        except ValueError:
+            return {
+                "status": "error",
+                "message": "Invalid date format. Use YYYY-MM-DD format."
+            }, 400
+        
+        try:
+            # Get only completed habits for the user on the target date
+            completed_habits = Habit.query.filter_by(
+                user_id=current_user_id,
+                date=target_date,
+                completed=True
+            ).all()
+            
+            habits_data = marshal(completed_habits, user_habit_fields)
+            
+            return {
+                "status": "success",
+                "message": "Completed habits retrieved successfully",
+                "data": {
+                    "date": target_date.isoformat(),
+                    "completed_habits": habits_data,
+                    "completed_count": len(habits_data)
+                }
+            }, 200
+                
+        except SQLAlchemyError as e:
+            return {
+                "status": "error",
+                "message": "Internal server error",
+                "error": str(e)
+            }, 500
+
+
+class UserPendingHabitsAPI(Resource):
+    """API for getting only pending (not completed) habits for user"""
+    
+    def options(self):
+        return {}, 200
+    
+    @jwt_required()
+    def get(self):
+        """Get user's pending habits for current date or specified date"""
+        args = user_habits_parser.parse_args()
+        current_user_id = get_jwt_identity()
+        
+        # Parse date or use today
+        try:
+            if args.get('date'):
+                target_date = datetime.strptime(args['date'], "%Y-%m-%d").date()
+            else:
+                target_date = date.today()
+        except ValueError:
+            return {
+                "status": "error",
+                "message": "Invalid date format. Use YYYY-MM-DD format."
+            }, 400
+        
+        try:
+            # Get only pending habits for the user on the target date
+            pending_habits = Habit.query.filter_by(
+                user_id=current_user_id,
+                date=target_date,
+                completed=False
+            ).all()
+            
+            habits_data = marshal(pending_habits, user_habit_fields)
+            
+            return {
+                "status": "success",
+                "message": "Pending habits retrieved successfully",
+                "data": {
+                    "date": target_date.isoformat(),
+                    "pending_habits": habits_data,
+                    "pending_count": len(habits_data)
+                }
+            }, 200
+                
+        except SQLAlchemyError as e:
+            return {
+                "status": "error",
+                "message": "Internal server error",
+                "error": str(e)
+            }, 500

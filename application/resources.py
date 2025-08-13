@@ -23,6 +23,11 @@ from .acadapi import (
     QuizAPI,
     QuizResource,
     QuizzesByConceptAPI,
+    HabitsAPI,
+    HabitDetailAPI,
+    UserHabitsAPI,
+    UserCompletedHabitsAPI,
+    UserPendingHabitsAPI,
     
 )
 
@@ -107,3 +112,12 @@ api.add_resource(StoriesByConceptAPI, '/concepts/<int:concept_id>/story')
 api.add_resource(QuizAPI, '/acad/quizzes')
 api.add_resource(QuizResource, '/acad/quizzes/<int:quiz_id>')
 api.add_resource(QuizzesByConceptAPI, '/concepts/<int:concept_id>/quiz')
+
+#Habits routes
+api.add_resource(HabitsAPI, '/acad/habits')
+api.add_resource(HabitDetailAPI, '/acad/habits/<int:habit_id>')
+
+api.add_resource(UserHabitsAPI, '/user/habits')                    # All habits for user
+api.add_resource(UserCompletedHabitsAPI, '/user/habits/completed') # Only completed habits
+api.add_resource(UserPendingHabitsAPI, '/user/habits/pending')     # Only pending habits  
+         # Habit completion stats
