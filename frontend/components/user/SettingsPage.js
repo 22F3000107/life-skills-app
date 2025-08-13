@@ -1,4 +1,8 @@
-import { getUserProfile, updateUserProfile, changePassword } from "/utils/api.js";
+import {
+  getUserProfile,
+  updateUserProfile,
+  changePassword,
+} from "../../utils/api.js";
 
 export default {
   name: "SettingsPage",

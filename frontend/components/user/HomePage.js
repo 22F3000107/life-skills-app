@@ -1,4 +1,4 @@
-import { getUserProfile } from '/utils/api.js';
+import { getUserProfile } from "../../utils/api.js";
 
 export default {
   name: "HomePage",

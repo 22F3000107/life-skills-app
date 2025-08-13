@@ -16,10 +16,17 @@ from .acadapi import (
     AcademicQuizzesAPI,
     AcademicQuizDetailAPI,
     AcademicUpdateQuizAPI,
-    AcademicDeleteQuizAPI
+    AcademicDeleteQuizAPI,
+    StoryAPI,
+    StoryResource,
+    StoriesByConceptAPI,
+    QuizAPI,
+    QuizResource,
+    QuizzesByConceptAPI,
+    
 )
 
-from .userapi import RegisterAPI, UserProfile,TodayHabits, SubmitHabits, WeeklyGoals, AddGoal, UpdateGoalStatus
+from .userapi import RegisterAPI, UserProfile,TodayHabits, SubmitHabits, WeeklyGoals, AddGoal, UpdateGoalStatus, StoriesListAPI
 from .userapi import QuizDetailAPI,QuizListAPI, QuizSubmitAPI, UserSkillSummaryAPI
 from .adminapi import AdminUsersAPI, AdminBlockUserAPI, AdminUnblockUserAPI, AdminDeleteUserAPI, AdminStoriesAPI, AdminUpdateStoryAPI, AdminDeleteStoryAPI,AdminGetStoryAPI
 from .adminapi import AdminQuizzesAPI, AdminCreateQuizAPI, AdminUpdateQuizAPI, AdminDeleteQuizAPI,AdminEditStoryAPI
@@ -35,6 +42,7 @@ api.add_resource(TodayHabits, "/habits/today")
 api.add_resource(SubmitHabits, "/habits/submit")
 api.add_resource(WeeklyGoals, "/weekly/goals")
 api.add_resource(AddGoal, "/add/goals")
+api.add_resource(StoriesListAPI, '/stories')
 
 api.add_resource(UpdateGoalStatus, "/goals/<int:goal_id>")
 api.add_resource(QuizListAPI, '/quizzes')
@@ -90,3 +98,12 @@ api.add_resource(AcademicQuizDetailAPI, "/academic/quiz/<int:quiz_id>")
 api.add_resource(AcademicUpdateQuizAPI, "/academic/quiz/<int:quiz_id>")
 api.add_resource(AcademicDeleteQuizAPI, "/academic/quiz/<int:quiz_id>")
 
+# Story routes
+api.add_resource(StoryAPI, '/acad/stories')
+api.add_resource(StoryResource, '/acad/stories/<int:story_id>')
+api.add_resource(StoriesByConceptAPI, '/concepts/<int:concept_id>/story')
+
+# Quiz routes  
+api.add_resource(QuizAPI, '/acad/quizzes')
+api.add_resource(QuizResource, '/acad/quizzes/<int:quiz_id>')
+api.add_resource(QuizzesByConceptAPI, '/concepts/<int:concept_id>/quiz')

@@ -1,4 +1,8 @@
-import { getFlaggedContent, unflagContent, deleteFlaggedContent } from "/utils/api.js";
+import {
+  getFlaggedContent,
+  unflagContent,
+  deleteFlaggedContent,
+} from "../../utils/api.js";
 
 export default {
   name: "FlaggedContent",

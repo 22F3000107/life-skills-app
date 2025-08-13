@@ -546,6 +546,15 @@ export default {
             <i class="bi bi-archive-fill nav-icon"></i>
             <span class="nav-text" v-if="!isCollapsed">Archive</span>
           </router-link>
+          <router-link 
+            to="/acad/contents" 
+            exact-active-class="active" 
+            class="nav-link sidebar-link"
+            @click="closeMobileMenu"
+          >
+            <i class="bi bi-archive-fill nav-icon"></i>
+            <span class="nav-text" v-if="!isCollapsed">Contents</span>
+          </router-link>
 
           <!-- Academic Role Only Links -->
           <template v-if="role === 'academic'">

@@ -33,6 +33,7 @@ import ReviewPage from "../components/acad/ReviewPage.js";
 import ArchivedQuestionsPage from "../components/acad/ArchivedQuestionsPage.js";
 import AcademicCreateStory from "../components/acad/AcademicCreateStory.js";
 import AcademicCreateQuiz from "../components/acad/AcademicCreateQuiz.js";
+import ContentManagement from '../components/acad/ContentManagement.js';
 
 // Define routes
 const routes = [
@@ -104,6 +105,11 @@ const routes = [
     name: "ArchivedQuestionsPage",
     component: ArchivedQuestionsPage,
   },
+  {
+    path:"/acad/contents",
+    name: "AcadContents",
+    component: ContentManagement
+  }
 ];
 
 

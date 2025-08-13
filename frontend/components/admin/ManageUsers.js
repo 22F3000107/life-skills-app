@@ -1,4 +1,9 @@
-import { getAllUsers, blockUser, unblockUser, deleteUser } from '/utils/api.js';
+import {
+  getAllUsers,
+  blockUser,
+  unblockUser,
+  deleteUser,
+} from "../../utils/api.js";
 
 export default {
   name: "ManageUsers",

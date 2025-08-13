@@ -1,4 +1,8 @@
-import { getAdminOverviewStats, getQuizAttemptsByRange, getSkillEngagement } from "/utils/api.js";
+import {
+  getAdminOverviewStats,
+  getQuizAttemptsByRange,
+  getSkillEngagement,
+} from "../../utils/api.js";
 
 export default {
   name: "ReportsAnalytics",

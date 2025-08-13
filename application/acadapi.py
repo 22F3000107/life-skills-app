@@ -190,6 +190,7 @@ concept_parser.add_argument('date', type=str, required=False, help='Date of conc
 concept_parser.add_argument('live', type=bool, required=False, help='Is concept live?')
 concept_parser.add_argument('max_marks', type=int, required=False, help='Maximum marks for a concept.')
 concept_parser.add_argument('question_ids', type=list, location='json')
+concept_parser.add_argument('type', type=str, required = True, help='Type of concept is required.')
 
 concept_fields = {
     'id': fields.Integer,
@@ -206,6 +207,7 @@ concept_fields = {
     'max_marks': fields.Integer,
     'question_count': fields.Integer,
     'age_groups': fields.List(fields.String, attribute=lambda c: [q.age_group for q in c.questions if q.age_group]),
+    'type':fields.String
 }
 
 class ConceptAPI(Resource):
@@ -248,12 +250,13 @@ class ConceptAPI(Resource):
         max_marks = args.get('max_marks')
         question_ids = args.get('question_ids')
         current_user_id = get_jwt_identity()
+        concept_type = args.get('type')
 
         try:
             if Concept.query.filter_by(name=name).first():
                 return {"message": "Concept with this name already exists."}, 400
 
-            concept_date = datetime.strptime(date, "%d-%m-%Y").date() if date else None
+            concept_date = datetime.strptime(date, "%Y-%m-%d").date() if date else None
 
             acad_team_member = Acadteam.query.filter_by(user_id=current_user_id).first()
             if not acad_team_member:
@@ -267,19 +270,42 @@ class ConceptAPI(Resource):
                 live=live,
                 max_marks=max_marks,
                 created_by_id=current_user_id,
-                updated_by_id=current_user_id
+                updated_by_id=current_user_id,
+                type=concept_type
             )
             db.session.add(new_concept)
-            db.session.commit()
-    
-            for q_id in question_ids:
-                question = Question.query.get(q_id)
-                if question:
-                    question.concept_id = new_concept.id
+            db.session.flush()  # get new_concept.id without committing
+
+            # Map questions to concept
+            if question_ids:
+                for q_id in question_ids:
+                    question = Question.query.get(q_id)
+                    if question:
+                        question.concept_id = new_concept.id
+
+            # Create quiz or story entry
+            if concept_type == "quiz":
+                new_quiz = Quiz(
+                    concept_id=new_concept.id,
+                    title=name,
+                    skill=description or "",
+                    created_by=current_user_id
+                )
+                db.session.add(new_quiz)
+
+            elif concept_type == "story":
+                new_story = Story(
+                    concept_id=new_concept.id,
+                    title=name,
+                    skill=description or "",
+                    content="",  # can be updated later
+                    created_by=current_user_id
+                )
+                db.session.add(new_story)
+
             db.session.commit()
 
-            return {"message": "Concept created and linked to questions successfully."}, 201
-
+            return {"message": f"Concept created as {concept_type} and linked successfully."}, 201
 
         except SQLAlchemyError as e:
             db.session.rollback()
@@ -323,14 +349,17 @@ class ConceptResource(Resource):
         live = args.get('live', False)
         max_marks = args.get('max_marks')
         current_user_id = get_jwt_identity()
+        new_type = args.get('type')
 
         try:
             concept = Concept.query.get(concept_id)
             if not concept:
                 return {"message": "Concept not found."}, 404
 
-            concept_date = datetime.strptime(date, "%d-%m-%Y").date() if date else None
+            old_type = concept.type
+            concept_date = datetime.strptime(date, "%Y-%m-%d").date() if date else None
 
+            # Update concept fields
             concept.module_id = module_id
             concept.name = name
             concept.description = description
@@ -338,8 +367,49 @@ class ConceptResource(Resource):
             concept.live = live
             concept.max_marks = max_marks
             concept.updated_by_id = current_user_id
-            db.session.commit()
+            concept.type = new_type
 
+            # Handle type changes
+            if old_type != new_type:
+                # Delete old linked record
+                if old_type == "quiz":
+                    Quiz.query.filter_by(concept_id=concept.id).delete()
+                elif old_type == "story":
+                    Story.query.filter_by(concept_id=concept.id).delete()
+
+                # Create new linked record
+                if new_type == "quiz":
+                    new_quiz = Quiz(
+                        concept_id=concept.id,
+                        title=name,
+                        skill=description or "",
+                        created_by=current_user_id
+                    )
+                    db.session.add(new_quiz)
+                elif new_type == "story":
+                    new_story = Story(
+                        concept_id=concept.id,
+                        title=name,
+                        skill=description or "",
+                        content="",
+                        created_by=current_user_id
+                    )
+                    db.session.add(new_story)
+
+            else:
+                # If type is unchanged, just update the linked record’s title/skill
+                if new_type == "quiz":
+                    quiz = Quiz.query.filter_by(concept_id=concept.id).first()
+                    if quiz:
+                        quiz.title = name
+                        quiz.skill = description or ""
+                elif new_type == "story":
+                    story = Story.query.filter_by(concept_id=concept.id).first()
+                    if story:
+                        story.title = name
+                        story.skill = description or ""
+
+            db.session.commit()
             return {"message": "Concept updated successfully."}, 200
 
         except SQLAlchemyError as e:
@@ -579,7 +649,7 @@ class QuestionsByModuleAPI(Resource):
 }, 200
 
         except SQLAlchemyError as e:
-    return {"error": str(e)}, 500
+            return {"error": str(e)}, 500
 
 # Deepak Kumar
 # SE May 34
@@ -786,3 +856,403 @@ class AcademicDeleteQuizAPI(Resource):
         db.session.commit()
 
         return {"message": "Quiz deleted successfully"}, 200
+
+# Story fields for serialization
+story_fields = {
+    'id': fields.Integer,
+    'concept_id': fields.Integer,
+    'title': fields.String,
+    'skill': fields.String,
+    'content': fields.String,
+    'status': fields.String,
+    'flag': fields.Boolean,
+    'flag_reason': fields.String,
+    'created_by': fields.Integer,
+    'created_at': fields.DateTime(dt_format='iso8601'),
+    'updated_at': fields.DateTime(dt_format='iso8601'),
+}
+
+# Quiz fields for serialization
+quiz_fields = {
+    'id': fields.Integer,
+    'concept_id': fields.Integer,
+    'title': fields.String,
+    'skill': fields.String,
+    'status': fields.String,
+    'flag': fields.Boolean,
+    'flag_reason': fields.String,
+    'created_by': fields.Integer,
+    'created_at': fields.DateTime(dt_format='iso8601'),
+    'updated_at': fields.DateTime(dt_format='iso8601'),
+}
+
+# Enhanced story fields with concept and author info
+story_detailed_fields = {
+    'id': fields.Integer,
+    'concept_id': fields.Integer,
+    'title': fields.String,
+    'skill': fields.String,
+    'content': fields.String,
+    'status': fields.String,
+    'flag': fields.Boolean,
+    'flag_reason': fields.String,
+    'created_by': fields.Integer,
+    'created_at': fields.DateTime(dt_format='iso8601'),
+    'updated_at': fields.DateTime(dt_format='iso8601'),
+    'concept': fields.Nested({
+        'id': fields.Integer,
+        'name': fields.String,
+        'description': fields.String,
+        'module_id': fields.Integer,
+        'live': fields.Boolean,
+        'max_marks': fields.Integer,
+        'question_count': fields.Integer,
+    }),
+    'author': fields.Nested({
+        'id': fields.Integer,
+        'name': fields.String,
+        'email': fields.String,
+    }),
+}
+
+# Enhanced quiz fields with concept and author info
+quiz_detailed_fields = {
+    'id': fields.Integer,
+    'concept_id': fields.Integer,
+    'title': fields.String,
+    'skill': fields.String,
+    'status': fields.String,
+    'flag': fields.Boolean,
+    'flag_reason': fields.String,
+    'created_by': fields.Integer,
+    'created_at': fields.DateTime(dt_format='iso8601'),
+    'updated_at': fields.DateTime(dt_format='iso8601'),
+    'concept': fields.Nested({
+        'id': fields.Integer,
+        'name': fields.String,
+        'description': fields.String,
+        'module_id': fields.Integer,
+        'live': fields.Boolean,
+        'max_marks': fields.Integer,
+        'question_count': fields.Integer,
+    }),
+    'author': fields.Nested({
+        'id': fields.Integer,
+        'name': fields.String,
+        'email': fields.String,
+    }),
+}
+
+# Story API - Get all stories
+class StoryAPI(Resource):
+    def options(self):
+        return {}, 200
+    
+    @jwt_required()
+    def get(self):
+        """Get all stories with optional filters"""
+        try:
+            # Get query parameters for filtering
+            status = request.args.get('status')  # draft, published, flagged
+            concept_id = request.args.get('concept_id', type=int)
+            module_id = request.args.get('module_id', type=int)
+            created_by = request.args.get('created_by', type=int)
+            
+            # Build query
+            query = Story.query
+            
+            # Apply filters
+            if status:
+                query = query.filter(Story.status == status)
+            if concept_id:
+                query = query.filter(Story.concept_id == concept_id)
+            if created_by:
+                query = query.filter(Story.created_by == created_by)
+            if module_id:
+                query = query.join(Concept).filter(Concept.module_id == module_id)
+            
+            stories = query.all()
+            
+            if stories:
+                enriched_stories = []
+                for story in stories:
+                    story_data = marshal(story, story_detailed_fields)
+                    # Add question count from concept
+                    if story.concept:
+                        story_data['concept']['question_count'] = len(story.concept.questions)
+                    enriched_stories.append(story_data)
+                
+                return enriched_stories, 200
+            else:
+                return {"message": "No stories found."}, 404
+                
+        except SQLAlchemyError as e:
+            return {"message": "Internal server error."}, 500
+
+# Individual Story API - Get, Update, Delete specific story
+class StoryResource(Resource):
+    def options(self, story_id):
+        return {}, 200
+    
+    @jwt_required()
+    def get(self, story_id):
+        """Get a specific story by ID"""
+        try:
+            story = Story.query.get(story_id)
+            if story:
+                story_data = marshal(story, story_detailed_fields)
+                # Add question count from concept
+                if story.concept:
+                    story_data['concept']['question_count'] = len(story.concept.questions)
+                return story_data, 200
+            else:
+                return {"message": "Story not found."}, 404
+                
+        except SQLAlchemyError as e:
+            return {"message": "Internal server error."}, 500
+    
+    @jwt_required()
+    def put(self, story_id):
+        """Update a specific story"""
+        try:
+            story = Story.query.get(story_id)
+            if not story:
+                return {"message": "Story not found."}, 404
+            
+            data = request.get_json()
+            current_user_id = get_jwt_identity()
+            
+            # Update fields if provided
+            if 'title' in data:
+                story.title = data['title']
+            if 'skill' in data:
+                story.skill = data['skill']
+            if 'content' in data:
+                story.content = data['content']
+            if 'status' in data:
+                story.status = data['status']
+            if 'flag' in data:
+                story.flag = data['flag']
+            if 'flag_reason' in data:
+                story.flag_reason = data['flag_reason']
+            
+            # Update timestamp
+            story.updated_at = datetime.utcnow()
+            
+            db.session.commit()
+            
+            return {"message": "Story updated successfully."}, 200
+            
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+    
+    @jwt_required()
+    def delete(self, story_id):
+        """Delete a specific story"""
+        try:
+            story = Story.query.get(story_id)
+            if not story:
+                return {"message": "Story not found."}, 404
+            
+            db.session.delete(story)
+            db.session.commit()
+            
+            return {"message": "Story deleted successfully."}, 200
+            
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return {"message": "Internal server error."}, 500
+
+# Quiz API - Get all quizzes
+class QuizAPI(Resource):
+    def options(self):
+        return {}, 200
+    
+    @jwt_required()
+    def get(self):
+        """Get all quizzes with optional filters"""
+        try:
+            # Get query parameters for filtering
+            status = request.args.get('status')  # draft, published, flagged
+            concept_id = request.args.get('concept_id', type=int)
+            module_id = request.args.get('module_id', type=int)
+            created_by = request.args.get('created_by', type=int)
+            
+            # Build query
+            query = Quiz.query
+            
+            # Apply filters
+            if status:
+                query = query.filter(Quiz.status == status)
+            if concept_id:
+                query = query.filter(Quiz.concept_id == concept_id)
+            if created_by:
+                query = query.filter(Quiz.created_by == created_by)
+            if module_id:
+                query = query.join(Concept).filter(Concept.module_id == module_id)
+            
+            quizzes = query.all()
+            
+            if quizzes:
+                enriched_quizzes = []
+                for quiz in quizzes:
+                    quiz_data = marshal(quiz, quiz_detailed_fields)
+                    # Add question count from concept
+                    if quiz.concept:
+                        quiz_data['concept']['question_count'] = len(quiz.concept.questions)
+                    enriched_quizzes.append(quiz_data)
+                
+                return enriched_quizzes, 200
+            else:
+                return {"message": "No quizzes found."}, 404
+                
+        except SQLAlchemyError as e:
+            return {"message": "Internal server error."}, 500
+
+# Individual Quiz API - Get, Update, Delete specific quiz
+class QuizResource(Resource):
+    def options(self, quiz_id):
+        return {}, 200
+    
+    @jwt_required()
+    def get(self, quiz_id):
+        """Get a specific quiz by ID"""
+        try:
+            quiz = Quiz.query.get(quiz_id)
+            if quiz:
+                quiz_data = marshal(quiz, quiz_detailed_fields)
+                # Add question count from concept
+                if quiz.concept:
+                    quiz_data['concept']['question_count'] = len(quiz.concept.questions)
+                    # Add questions list for quiz
+                    quiz_data['questions'] = [
+                        {
+                            'id': q.id,
+                            'question_statement': q.question_statement,
+                            'type': q.type,
+                            'age_group': q.age_group,
+                        } for q in quiz.concept.questions
+                    ]
+                return quiz_data, 200
+            else:
+                return {"message": "Quiz not found."}, 404
+                
+        except SQLAlchemyError as e:
+            return {"message": "Internal server error."}, 500
+    
+    @jwt_required()
+    def put(self, quiz_id):
+        """Update a specific quiz"""
+        try:
+            quiz = Quiz.query.get(quiz_id)
+            if not quiz:
+                return {"message": "Quiz not found."}, 404
+            
+            data = request.get_json()
+            current_user_id = get_jwt_identity()
+            
+            # Update fields if provided
+            if 'title' in data:
+                quiz.title = data['title']
+            if 'skill' in data:
+                quiz.skill = data['skill']
+            if 'status' in data:
+                quiz.status = data['status']
+            if 'flag' in data:
+                quiz.flag = data['flag']
+            if 'flag_reason' in data:
+                quiz.flag_reason = data['flag_reason']
+            
+            # Update timestamp
+            quiz.updated_at = datetime.utcnow()
+            
+            db.session.commit()
+            
+            return {"message": "Quiz updated successfully."}, 200
+            
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+    
+    @jwt_required()
+    def delete(self, quiz_id):
+        """Delete a specific quiz"""
+        try:
+            quiz = Quiz.query.get(quiz_id)
+            if not quiz:
+                return {"message": "Quiz not found."}, 404
+            
+            db.session.delete(quiz)
+            db.session.commit()
+            
+            return {"message": "Quiz deleted successfully."}, 200
+            
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return {"message": "Internal server error."}, 500
+
+# Stories by Concept API
+class StoriesByConceptAPI(Resource):
+    def options(self, concept_id):
+        return {}, 200
+    
+    @jwt_required()
+    def get(self, concept_id):
+        """Get all stories for a specific concept"""
+        try:
+            concept = Concept.query.get(concept_id)
+            if not concept:
+                return {"message": "Concept not found."}, 404
+            
+            if concept.type != 'story':
+                return {"message": "Concept is not of type 'story'."}, 400
+            
+            story = Story.query.filter_by(concept_id=concept_id).first()
+            if story:
+                story_data = marshal(story, story_detailed_fields)
+                if story.concept:
+                    story_data['concept']['question_count'] = len(story.concept.questions)
+                return story_data, 200
+            else:
+                return {"message": "No story found for this concept."}, 404
+                
+        except SQLAlchemyError as e:
+            return {"message": "Internal server error."}, 500
+
+# Quizzes by Concept API
+class QuizzesByConceptAPI(Resource):
+    def options(self, concept_id):
+        return {}, 200
+    
+    @jwt_required()
+    def get(self, concept_id):
+        """Get quiz for a specific concept"""
+        try:
+            concept = Concept.query.get(concept_id)
+            if not concept:
+                return {"message": "Concept not found."}, 404
+            
+            if concept.type != 'quiz':
+                return {"message": "Concept is not of type 'quiz'."}, 400
+            
+            quiz = Quiz.query.filter_by(concept_id=concept_id).first()
+            if quiz:
+                quiz_data = marshal(quiz, quiz_detailed_fields)
+                if quiz.concept:
+                    quiz_data['concept']['question_count'] = len(quiz.concept.questions)
+                    # Add questions for the quiz
+                    quiz_data['questions'] = [
+                        {
+                            'id': q.id,
+                            'question_statement': q.question_statement,
+                            'type': q.type,
+                            'age_group': q.age_group,
+                        } for q in quiz.concept.questions
+                    ]
+                return quiz_data, 200
+            else:
+                return {"message": "No quiz found for this concept."}, 404
+                
+        except SQLAlchemyError as e:
+            return {"message": "Internal server error."}, 500
