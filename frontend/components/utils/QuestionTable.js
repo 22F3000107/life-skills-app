@@ -190,18 +190,18 @@ export default {
                 <td class="px-4 py-4 text-center">
                   <span
                     class="badge px-3 py-2 fs-6 position-relative"
-                    :class="getStatusBadgeClass(mode === 'simple' ? q.status : getStatusLabel(q.status))"
+                    :class="getStatusBadgeClass(mode === 'simple' ? q.is_approved : getStatusLabel(q.is_approved))"
                     style="border-radius: 20px;"
                   >
                     <i v-if="mode === 'simple'"
                       class="me-2"
                       :class="{
-                        'bi bi-check-circle': q.status === 'Approved',
-                        'bi bi-x-circle': q.status === 'Rejected',
-                        'bi bi-clock': q.status === 'Pending'
+                        'bi bi-check-circle': q.is_approved === true,
+                        'bi bi-x-circle': q.is_approved ===false,
+                        'bi bi-clock': q.is_approved ===null
                       }"
                     ></i>
-                    {{ mode === 'simple' ? q.status : getStatusLabel(q.status) }}
+                    {{ mode === 'simple' ? q.is_approved : getStatusLabel(q.is_approved) }}
                   </span>
                 </td>
                 <td class="px-4 py-4 text-center">

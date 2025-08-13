@@ -1,7 +1,7 @@
 from flask import jsonify, current_app
 from flask_restful import Resource, request
 from sqlalchemy.exc import SQLAlchemyError
-from .models import db, User,roles_users,Acadteam,Habit,Goal,Rewards,Scores,Quiz, QuizQuestion, QuizAttempt, Story
+from .models import db, User,roles_users,Acadteam,Habit,Goal,Rewards,Scores,Quiz, QuizQuestion, QuizAttempt, Story, Concept, Question
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash
 import os
@@ -9,7 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import func, select
 from application.sec import datastore
 import uuid
-from datetime import datetime, date
+from datetime import datetime, date,timedelta
 import json, pickle
 from sqlalchemy import text
 class RegisterAPI(Resource):
@@ -89,9 +89,62 @@ class TodayHabits(Resource):
     @jwt_required()
     def get(self):
         current_user_id = get_jwt_identity()
+
+        # Check if user already has habits for today
         habits = Habit.query.filter_by(user_id=current_user_id, date=date.today()).all()
-        habits_data = [{"name": h.name, "completed": h.completed} for h in habits]
-        return {"habits": habits_data}, 200
+
+        if not habits:
+            # Find concepts of type 'habits' that have today's date
+            today_concepts = Concept.query.filter(
+                Concept.type == 'habits',
+                Concept.date == date.today(),
+                Concept.live == True  # Only live/active concepts
+            ).all()
+            print(f"Today's concepts for user {current_user_id}: {[c.name for c in today_concepts]}")
+
+            if today_concepts:
+                # Get all questions from today's habit concepts
+                for concept in today_concepts:
+                    questions = Question.query.filter_by(
+                        concept_id=concept.id,
+                        is_approved=True,
+                        is_archived=False
+                    ).all()
+
+                    if questions:
+                        for q in questions:
+                            new_habit = Habit(
+                                user_id=current_user_id,
+                                name=q.question_statement.strip() if q.question_statement else None,
+                                completed=False,
+                                date=date.today()
+                            )
+                            db.session.add(new_habit)
+
+                db.session.commit()
+
+                # Refresh habits after creating new ones
+                habits = Habit.query.filter_by(user_id=current_user_id, date=date.today()).all()
+
+        # Return habits data with additional info
+        habits_data = []
+        for h in habits:
+            habits_data.append({
+                "id": h.id,
+                "name": h.name,
+                "completed": h.completed
+            })
+
+        return {
+            "status": "success",
+            "message": "Today's habits retrieved successfully",
+            "data": {
+                "date": date.today().isoformat(),
+                "habits": habits_data,
+                "total_habits": len(habits_data),
+                "completed_habits": len([h for h in habits_data if h["completed"]])
+            }
+        }, 200
 
 
 class SubmitHabits(Resource):
@@ -100,56 +153,102 @@ class SubmitHabits(Resource):
         current_user_id = get_jwt_identity()
         data = request.get_json()
 
-        habits = data.get("habits", [])
-        if not habits or not isinstance(habits, list):
-            return {"error": "Invalid or missing habits data."}, 400
+        habits_list = data.get("habits", [])
+        if not habits_list or not isinstance(habits_list, list):
+            return {
+                "status": "error",
+                "message": "Invalid or missing habits data."
+            }, 400
 
         completed_count = 0
-        for habit_data in habits:
-            name = habit_data.get("name")
-            completed = habit_data.get("completed", False)
 
-            if not name:
-                continue  
+        try:
+            # Update or create today's habits
+            for habit_data in habits_list:
+                name = habit_data.get("name")
+                completed = habit_data.get("completed", False)
+                habit_id = habit_data.get("id")  # Optional: if you're passing habit IDs
 
-            habit = Habit.query.filter_by(
-                user_id=current_user_id,
-                name=name,
-                date=date.today()
-            ).first()
+                if not name:
+                    continue
 
-            if habit:
-                habit.completed = completed
-            else:
-                habit = Habit(
-                    user_id=current_user_id,
-                    name=name,
-                    completed=completed,
-                    date=date.today()
-                )
-                db.session.add(habit)
+                # Find habit by ID first, then by name if no ID provided
+                habit = None
+                if habit_id:
+                    habit = Habit.query.filter_by(
+                        id=habit_id,
+                        user_id=current_user_id,
+                        date=date.today()
+                    ).first()
+                
+                if not habit:
+                    habit = Habit.query.filter_by(
+                        user_id=current_user_id,
+                        name=name,
+                        date=date.today()
+                    ).first()
 
-            if completed:
-                completed_count += 1
+                if habit:
+                    habit.completed = completed
+                else:
+                    # Create new habit if it doesn't exist
+                    habit = Habit(
+                        user_id=current_user_id,
+                        name=name,
+                        completed=completed,
+                        date=date.today()
+                    )
+                    db.session.add(habit)
 
-        rewards = Rewards.query.filter_by(user_id=current_user_id).first()
-        if not rewards:
-            rewards = Rewards(user_id=current_user_id, coins=0, streak=0)
-            db.session.add(rewards)
+                if completed:
+                    completed_count += 1
 
-        rewards.coins = rewards.coins or 0
-        rewards.streak = rewards.streak or 0
+            # Fetch or create rewards record
+            rewards = Rewards.query.filter_by(user_id=current_user_id).first()
+            if not rewards:
+                rewards = Rewards(user_id=current_user_id, coins=0, streak=0, last_completed_date=None)
+                db.session.add(rewards)
 
-        coins_awarded = completed_count * 10
-        rewards.coins += coins_awarded
+            # Coin calculation
+            coins_awarded = completed_count * 10
+            rewards.coins = (rewards.coins or 0) + coins_awarded
 
-        db.session.commit()
+            # Streak logic — only if ALL habits are completed today
+            total_habits_today = Habit.query.filter_by(user_id=current_user_id, date=date.today()).count()
+            all_habits_completed = total_habits_today > 0 and completed_count == total_habits_today
 
-        return {
-            "message": "Habits submitted successfully.",
-            "reward_earned": completed_count > 0,
-            "coins_awarded": coins_awarded
-        }, 200
+            if all_habits_completed:
+                # Check if yesterday was last streak date (continuous)
+                if rewards.last_completed_date == date.today() - timedelta(days=1):
+                    rewards.streak += 1
+                else:
+                    rewards.streak = 1  # reset to 1
+                rewards.last_completed_date = date.today()
+            
+            db.session.commit()
+
+            return {
+                "status": "success",
+                "message": "Habits submitted successfully.",
+                "data": {
+                    "reward_earned": completed_count > 0,
+                    "coins_awarded": coins_awarded,
+                    "total_coins": rewards.coins,
+                    "streak": rewards.streak,
+                    "completed_count": completed_count,
+                    "total_habits": total_habits_today,
+                    "all_habits_completed": all_habits_completed
+                }
+            }, 200
+
+        except Exception as e:
+            db.session.rollback()
+            return {
+                "status": "error",
+                "message": "Failed to submit habits.",
+                "error": str(e)
+            }, 500
+
 
 
 class WeeklyGoals(Resource):

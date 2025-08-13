@@ -43,7 +43,7 @@ export default {
         question: q.question_statement,
         age: q.age_group[0],
         type: q.type,
-        status: q.status,
+        status: q.is_approved,
       }));
     },
 

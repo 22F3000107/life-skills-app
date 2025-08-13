@@ -1,5 +1,5 @@
 // AcademicCreateStory.js
-import { createAcademicStory } from "/utils/api.js";
+import { createAcademicStory } from "../../utils/api.js";
 
 export default {
   name: "AcademicCreateStory",

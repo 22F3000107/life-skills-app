@@ -47,3 +47,17 @@ export async function fetchConceptById(id) {
   if (!res.ok) throw new Error("Concept not found");
   return res.json();
 }
+
+export async function patchConceptById(id, data) {
+  const res = await fetch(`${BASE_URL}/api/concept/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
+    },
+    body: JSON.stringify({ live: data }),
+  });
+
+  if (!res.ok) throw new Error("Failed to update concept");
+  return res.json();
+}

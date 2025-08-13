@@ -18,7 +18,7 @@ export default {
       selectedModule: "",
       selectedType: "",
       selectedAge: "",
-      selectedStatus: "Pending",
+      selectedStatus: null,
 
       questionTypes: ["MCQ", "MSQ", "True/False", "Matching"],
       moduleOptions: [],
@@ -162,7 +162,7 @@ export default {
         // Transform the data to include review-specific fields
         this.questions = allQuestions.map((q) => ({
           ...q,
-          status: q.status || "Pending",
+          status: q.is_approved ,
           review_date: q.review_date || null,
           reviewer: q.reviewer || null,
           review_comment: q.review_comment || "",
@@ -266,12 +266,9 @@ export default {
 
       try {
         this.isSaving = true;
-        await updateQuestionStatus(questionToApprove.id, {
-          status: "Approved",
-          review_comment: this.reviewComment,
-          reviewer: "Current User", // Replace with actual user
-          review_date: new Date().toISOString(),
-        });
+        await updateQuestionStatus(questionToApprove.id, 
+          { is_approved: true }
+        );
 
         // Update local data
         questionToApprove.status = "Approved";
@@ -301,12 +298,7 @@ export default {
 
       try {
         this.isSaving = true;
-        await updateQuestionStatus(questionToReject.id, {
-          status: "Rejected",
-          review_comment: this.reviewComment,
-          reviewer: "Current User", // Replace with actual user
-          review_date: new Date().toISOString(),
-        });
+        await updateQuestionStatus(questionToReject.id, { is_approved: false });
 
         // Update local data
         questionToReject.status = "Rejected";
@@ -334,12 +326,7 @@ export default {
       try {
         this.isSaving = true;
         const promises = this.selectedQuestions.map((id) =>
-          updateQuestionStatus(id, {
-            status: "Approved",
-            review_comment: this.bulkComment,
-            reviewer: "Current User",
-            review_date: new Date().toISOString(),
-          })
+          updateQuestionStatus(id, { is_approved: true })
         );
 
         await Promise.all(promises);
@@ -376,12 +363,7 @@ export default {
       try {
         this.isSaving = true;
         const promises = this.selectedQuestions.map((id) =>
-          updateQuestionStatus(id, {
-            status: "Rejected",
-            review_comment: this.bulkComment,
-            reviewer: "Current User",
-            review_date: new Date().toISOString(),
-          })
+          updateQuestionStatus(id, { is_approved: false })
         );
 
         await Promise.all(promises);
