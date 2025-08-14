@@ -6,7 +6,7 @@ This guide will help you set up and run the application locally on your machine.
 
 Before getting started, make sure you have the following installed on your system:
 
-- Node.js and npm
+- Node.js and npm (latest version)
 - Python 3
 
 ## Installation and Setup
@@ -28,29 +28,23 @@ Install the required Node.js dependencies:
 npm install
 ```
 
-### 3. Start the Servers
+To install Python dependencies, execute the following command : 
 
-You'll need to run two separate Python HTTP servers for the frontend and mock server.
-
-#### Start the Mock Server
-
-Open a terminal window and run:
-
-```bash
-python3 -m http.server 5001
+```
+pip install -r "requirements.txt"
 ```
 
-#### Start the Frontend Server
+### 3. Start the Servers
 
-Open another terminal window and run:
+You'll need to run the server using the following command
 
-```bash
-python3 -m http.server 5500
+```
+python3 main.py
 ```
 
 ### 4. Access the Application
 
-Once both servers are running, open your web browser and navigate to:
+Once the server starts running, open your web browser and navigate to:
 
 ```
 http://localhost:5500/frontend/index.html
@@ -59,12 +53,25 @@ http://localhost:5500/frontend/index.html
 ### 5. Folder Structure
 ```
 .
+├── __pycache__
+│   ├── config.cpython-310.pyc
+│   └── main.cpython-310.pyc
 ├── application
+│   ├── __pycache__
+│   │   ├── acadapi.cpython-310.pyc
+│   │   ├── adminapi.cpython-310.pyc
+│   │   ├── instances.cpython-310.pyc
+│   │   ├── models.cpython-310.pyc
+│   │   ├── resources.cpython-310.pyc
+│   │   ├── sec.cpython-310.pyc
+│   │   └── userapi.cpython-310.pyc
+│   ├── acadapi.py
 │   ├── adminapi.py
 │   ├── instances.py
 │   ├── models.py
 │   ├── resources.py
-│   └── sec.py
+│   ├── sec.py
+│   └── userapi.py
 ├── config.py
 ├── frontend
 │   ├── components
@@ -74,6 +81,7 @@ http://localhost:5500/frontend/index.html
 │   │   │   ├── ArchivedQuestionsPage.js
 │   │   │   ├── ConceptPage.js
 │   │   │   ├── ConceptQuestionsPage.js
+│   │   │   ├── ContentManagement.js
 │   │   │   ├── EditQuestionPage.js
 │   │   │   ├── IndividualModulePage.js
 │   │   │   ├── IndividualQuestionPage.js
@@ -96,14 +104,49 @@ http://localhost:5500/frontend/index.html
 │   │   │   ├── LoginPage.js
 │   │   │   ├── PublicNavbar.js
 │   │   │   └── RegistrationPage.js
-│   │   └── user
-│   │       ├── GoalTrackerPage.js
-│   │       ├── HealthyHabitsPage.js
-│   │       ├── HomePage.js
-│   │       ├── SettingsPage.js
-│   │       ├── SummaryPage.js
-│   │       ├── TakeTestPage.js
-│   │       └── UserNavbar.js
+│   │   ├── user
+│   │   │   ├── GoalTrackerPage.js
+│   │   │   ├── HealthyHabitsPage.js
+│   │   │   ├── HomePage.js
+│   │   │   ├── SettingsPage.js
+│   │   │   ├── SummaryPage.js
+│   │   │   ├── TakeTestPage.js
+│   │   │   └── UserNavbar.js
+│   │   └── utils
+│   │       ├── AlertMessages.js
+│   │       ├── AnswerOptions.js
+│   │       ├── ArchivedQuestionsHeader.js
+│   │       ├── ArchivedQuestionsStats.js
+│   │       ├── ArchivedQuestionsTable.js
+│   │       ├── BulkActionsModal.js
+│   │       ├── DeleteModal.js
+│   │       ├── EditAnswerOptions.js
+│   │       ├── EditMatchingOptions.js
+│   │       ├── EditMCQOptions.js
+│   │       ├── EditQuestionHeader.js
+│   │       ├── EditTrueFalseOptions.js
+│   │       ├── ErrorState.js
+│   │       ├── ImageModel.js
+│   │       ├── LoadingState.js
+│   │       ├── MatchingOptions.js
+│   │       ├── MCQOptions.js
+│   │       ├── MediaDisplay.js
+│   │       ├── MediaUpload.js
+│   │       ├── ModuleHeader.js
+│   │       ├── QuestionContentForm.js
+│   │       ├── QuestionDetailsForm.js
+│   │       ├── QuestionFilters.js
+│   │       ├── QuestionFormHeader.js
+│   │       ├── QuestionHeader.js
+│   │       ├── QuestionMetaData.js
+│   │       ├── QuestionPagination.js
+│   │       ├── QuestionStats.js
+│   │       ├── QuestionTable.js
+│   │       ├── QuestionTableRow.js
+│   │       ├── QuestionText.js
+│   │       ├── RestoreModal.js
+│   │       ├── SaveActions.js
+│   │       └── TrueFalseOptions.js
 │   ├── css
 │   │   └── style.css
 │   ├── images
@@ -125,16 +168,20 @@ http://localhost:5500/frontend/index.html
 │   │       ├── questions.json
 │   │       └── questionsByModule.json
 │   ├── README.md
-│   ├── services // for fetch data using mock server or real API
+│   ├── services
 │   │   ├── acadService.js
 │   │   ├── api.js
+│   │   ├── conceptService.js
 │   │   ├── moduleService.js
-│   │   └── questionService.js
+│   │   ├── questionService.js
+│   │   └── storyQuizService.js
 │   ├── static
+│   │   ├── index.html
 │   │   └── index.js
 │   ├── store
 │   │   └── index.js
 │   └── utils
+│       ├── api.js
 │       ├── router.js
 │       └── store.js
 ├── instance
@@ -143,7 +190,8 @@ http://localhost:5500/frontend/index.html
 ├── package-lock.json
 ├── package.json
 ├── README.md
-└── requirements.txt
+├── requirements.txt
+└── upload_initial_data.py
 ```
 
 ## Test Accounts
@@ -152,15 +200,13 @@ The application comes with pre-configured test accounts for different user roles
 
 | Role     | Email             | Password     |
 | -------- | ----------------- | ------------ |
-| Admin    | admin@example.com | any password |
-| User     | user@example.com  | any password |
-| Academic | acad@email.com    | any password |
+| Admin    | admin@email.com | admin |
+| User     | user@email.com  | user1234 |
+| Academic | acad@email.com    | acad1234 |
 
-You can use any password when logging in with these test accounts.
 
 ## Troubleshooting
 
-- **Port conflicts**: If ports 5001 or 5500 are already in use, you can specify different ports by adding the port number after the command (e.g., `python3 -m http.server 8080`)
 - **Python command not found**: Try using `python` instead of `python3` if you're on Windows
-- **Permission errors**: Make sure you have the necessary permissions to run servers on the specified ports
+
 
