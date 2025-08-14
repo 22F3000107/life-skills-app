@@ -91,6 +91,10 @@ export async function archiveQuestion(id) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
       },
+
+      body: JSON.stringify({
+        is_archived: true, // unarchive
+      }),
     });
     if (!res.ok) throw new Error("Failed to archive question");
     return res.json();
