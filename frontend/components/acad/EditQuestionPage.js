@@ -7,9 +7,11 @@ import { SaveActions } from "../utils/SaveActions.js";
 import { QuestionStats } from "../utils/QuestionStats.js";
 import { LoadingState } from "../utils/LoadingState.js";
 import { ErrorState } from "../utils/ErrorState.js";
-import { fetchQuestionById, updateQuestion } from "../../services/questionService.js";
+import {
+  fetchQuestionById,
+  updateQuestion,
+} from "../../services/questionService.js";
 import { fetchModules } from "../../services/moduleService.js";
-
 
 export default {
   name: "EditQuestionPage",
@@ -136,9 +138,9 @@ export default {
         this.isLoading = false;
       }
     },
-    getStatusLabel(status) {
-      if (status === true) return "Approved";
-      else if (status === false) return "Rejected";
+    getStatusLabel(is_approved) {
+      if (is_approved === true) return "Approved";
+      else if (is_approved === false) return "Rejected";
       else return "Pending";
     },
 

@@ -85,73 +85,6 @@ class UserProfile(Resource):
 
 
 
-# class TodayHabits(Resource):
-#     @jwt_required()
-#     def get(self):
-#         current_user_id = get_jwt_identity()
-#         habits = Habit.query.filter_by(user_id=current_user_id, date=date.today()).all()
-#         habits_data = [{"name": h.name, "completed": h.completed} for h in habits]
-#         return {"habits": habits_data}, 200
-
-
-# class SubmitHabits(Resource):
-#     @jwt_required()
-#     def post(self):
-#         current_user_id = get_jwt_identity()
-#         data = request.get_json()
-
-#         habits = data.get("habits", [])
-#         if not habits or not isinstance(habits, list):
-#             return {"error": "Invalid or missing habits data."}, 400
-
-#         completed_count = 0
-#         for habit_data in habits:
-#             name = habit_data.get("name")
-#             completed = habit_data.get("completed", False)
-
-#             if not name:
-#                 continue  
-
-#             habit = Habit.query.filter_by(
-#                 user_id=current_user_id,
-#                 name=name,
-#                 date=date.today()
-#             ).first()
-
-#             if habit:
-#                 habit.completed = completed
-#             else:
-#                 habit = Habit(
-#                     user_id=current_user_id,
-#                     name=name,
-#                     completed=completed,
-#                     date=date.today()
-#                 )
-#                 db.session.add(habit)
-
-#             if completed:
-#                 completed_count += 1
-
-#         rewards = Rewards.query.filter_by(user_id=current_user_id).first()
-#         if not rewards:
-#             rewards = Rewards(user_id=current_user_id, coins=0, streak=0)
-#             db.session.add(rewards)
-
-#         rewards.coins = rewards.coins or 0
-#         rewards.streak = rewards.streak or 0
-
-#         coins_awarded = completed_count * 10
-#         rewards.coins += coins_awarded
-
-#         db.session.commit()
-
-#         return {
-#             "message": "Habits submitted successfully.",
-#             "reward_earned": completed_count > 0,
-#             "coins_awarded": coins_awarded
-#         }, 200
-
-
 class TodayHabits(Resource):
     @jwt_required()
     def get(self):
@@ -160,7 +93,6 @@ class TodayHabits(Resource):
         habits = Habit.query.filter_by(user_id=current_user_id, date=date.today()).all()
 
         if not habits:
-            from sqlalchemy import func
             concept = Concept.query.filter(func.lower(Concept.name) == "healthy habits").first()
             if concept:
                 questions = Question.query.filter_by(

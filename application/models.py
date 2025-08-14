@@ -135,7 +135,7 @@ class Concept(db.Model, TimestampMixin, UserTrackingMixin):
     created_by_team_id = db.Column(db.Integer, db.ForeignKey('acadteam.id'))
     flag = db.Column(db.Boolean, default=False)
     max_marks = db.Column(db.Integer)
-    type = db.Column(db.Enum("quiz", "story", name="concept_type"), nullable=False)
+    type = db.Column(db.Enum("quiz", "story","habits", name="concept_type"), nullable=False)
 
     module = db.relationship('Module', backref=db.backref('concepts', lazy=True))
     created_by_team = db.relationship('Acadteam', backref=db.backref('concepts', lazy=True))

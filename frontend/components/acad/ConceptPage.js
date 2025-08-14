@@ -2,6 +2,7 @@ import {
   fetchConcepts,
   createConcept,
   fetchConceptById,
+  patchConceptById
 } from "../../services/conceptService.js";
 import { fetchQuestionsByModule } from "../../services/questionService.js";
 import { fetchModules } from "../../services/moduleService.js";
@@ -18,7 +19,7 @@ export default {
       currentPage: 1,
       conceptsPerPage: 9,
       ageGroups: ["6-8", "9-11", "12-14", "15-18"],
-      conceptTypes: ["quiz", "story"], // New concept types
+      conceptTypes: ["quiz", "story","habits"], // New concept types
       moduleOptions: [],
       concepts: [],
       showCreatePopup: false,
@@ -182,16 +183,17 @@ export default {
         this.concepts = await fetchConcepts();
       } catch (error) {
         console.error("Create concept failed:", error);
-        alert("Failed to create concept.");
       } finally {
         this.isLoading = false;
       }
     },
-    toggleStatus(concept, event) {
+    async toggleStatus(concept, event) {
       event.preventDefault();
       event.stopPropagation();
-      concept.live = !concept.live;
-      // You might want to call an API to update the status
+      const newStatus = !concept.live;
+      concept.live = newStatus; // optimistic UI update
+
+      await patchConceptById(concept.id, newStatus);
     },
     async fetchQuestions() {
       if (!this.filterModule) {
@@ -252,11 +254,16 @@ export default {
       const icons = {
         quiz: "bi-question-circle",
         story: "bi-book",
+        habits: "bi-lightbulb",
       };
       return icons[type] || "bi-lightbulb";
     },
     getTypeIcon(type) {
-      return type === "quiz" ? "bi-question-circle-fill" : "bi-book-fill";
+      return type === "quiz"
+        ? "primary"
+        : type === "habits"
+        ? "info"
+        : "secondary";
     },
     getTypeColor(type) {
       return type === "quiz" ? "primary" : "info";
@@ -572,7 +579,7 @@ export default {
                           </div>
 
                           <div class="mb-3" v-if="concept.date">
-                            <small class="text-muted">Created</small>
+                            <small class="text-muted">Date</small>
                             <div class="fw-medium text-dark small">{{ formatDate(concept.date) }}</div>
                           </div>
                           
@@ -708,6 +715,9 @@ export default {
                     </option>
                     <option value="story">
                       <i class="bi bi-book-fill"></i> Story
+                    </option>
+                      <option value="habits">
+                      <i class="bi bi-lightbulb"></i> Habits
                     </option>
                   </select>
                 </div>

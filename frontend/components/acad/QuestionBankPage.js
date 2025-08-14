@@ -53,7 +53,7 @@ export default {
           (this.selectedAges.length === 0 ||
             q.age_group.some((age) => this.selectedAges.includes(age))) &&
           (this.selectedStatuses.length === 0 ||
-            this.selectedStatuses.includes(this.getStatusLabel(q.status)))
+            this.selectedStatuses.includes(this.getStatusLabel(q.is_approved)))
       );
 
       return filtered.sort((a, b) => {
@@ -97,9 +97,9 @@ export default {
   },
 
   methods: {
-    getStatusLabel(status) {
-      if (status === true) return "Approved";
-      else if (status === false) return "Rejected";
+    getStatusLabel(is_approved) {
+      if (is_approved === true) return "Approved";
+      else if (is_approved === false) return "Rejected";
       else return "Pending";
     },
 
