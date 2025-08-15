@@ -48,6 +48,9 @@ class User(db.Model, UserMixin):
     fs_uniquifier = db.Column(db.String(255), unique=True, nullable=False)
     active = db.Column(db.Boolean(), default=True)
     registered = db.Column(db.DateTime, default=datetime.utcnow)
+         # NEW COLUMN
+    last_login = db.Column(db.DateTime, nullable=True)
+
 
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
@@ -224,3 +227,18 @@ class QuizAttempt(db.Model):
 
     user = db.relationship('User', backref=db.backref('quiz_attempts', lazy=True))
     quiz = db.relationship('Quiz', backref=db.backref('attempts', lazy=True))
+
+class ReminderSetting(db.Model):
+    __tablename__ = "reminder_settings"
+
+    id = db.Column(db.Integer, primary_key=True)
+    # Weekly reminder time
+    minute_weekly = db.Column(db.String(2), default="0")   # "00" to "59"
+    hour_weekly = db.Column(db.String(2), default="9")     # "0" to "23"
+
+    # Inactive reminder time
+    minute_inactive = db.Column(db.String(2), default="0") # "00" to "59"
+    hour_inactive = db.Column(db.String(2), default="9")   # "0" to "23"
+
+    # Only used for weekly reminders, default is Monday
+    day_of_week = db.Column(db.String(15), default="monday", nullable=True)

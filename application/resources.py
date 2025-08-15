@@ -32,7 +32,7 @@ from .adminapi import AdminUsersAPI, AdminBlockUserAPI, AdminUnblockUserAPI, Adm
 from .adminapi import AdminQuizzesAPI, AdminCreateQuizAPI, AdminUpdateQuizAPI, AdminDeleteQuizAPI,AdminEditStoryAPI
 from .adminapi import AdminFlaggedContentAPI,AdminUnflagContentAPI,AdminDeleteFlaggedContentAPI, ChangePasswordAdminAPI
 from .userapi import ChangePasswordAPI
-from .adminapi import AdminStatsAPI,AdminStatsOverviewAPI,AdminQuizAttemptsAPI, AdminSkillEngagementAPI
+from .adminapi import AdminStatsAPI,AdminStatsOverviewAPI,AdminQuizAttemptsAPI, AdminSkillEngagementAPI,WeeklyReminderAPI,InactiveReminderAPI
 api = Api(prefix='/api')
 api.add_resource(LoginAPI, '/login')
 api.add_resource(RegisterAPI, '/register/user')
@@ -107,3 +107,6 @@ api.add_resource(StoriesByConceptAPI, '/concepts/<int:concept_id>/story')
 api.add_resource(QuizAPI, '/acad/quizzes')
 api.add_resource(QuizResource, '/acad/quizzes/<int:quiz_id>')
 api.add_resource(QuizzesByConceptAPI, '/concepts/<int:concept_id>/quiz')
+
+api.add_resource(WeeklyReminderAPI, '/admin/WeeklyReminder')
+api.add_resource(InactiveReminderAPI, '/admin/InactiveReminder')

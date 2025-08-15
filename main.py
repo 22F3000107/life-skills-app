@@ -10,7 +10,11 @@ from application.sec import datastore
 from application.instances import cache
 from werkzeug.security import generate_password_hash
 import uuid
-
+# add this part
+from application.worker import celery_init_app
+from application.tasks import weekly_reminder,send_reminder_to_inactive
+from application.models import ReminderSetting
+from celery.schedules import crontab
 
 def sync_questions_to_quiz_questions():
     print("Starting sync of Question -> QuizQuestion...")
@@ -116,7 +120,41 @@ def create_app():
 
 
 app = create_app()
+celery_app = celery_init_app(app)
 
+# @celery_app.on_after_configure.connect
+# def send_email(sender, **kwargs):
+#     weekly = ReminderSetting.query.get(1)
+#     sender.add_periodic_task(
+#             crontab(minute=int(weekly.minute_weekly), 
+#                     hour=int(weekly.hour_weekly), 
+#                     day_of_week=weekly.day_of_week.lower()),
+#             weekly_reminder.s()
+#         )
+
+# @celery_app.on_after_configure.connect
+# def setup_periodic_tasks(sender, **kwargs):
+#     inactive = ReminderSetting.query.get(2)
+#     sender.add_periodic_task(
+#             crontab(minute=int(inactive.minute_inactive), 
+#                     hour=int(inactive.hour_inactive)),
+#             send_reminder_to_inactive.s()
+#         )
+
+
+@celery_app.on_after_configure.connect
+def send_email(sender, **kwargs):
+    sender.add_periodic_task(
+            crontab(minute='*'),
+            weekly_reminder.s()
+        )
+
+@celery_app.on_after_configure.connect
+def setup_periodic_tasks(sender, **kwargs):
+    sender.add_periodic_task(
+            crontab(minute='*'),
+            send_reminder_to_inactive.s()
+        )
 
 @app.route("/")
 def serve_index():
