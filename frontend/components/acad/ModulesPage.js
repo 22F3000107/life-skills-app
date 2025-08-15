@@ -1,9 +1,10 @@
-import { fetchModules,createModule } from "../../services/moduleService.js";
+import { fetchModules, createModule } from "../../services/moduleService.js";
 
 export default {
   name: "ModulesPage",
   data() {
     return {
+      isCreating: false,
       showCreatePopup: false,
       newModule: {
         name: "",
@@ -352,17 +353,12 @@ export default {
           <p class="text-muted">Please wait while we fetch your modules.</p>
         </div>
 
-        <!-- No Results -->
-        <div v-else-if="filteredModules.length === 0" class="text-center py-5">
-          <div class="empty-state">
-            <i class="fas fa-search text-muted mb-3" style="font-size: 3rem;"></i>
-            <h5>No modules found</h5>
-            <p class="text-muted mb-4">Try adjusting your search criteria or create a new module.</p>
-            <button class="btn btn-primary" @click="showCreatePopup = true">
-              <i class="fas fa-plus me-2"></i>Create Your First Module
-            </button>
-          </div>
-        </div>
+        <div v-if="paginatedModules.length === 0" class="col-12">
+    <div class="bg-white border rounded text-center py-5 text-muted">
+      <i class="fas fa-info-circle me-2"></i>
+      No modules available.
+    </div>
+  </div>
 
         <!-- Module Cards Grid View -->
         <div v-else-if="viewMode === 'grid'" class="row g-4">

@@ -338,7 +338,20 @@ class ConceptResource(Resource):
                 return {"message": "No concept found."}, 404
         except SQLAlchemyError as e:
             return {"message": "Internal server error."}, 500   
+        
+    @jwt_required()
+    def patch(self, concept_id):
+        concept = Concept.query.get(concept_id)
+        if not concept:
+            return {"message": "Concept not found."}, 404
 
+        live = request.json.get("live")
+        if live is not None:
+            concept.live = live
+
+        db.session.commit()
+        return {"message": "Concept live status updated"}, 200
+    
     @jwt_required()
     def put(self, concept_id):
         args = concept_parser.parse_args()
@@ -578,13 +591,22 @@ class QuestionResource(Resource):
             if not question:
                 return {"message": "Question not found."}, 404
 
-            # Toggle the archived status
-            question.is_archived = not question.is_archived
+            data = request.json
+            print("data" ,data)
+
+            # Toggle archived status if key present
+            if "is_archived" in data:
+                question.is_archived = data["is_archived"]
+
+            # Update approval status if key present
+            if "is_approved" in data:
+                question.is_approved = data["is_approved"]
+
             question.updated_by_id = current_user_id
             db.session.commit()
 
-            status_msg = "archived" if question.is_archived else "unarchived"
-            return {"message": f"Question {status_msg} successfully."}, 200
+            return {"message": "Question updated successfully."}, 200
+
 
         except SQLAlchemyError as e:
             db.session.rollback()

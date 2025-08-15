@@ -31,8 +31,6 @@ import IndividualQuestionPage from "../components/acad/IndividualQuestionPage.js
 import EditQuestionPage from "../components/acad/EditQuestionPage.js";
 import ReviewPage from "../components/acad/ReviewPage.js";
 import ArchivedQuestionsPage from "../components/acad/ArchivedQuestionsPage.js";
-import AcademicCreateStory from "../components/acad/AcademicCreateStory.js";
-import AcademicCreateQuiz from "../components/acad/AcademicCreateQuiz.js";
 import ContentManagement from '../components/acad/ContentManagement.js';
 
 // Define routes
@@ -57,9 +55,6 @@ const routes = [
   { path: '/admin/settings', name: 'AdminSettings', component: AdminSettings }, { path: "/acad-dashboard", name: "AcadDashboard", component: AcadDashboard },
   { path: "/acad/home", name: "AcadHomePage", component: AcadHomePage },
   { path: "/acad/modules", name: "ModulePage", component: ModulesPage },
-  { path: "/acad/AcademicCreateStory", name: "AcademicCreateStory", component: AcademicCreateStory },
-  { path: "/acad/AcademicCreateQuiz", name: "AcademicCreateQuiz", component: AcademicCreateQuiz },
-
   {
     path: "/acad/module/:mcode",
     component: IndividualModulePage,

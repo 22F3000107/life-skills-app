@@ -287,15 +287,19 @@ export default {
               </div>
               <div class="card-body pt-2">
                 <!-- Total Questions -->
-                <div class="mb-3">
-                  <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-muted">Total Questions</span>
-                    <span class="fs-4 fw-bold text-primary">{{ questionStats.totalQuestions }}</span>
-                  </div>
-                  <div class="progress" style="height: 6px;">
-                    <div class="progress-bar bg-primary" style="width: 100%;"></div>
-                  </div>
-                </div>
+         <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="text-muted">Total Questions</span>
+              <span class="fs-4 fw-bold text-primary">{{ questionStats.totalQuestions }}</span>
+            </div>
+            <div class="progress" style="height: 6px;">
+              <div
+                class="progress-bar"
+                :class="{ 'bg-primary': questionStats.totalQuestions > 0 }"
+                :style="{ width: questionStats.totalQuestions > 0 ? '100%' : '0%' }"
+              ></div>
+            </div>
+          </div>
 
                 <!-- Approved Questions -->
                 <div class="mb-3">
@@ -406,7 +410,7 @@ export default {
                 <div class="d-flex gap-2 justify-content-lg-end mt-2 mt-lg-0 align-items-center">
                   
                   <!-- Search Input -->
-                  <div style="max-width: 240px;">
+                  <div style="max-width: 360px;">
                     <div class="position-relative">
                       <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-2 text-muted"></i>
                       <input
@@ -418,17 +422,7 @@ export default {
                       />
                     </div>
                   </div>
-                  <!-- Filter Dropdown -->
-                  <select 
-                    v-model="selectedFilter" 
-                    class="form-select form-select-sm" 
-                    style="border-radius: 10px; border: 1px solid #dee2e6; min-width: 150px;"
-                  >
-                    <option value="all">All Modules</option>
-                    <option value="active">With Questions</option>
-                    <option value="empty">Empty Modules</option>
-                  </select>
-                  <!-- View Toggle -->
+                                    <!-- View Toggle -->
                   <div class="btn-group btn-group-sm" role="group">
                     <button 
                       type="button" 
@@ -463,52 +457,64 @@ export default {
             </div>
             <!-- Grid View -->
             <div v-else-if="viewMode === 'grid'" class="p-4">
-              <div class="row g-3">
-                <div v-for="(mod, index) in paginatedModules" :key="mod.id" class="col-xl-4 col-lg-6">
-                  <div 
-                    class="card border-0 shadow-sm module-card"
-                    style="border-radius: 12px; cursor: pointer; transition: all 0.3s ease;"
-                    :style="{  'animation-delay': (index * 0.1) + 's' }"
-                    @click="goToModule(mod.id)"
-                  >
-                    <div class="card-body p-3">
-                      <div class="d-flex align-items-center justify-content-between mb-3">
-                        <div class="d-flex align-items-center gap-2">
-                          <div class="bg-primary bg-opacity-10 p-2 rounded-circle">
-                            <i :class="'bi ' + getModuleIcon(mod) + ' text-primary'"></i>
-                          </div>
-                          <span class="badge bg-primary bg-opacity-10 text-primary px-2 py-1 rounded-pill small fw-medium">
-                            {{ mod.id }}
-                          </span>
-                        </div>
-                        <button class="btn btn-sm btn-primary" style="border-radius: 8px;">
-                          <i class="bi bi-eye"></i>
-                        </button>
-                      </div>
-                      
-                      <h6 class="card-title mb-3 fw-bold text-dark">{{ mod.name }}</h6>
-                      
-                      <div class="row g-0 text-center">
-                        <div class="col-6 border-end">
-                          <div class="p-2">
-                            <div class="fs-5 fw-bold" :class="'text-' + getProgressColor(mod.approved_count + mod.review_count + mod.rejected_count)">
-                              {{ mod.approved_count + mod.review_count + mod.rejected_count }}
-                            </div>
-                            <small class="text-muted">Questions</small>
-                          </div>
-                        </div>
-                        <div class="col-6">
-                          <div class="p-2">
-                            <div class="fs-5 fw-bold text-info">{{ mod.concepts_count }}</div>
-                            <small class="text-muted">Concepts</small>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+  <div class="row g-3">
+    <div v-for="(mod, index) in paginatedModules" :key="mod.id" class="col-xl-4 col-lg-6">
+      <div 
+        class="card border-0 shadow-sm module-card"
+        style="border-radius: 12px; cursor: pointer; transition: all 0.3s ease;"
+        :style="{  'animation-delay': (index * 0.1) + 's' }"
+        @click="goToModule(mod.id)"
+      >
+        <div class="card-body p-3">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="d-flex align-items-center gap-2">
+              <div class="bg-primary bg-opacity-10 p-2 rounded-circle">
+                <i :class="'bi ' + getModuleIcon(mod) + 'text-primary'"></i>
+              </div>
+              <span class="badge bg-primary bg-opacity-10 text-primary px-2 py-1 rounded-pill small fw-medium">
+                {{ mod.id }}
+              </span>
+            </div>
+            <button class="btn btn-sm btn-primary" style="border-radius: 8px;">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+          
+          <h6 class="card-title mb-3 fw-bold text-dark">{{ mod.name }}</h6>
+          
+          <div class="row g-0 text-center">
+            <div class="col-6 border-end">
+              <div class="p-2">
+                <div class="fs-5 fw-bold" :class="'text-' + getProgressColor(mod.approved_count + mod.review_count + mod.rejected_count)">
+                  {{ mod.approved_count + mod.review_count + mod.rejected_count }}
                 </div>
+                <small class="text-muted">Questions</small>
               </div>
             </div>
+            <div class="col-6">
+              <div class="p-2">
+                <div class="fs-5 fw-bold text-info">{{ mod.concepts_count }}</div>
+                <small class="text-muted">Concepts</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State for Grid -->
+    <div v-if="paginatedModules.length === 0" class="col-12">
+      <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 300px;">
+        <div class="bg-light rounded-circle mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+          <i class="bi bi-search fs-1 text-muted"></i>
+        </div>
+        <h5 class="text-muted mb-2">No modules found</h5>
+        <p class="text-muted mb-0">Try adjusting your search criteria</p>
+      </div>
+    </div>
+  </div>
+</div>
+
 
             <!-- List View -->
             <div v-else class="table-responsive">

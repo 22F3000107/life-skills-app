@@ -91,6 +91,10 @@ export async function archiveQuestion(id) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
       },
+
+      body: JSON.stringify({
+        is_archived: true, // unarchive
+      }),
     });
     if (!res.ok) throw new Error("Failed to archive question");
     return res.json();
@@ -151,9 +155,11 @@ export async function updateQuestionStatus(id, statusData) {
       review_date: statusData.review_date,
     };
   } else {
-    const res = await fetch(`${BASE_URL}/api/question/${id}/`, {
+    const res = await fetch(`${BASE_URL}/api/question/${id}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" ,
+        Authorization: `Bearer ${localStorage.getItem("auth-token")}`
+      },
       body: JSON.stringify(statusData),
     });
 
@@ -182,6 +188,9 @@ export async function restoreQuestion(id, restoreData) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
       },
+      body: JSON.stringify({
+        is_archived: false, // unarchive
+      }),
     });
     if (!res.ok) throw new Error("Failed to unarchive question");
     return res.json();

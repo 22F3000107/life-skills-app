@@ -51,11 +51,10 @@ def sync_questions_to_quiz_questions():
 
 def create_app():
     app = Flask(__name__, static_folder="frontend", static_url_path='') 
-    CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": "*"}})
+    CORS(app, resources={r"/api/*": {"origins": "http://localhost:5500"}}, supports_credentials=True)
     app.config.from_object(DevelopmentConfig)
     db.init_app(app)
     api.init_app(app)
-    CORS(app, resources={r"/api/*": {"origins": "http://localhost:5500"}}, supports_credentials=True)
     jwt = JWTManager(app)
     cache.init_app(app)
 
