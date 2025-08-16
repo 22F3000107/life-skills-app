@@ -231,8 +231,8 @@ class UpdateGoalStatus(Resource):
         data = request.get_json() or {}
         new_status = data.get("status")
 
-        if new_status not in ("done", "active"):
-            return {"error": "Invalid status. Allowed: 'done' or 'active'."}, 400
+        if new_status not in ("done", "active","failed"):
+            return {"error": "Invalid status. Allowed: 'done' or 'active' or 'failed'."}, 400
 
         goal.status = new_status
         db.session.commit()
