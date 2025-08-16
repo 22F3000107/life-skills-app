@@ -355,12 +355,19 @@ export async function updateAdminSettings(payload) {
   return await putData("/admin/settings", payload, token);
 }
 
-export async function getReminderSettings(token) {
-  return await getData("/admin/reminder-settings", token);
+// export async function getReminderSettings(token) {
+//   return await getData("/admin/reminder-settings", token);
+// }
+
+// export async function saveReminderSettings(data, token) {
+//   return await postData("/admin/reminder-settings", data, token);
+// }
+export async function saveWeeklyReminderSettings(data, token) {
+  return await putData("/admin/WeeklyReminder", data, token); 
 }
 
-export async function saveReminderSettings(data, token) {
-  return await postData("/admin/reminder-settings", data, token);
+export async function saveInactiveReminderSettings(data, token) {
+  return await putData("/admin/InactiveReminder", data, token); // PUT
 }
 
 export async function changeAdminPassword(payload, token) {

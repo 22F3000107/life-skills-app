@@ -2144,3 +2144,97 @@
     font-size: 1rem;
   }
 }
+
+/* Container */
+.reminder-settings {
+  max-width: 600px;
+  margin: 0 auto;
+  font-family: inherit; /* use global font */
+}
+
+.settings-title {
+  text-align: center;
+  font-size: 1.8rem;
+  margin-bottom: 24px;
+  color: var(--heading-color, #2c3e50);
+}
+
+.section-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--heading-color, #34495e);
+}
+
+/* Card-like form sections */
+.reminder-card {
+  background: var(--card-bg, #fff);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Form elements */
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--label-color, #555);
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: var(--primary-color, #3498db);
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-primary {
+  background-color: var(--primary-color, #3498db);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-color-dark, #2980b9);
+  transform: translateY(-1px);
+}
+
+/* Status messages */
+.status-message {
+  margin-top: 10px;
+  font-weight: 500;
+}
+
+.text-success {
+  color: var(--success-color, #27ae60);
+}
+
+.text-error {
+  color: var(--error-color, #e74c3c);
+}
