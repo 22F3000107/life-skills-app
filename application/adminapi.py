@@ -4,7 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta, date
 from sqlalchemy import func
 
-from .models import db, User,roles_users,Acadteam,Habit,Goal,Rewards,Scores,Quiz, QuizQuestion, Story,Module,QuizAttempt
+from .models import db, User,roles_users,Acadteam,Habit,Goal,Rewards,Scores,Quiz, QuizQuestion, Story,Module,QuizAttempt, ReminderSetting
 
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash
@@ -33,8 +33,12 @@ class LoginAPI(Resource):
         
         if not user.check_password(password):
             return {"error": "Invalid credentials"}, 401
-        # if not user.active:
-        #     return {"error": "Account is blocked."}, 403
+        if not user.active:
+            return {"error": "Account is blocked."}, 403
+        
+         # ✅ Update last login time
+        user.last_login = datetime.utcnow()
+        db.session.commit()
         
         roles = [role.name for role in user.roles]
         
@@ -617,3 +621,63 @@ class ChangePasswordAdminAPI(Resource):
         admin.set_password(new_password)
         db.session.commit()
         return {"message": "Admin password updated successfully"}, 200
+    
+class WeeklyReminderAPI(Resource):
+    @jwt_required()
+    def put(self):
+        """
+        Update weekly reminder (row id=1)
+        """
+        data = request.get_json()
+        if not data:
+            return {"error": "No data provided"}, 400
+
+        # Always update the row for weekly reminder (id=1)
+        reminder = ReminderSetting.query.get(1)
+        if not reminder:
+            # Create if doesn't exist
+            reminder = ReminderSetting(
+                id=1,
+                hour_weekly=str(data.get("hour", "9")),
+                minute_weekly=str(data.get("minute", "0")),
+                day_of_week=data.get("day_of_week", "monday").lower()
+            )
+            db.session.add(reminder)
+        else:
+            reminder.hour_weekly = str(data.get("hour", "9"))
+            reminder.minute_weekly = str(data.get("minute", "0"))
+            reminder.day_of_week = data.get("day_of_week", "monday").lower()
+
+        try:
+            db.session.commit()
+            return {"message": "Weekly reminder updated successfully"}, 200
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+
+class InactiveReminderAPI(Resource):
+    @jwt_required()
+    def put(self):
+        data = request.get_json()
+        if not data:
+            return {"error": "No data provided"}, 400
+
+        reminder = ReminderSetting.query.get(2)
+        if not reminder:
+            reminder = ReminderSetting(
+                id=2,
+                hour_inactive=str(data.get("hour", "10")),
+                minute_inactive=str(data.get("minute", "0"))
+            )
+            db.session.add(reminder)
+        else:
+            reminder.hour_inactive = str(data.get("hour", "10"))
+            reminder.minute_inactive = str(data.get("minute", "0"))
+
+        try:
+            db.session.commit()
+            return {"message": "Inactive reminder updated successfully"}, 200
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
