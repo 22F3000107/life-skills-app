@@ -37,6 +37,28 @@ export default {
         </router-link>
       </nav>
 
+      <!-- Back / Forward Buttons -->
+        <div class="p-3 border-top border-white border-opacity-20" v-if="!isCollapsed">
+          <div class="d-flex gap-2 mb-3">
+            <button 
+              class="btn btn-outline-light btn-sm flex-fill"
+              @click="goBack"
+              style="border-radius: 12px; border: 2px solid rgba(255,255,255,0.3);"
+            >
+              <i class="bi bi-arrow-left me-1"></i>
+              Back
+            </button>
+            <button 
+              class="btn btn-outline-light btn-sm flex-fill"
+              @click="goForward"
+              style="border-radius: 12px; border: 2px solid rgba(255,255,255,0.3);"
+            >
+              Forward
+              <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+          </div>
+        </div>
+
       <!-- Logout -->
       <div class="p-3 border-top">
         <button class="btn btn-outline-light btn-sm w-100" @click="logout">
@@ -50,6 +72,12 @@ export default {
       localStorage.removeItem('auth-token');
       localStorage.removeItem('role');
       this.$router.push('/login');
+      },
+    goBack() {
+      this.$router.go(-1); // Go back one step in history
+    },
+    goForward() {
+      this.$router.go(1); // Go forward one step in history
     }
   }
 };
