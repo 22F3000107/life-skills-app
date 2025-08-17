@@ -1,4 +1,10 @@
-import { getQuizList, getStoriesList, getQuizById, submitQuiz } from "../../utils/api.js";
+import {
+  getQuizList,
+  getStoriesList,
+  getQuizById,
+  submitQuiz,
+} from "../../utils/api.js";
+import { fetchQuestionById } from "../../services/questionService.js";
 
 export default {
   name: "TakeTestPage",
@@ -23,6 +29,7 @@ export default {
       feedback: "",
       showResults: false,
       currentHint: null,
+      storyQuestions: [],
     };
   },
 
@@ -36,16 +43,16 @@ export default {
 
       // Fetch stories
       const storyData = await getStoriesList(this.token);
-      const stories = Array.isArray(storyData?.stories) ? storyData.stories : [];
+      const stories = Array.isArray(storyData) ? storyData : [];
 
       // Combine with type
       this.learningItems = [
-        ...quizzes.map(q => ({
+        ...quizzes.map((q) => ({
           ...q,
           type: "quiz",
-          is_flagged: q.is_flagged === true // ensure boolean
+          is_flagged: q.is_flagged === true, // ensure boolean
         })),
-        ...stories.map(s => ({ ...s, type: "story" })),
+        ...stories.map((s) => ({ ...s, type: "story" })),
       ];
     } catch (err) {
       console.error("Error fetching learning materials", err.message);
@@ -81,9 +88,24 @@ export default {
       }
     },
 
-    readStory(story) {
+    async readStory(story) {
       this.selectedStory = story;
       this.selectedQuiz = null;
+      this.storyQuestions = [];
+
+      if (story.concept?.question_ids?.length) {
+        try {
+          this.loading = true;
+          const fetched = await Promise.all(
+            story.concept.question_ids.map((id) => fetchQuestionById(id))
+          );
+          this.storyQuestions = fetched;
+        } catch (err) {
+          console.error("Failed to fetch story questions", err.message);
+        } finally {
+          this.loading = false;
+        }
+      }
     },
 
     selectOption(index) {
@@ -118,7 +140,8 @@ export default {
       if (this.coins >= hintCost && !this.hintUsed) {
         this.coins -= hintCost;
         this.hintUsed = true;
-        this.currentHint = this.questions[this.currentQuestionIndex].hint || null;
+        this.currentHint =
+          this.questions[this.currentQuestionIndex].hint || null;
       }
     },
 
@@ -277,10 +300,14 @@ export default {
         <div v-if="selectedStory" class="card shadow-sm mt-4">
           <div class="card-body">
             <h4>{{ selectedStory.title }}</h4>
-            <p>{{ selectedStory.content || "Story content is not available." }}</p>
+            <div v-if="storyQuestions.length" class="mt-4">
+              <div v-for="(q, i) in storyQuestions" :key="q.id" class="mb-3">
+                <p>{{ q.question_statement }}</p>
+              </div>
+            </div>
 
             <button class="btn btn-secondary mt-3" @click="closeStory">
-              Back to List
+              Go Back
             </button>
           </div>
         </div>

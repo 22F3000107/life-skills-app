@@ -945,6 +945,7 @@ story_detailed_fields = {
         'live': fields.Boolean,
         'max_marks': fields.Integer,
         'question_count': fields.Integer,
+        'question_ids': fields.List(fields.Integer)
     }),
     'author': fields.Nested({
         'id': fields.Integer,
@@ -1018,6 +1019,7 @@ class StoryAPI(Resource):
                     # Add question count from concept
                     if story.concept:
                         story_data['concept']['question_count'] = len(story.concept.questions)
+                        story_data['concept']['question_ids'] = [q.id for q in story.concept.questions]
                     enriched_stories.append(story_data)
                 
                 return enriched_stories, 200
