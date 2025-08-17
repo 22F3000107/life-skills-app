@@ -44,7 +44,7 @@ def sync_questions_to_quiz_questions():
                     question=question.question_statement,
                     options=options,
                     correct_answer=correct_answer_index,
-                    hint=""  # Add hint if you have it
+                    hint=""  # Add hint 
                 )
                 db.session.add(new_quiz_question)
 

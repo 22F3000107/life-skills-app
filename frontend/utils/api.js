@@ -49,26 +49,6 @@ async function putData(url = '', data = {}, token = null) {
 
 
 // Helper function for GET requests
-// async function getData(url = '', token = null) {
-//   const headers = {
-//     "Content-Type": "application/json",
-//   };
-
-//   if (token) {
-//     headers["Authorization"] = `Bearer ${token}`;
-//   }
-
-//   const response = await fetch(`${BASE_URL}${url}`, {
-//     method: "GET",
-//     headers,
-//   });
-
-//   const json = await response.json();
-//   if (!response.ok) {
-//     throw new Error(json.error || "API error");
-//   }
-//   return json;
-// }
 async function getData(url = '', token = null) {
   const headers = {
     "Content-Type": "application/json",
@@ -166,9 +146,6 @@ export async function getUserSummary(token) {
   return await getData("/user/summary", token);
 }
 
-// export async function getUserProfile(token) {
-//   return await getData("/user-profile", token);
-// }
 
 export async function updateUserProfile(payload, token) {
   return await putData("/user/profile", payload, token);
@@ -282,17 +259,6 @@ export async function getAdminQuizzes(token) {
   return await getData("/admin/quizzes", token);
 }
 
-// export async function updateQuiz(id, payload) {
-//   const token = localStorage.getItem("auth-token");
-//   return await fetch(`${BASE_URL}/admin/update-quiz/${id}`, {
-//     method: 'PUT',
-//     headers: {
-//       "Content-Type": "application/json",
-//       "Authorization": `Bearer ${token}`
-//     },
-//     body: JSON.stringify(payload)
-//   }).then(res => res.json());
-// }
 export async function updateQuiz(quizId, payload) {
   const token = localStorage.getItem("auth-token");
   return await putData(`/admin/update-quiz/${quizId}`, payload, token);
@@ -356,13 +322,6 @@ export async function updateAdminSettings(payload) {
   return await putData("/admin/settings", payload, token);
 }
 
-// export async function getReminderSettings(token) {
-//   return await getData("/admin/reminder-settings", token);
-// }
-
-// export async function saveReminderSettings(data, token) {
-//   return await postData("/admin/reminder-settings", data, token);
-// }
 export async function saveWeeklyReminderSettings(data, token) {
   return await putData("/admin/WeeklyReminder", data, token); 
 }
