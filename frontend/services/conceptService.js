@@ -61,3 +61,17 @@ export async function patchConceptById(id, data) {
   if (!res.ok) throw new Error("Failed to update concept");
   return res.json();
 }
+
+export async function addQuestionsToConcepts(id, questions) {
+  const res = await fetch(`${BASE_URL}/api/concept/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
+    },
+    body: JSON.stringify({ question_ids: questions.map((q) => q.id) }),
+  });
+
+  if (!res.ok) throw new Error("Failed to add questions to concept");
+  return res.json();
+}

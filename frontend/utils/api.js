@@ -178,8 +178,9 @@ export async function changePassword(payload, token) {
   return await putData("/change-password", payload, token);
 }
 export async function getStoriesList(token) {
-  const response = await fetch('/api/stories', {
+  const response = await fetch('/acad/stories', {
     headers: {
+      "Content-Type": "application/json",
       'Authorization': `Bearer ${token}`,
     },
   });

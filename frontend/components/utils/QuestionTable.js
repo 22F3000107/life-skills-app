@@ -200,7 +200,7 @@ export default {
                         'bi bi-x-circle': q.is_approved ===false,
                         'bi bi-clock': q.is_approved ===null                      }"
                     ></i>
-                    {{ mode === 'simple' ? q.is_approved : getStatusLabel(q.is_approved) }}
+                    {{ getStatusLabel(q.is_approved) }}
                   </span>
                 </td>
                 <td class="px-4 py-4 text-center">

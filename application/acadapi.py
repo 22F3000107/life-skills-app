@@ -345,12 +345,25 @@ class ConceptResource(Resource):
         if not concept:
             return {"message": "Concept not found."}, 404
 
-        live = request.json.get("live")
+        data = request.json
+        live = data.get("live")
+        question_ids = data.get("question_ids")
+
         if live is not None:
             concept.live = live
 
+        if question_ids is not None:
+            existing_ids = {q.id for q in concept.questions}
+            new_questions = Question.query.filter(Question.id.in_(question_ids)).all()
+            for q in new_questions:
+                if q.id not in existing_ids:
+                    # concept.questions.append(q)
+                    question = Question.query.get(q.id)
+                    question.concept_id = concept.id
+
         db.session.commit()
-        return {"message": "Concept live status updated"}, 200
+        return {"message": "Concept updated successfully with questions"}, 200
+
     
     @jwt_required()
     def put(self, concept_id):
@@ -530,7 +543,10 @@ class QuestionAPI(Resource):
             )
             db.session.add(new_question)
             db.session.commit()
-            return {"message": "Question created successfully."}, 201
+            return {
+                "message": "Question created successfully.",
+                "id": new_question.id
+            }, 201
 
         except SQLAlchemyError as e:
             db.session.rollback()

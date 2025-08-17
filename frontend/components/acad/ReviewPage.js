@@ -175,6 +175,11 @@ export default {
         this.isLoading = false;
       }
     },
+    getStatusLabel(is_approved) {
+      if (is_approved === true) return "Approved";
+      else if (is_approved === false) return "Rejected";
+      else return "Pending";
+    },
 
     calculateStats() {
       this.stats = this.questions.reduce(
