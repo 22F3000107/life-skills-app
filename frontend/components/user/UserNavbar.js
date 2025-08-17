@@ -10,6 +10,12 @@ export default {
       localStorage.removeItem('auth-token');
       localStorage.removeItem('role');
       this.$router.push('/login');
+    },
+    goBack() {
+      this.$router.go(-1); // Navigate one step back
+    },
+    goForward() {
+      this.$router.go(1); // Navigate one step forward
     }
   },
   mounted() {
@@ -46,6 +52,28 @@ export default {
         </router-link>
       </nav>
 
+      <!-- Back / Forward Buttons -->
+      <div class="p-3 border-top border-dark border-opacity-25">
+        <div class="d-flex gap-2 mb-3">
+          <button 
+            class="btn btn-outline-secondary btn-sm flex-fill"
+            @click="goBack"
+            style="border-radius: 12px;"
+          >
+            <i class="bi bi-arrow-left me-1"></i>
+            Back
+          </button>
+          <button 
+            class="btn btn-outline-secondary btn-sm flex-fill"
+            @click="goForward"
+            style="border-radius: 12px;"
+          >
+            Forward
+            <i class="bi bi-arrow-right ms-1"></i>
+          </button>
+        </div>
+      </div>
+
       <!-- Logout -->
       <div class="p-3 border-top">
         <button class="btn btn-outline-danger btn-sm w-100 d-flex align-items-center justify-content-center" @click="logout">
@@ -55,6 +83,7 @@ export default {
     </div>
   `
 };
+
 
 
 

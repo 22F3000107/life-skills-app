@@ -2203,28 +2203,6 @@
   border-color: var(--primary-color, #3498db);
 }
 
-/* Buttons */
-.btn {
-  display: inline-block;
-  padding: 10px 16px;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  border: none;
-  transition: background-color 0.2s ease, transform 0.1s ease;
-}
-
-.btn-primary {
-  background-color: var(--primary-color, #3498db);
-  color: #fff;
-}
-
-.btn-primary:hover {
-  background-color: var(--primary-color-dark, #2980b9);
-  transform: translateY(-1px);
-}
-
 /* Status messages */
 .status-message {
   margin-top: 10px;
