@@ -12,6 +12,7 @@ import os
 from sqlalchemy import func
 from application.sec import datastore
 import uuid
+from datetime import datetime, timedelta, date, time
 
 class LoginAPI(Resource):
 
@@ -498,7 +499,14 @@ class AdminStatsAPI(Resource):
         stories_added = Story.query.filter(Story.status.in_(["draft", "published"])).count()
         academic_members = Acadteam.query.count()
 
-        
+        # Calculate active users today
+        today_start = datetime.combine(date.today(), time.min)
+        tomorrow_start = today_start + timedelta(days=1)
+
+        active_today = User.query.filter(
+            User.last_login >= today_start,
+            User.last_login < tomorrow_start
+        ).count()
 
 
         return {
@@ -506,7 +514,8 @@ class AdminStatsAPI(Resource):
             "total_quizzes": total_quizzes,
             "flagged_items": flagged_items,
             "stories_added": stories_added,
-            "academic_members": academic_members
+            "academic_members": academic_members,
+            "active_today": active_today
             
         }, 200
 
