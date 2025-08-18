@@ -789,33 +789,33 @@ export default {
                   </div>
                   
                   <!-- True/False Options -->
-                  <div v-else-if="currentQuestion.question_type === 'True/False'">
+                  <div v-else-if="currentQuestion.type === 'True/False'">
                     <div class="row g-3">
                       <div class="col-md-6">
-                        <div class="option-card p-3 rounded-3" :class="{ 'border-success bg-success bg-opacity-10': currentQuestion.options[0]?.correct }">
+                        <div class="option-card p-3 rounded-3" :class="{ 'border-success bg-success bg-opacity-10': currentQuestion.answers[0]?.correct }">
                           <div class="d-flex align-items-center">
                             <input 
                               type="radio" 
-                              :checked="currentQuestion.options[0]?.correct"
+                              :checked="currentQuestion.answers[0]?.correct"
                               disabled
                               class="form-check-input me-3"
                             />
-                            <span class="fw-bold">True</span>
-                            <i v-if="currentQuestion.options[0]?.correct" class="bi bi-check-circle text-success ms-auto"></i>
+                            <span class="fw-bold">{{ currentQuestion.answers[0]?.text }}</span>
+                            <i v-if="currentQuestion.answers[0]?.correct" class="bi bi-check-circle text-success ms-auto"></i>
                           </div>
                         </div>
                       </div>
                       <div class="col-md-6">
-                        <div class="option-card p-3 rounded-3" :class="{ 'border-success bg-success bg-opacity-10': currentQuestion.options[1]?.correct }">
+                        <div class="option-card p-3 rounded-3" :class="{ 'border-success bg-success bg-opacity-10': currentQuestion.answers[1]?.correct }">
                           <div class="d-flex align-items-center">
                             <input 
                               type="radio" 
-                              :checked="currentQuestion.options[1]?.correct"
+                              :checked="currentQuestion.answers[1]?.correct"
                               disabled
                               class="form-check-input me-3"
                             />
-                            <span class="fw-bold">False</span>
-                            <i v-if="currentQuestion.options[1]?.correct" class="bi bi-check-circle text-success ms-auto"></i>
+                            <span class="fw-bold">{{ currentQuestion.answers[1]?.text }}</span>
+                            <i v-if="currentQuestion.answers[1]?.correct" class="bi bi-check-circle text-success ms-auto"></i>
                           </div>
                         </div>
                       </div>
