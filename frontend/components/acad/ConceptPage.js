@@ -193,7 +193,7 @@ export default {
       const newStatus = !concept.live;
       concept.live = newStatus; // optimistic UI update
 
-      await patchConceptById(concept.id, newStatus);
+      await patchConceptById(concept.id, { flag: "toggle_live" });
     },
     async fetchQuestions() {
       if (!this.filterModule) {

@@ -2,7 +2,7 @@ import { fetchConceptById } from "../../services/conceptService.js";
 import { fetchModules } from "../../services/moduleService.js";
 import { fetchQuestionById } from "../../services/questionService.js";
 import { fetchQuestionsByModule } from "../../services/questionService.js";
-import { addQuestionsToConcepts } from "../../services/conceptService.js";
+import { addQuestionsToConcepts, removeQuestionFromConcept } from "../../services/conceptService.js";
 export default {
   name: "ConceptQuestionsPage",
   data() {
@@ -208,8 +208,15 @@ export default {
       this.fetchedQuestions = [];
       this.selectedQuestionIds = [];
     },
-    removeQuestion(qcode) {
+    async removeQuestion(qcode) {
       this.questions = this.questions.filter((q) => q.id !== qcode);
+      try {
+        await removeQuestionFromConcept(this.conceptCode, qcode);
+        alert("Question removed from concept.");
+      } catch (err) {
+        console.error("Error removing question", err);
+        alert("Failed to remove question.");
+      }
     },
     toggleDropdown(dropdownName) {
       this.activeDropdown =
