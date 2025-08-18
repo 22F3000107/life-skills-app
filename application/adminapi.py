@@ -28,16 +28,20 @@ class LoginAPI(Resource):
             return {"error": "Missing email or password"}, 400
         
         user = User.query.filter_by(email=email).first()
-        
+
         if not user:
-            return {"error": "Invalid credentials"}, 401
-        
+            # wrong email
+            return {"error": "user doesn't exist"}, 401
+
         if not user.check_password(password):
-            return {"error": "Invalid credentials"}, 401
+            # wrong password
+            return {"error": "Password is incorrect"}, 401
+
         if not user.active:
+            # account blocked
             return {"error": "Account is blocked."}, 403
         
-         # ✅ Update last login time
+        # Update last login time
         user.last_login = datetime.utcnow()
         db.session.commit()
         
@@ -45,13 +49,11 @@ class LoginAPI(Resource):
         
         access_token = create_access_token(identity=str(user.id))
 
-        
         return {
             "access_token": access_token,
             "user_id": user.id,
             "roles": roles[0]
-        }, 200
-    
+        }, 200  
 
 
 class AdminUsersAPI(Resource):

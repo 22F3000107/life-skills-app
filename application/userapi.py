@@ -289,7 +289,6 @@ class QuizDetailAPI(Resource):
 
 
 
-
 class QuizSubmitAPI(Resource):
     @jwt_required()
     def post(self, quiz_id):
@@ -447,7 +446,7 @@ class StoriesListAPI(Resource):
                 "id": story.id,
                 "title": story.title,
                 "content": story.content,
-                "skill": story.skill,  # if you have a skill field
+                "skill": story.skill,  
             })
 
         return jsonify({"stories": stories_data})
