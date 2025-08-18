@@ -93,7 +93,7 @@ class TodayHabits(Resource):
         habits = Habit.query.filter_by(user_id=current_user_id, date=date.today()).all()
 
         if not habits:
-            concept = Concept.query.filter(func.lower(Concept.name) == "healthy habits").first()
+            concept = Concept.query.filter(func.lower(Concept.type) == "habits").first()
             if concept:
                 questions = Question.query.filter_by(
                     concept_id=concept.id,

@@ -345,12 +345,25 @@ class ConceptResource(Resource):
         if not concept:
             return {"message": "Concept not found."}, 404
 
-        live = request.json.get("live")
+        data = request.json
+        live = data.get("live")
+        question_ids = data.get("question_ids")
+
         if live is not None:
             concept.live = live
 
+        if question_ids is not None:
+            existing_ids = {q.id for q in concept.questions}
+            new_questions = Question.query.filter(Question.id.in_(question_ids)).all()
+            for q in new_questions:
+                if q.id not in existing_ids:
+                    # concept.questions.append(q)
+                    question = Question.query.get(q.id)
+                    question.concept_id = concept.id
+
         db.session.commit()
-        return {"message": "Concept live status updated"}, 200
+        return {"message": "Concept updated successfully with questions"}, 200
+
     
     @jwt_required()
     def put(self, concept_id):
@@ -530,7 +543,10 @@ class QuestionAPI(Resource):
             )
             db.session.add(new_question)
             db.session.commit()
-            return {"message": "Question created successfully."}, 201
+            return {
+                "message": "Question created successfully.",
+                "id": new_question.id
+            }, 201
 
         except SQLAlchemyError as e:
             db.session.rollback()
@@ -569,7 +585,6 @@ class QuestionResource(Resource):
             question.question_statement = args.get('question_statement')
             question.answers = args.get('answers')
             question.is_approved = args.get('is_approved')
-            question.marks = args.get('marks')
             question.is_archived = args.get('is_archived', False)
             question.audio_url = args.get('audio_url')
             question.image_url = args.get('image_url')
@@ -654,9 +669,7 @@ class QuestionsByModuleAPI(Resource):
                     "question_statement": q.question_statement,
                     "age_group": q.age_group,
                     "answers": q.answers,
-                    "status": "Approved" if q.is_approved is True else
-                              "Rejected" if q.is_approved is False else
-                              "Pending",
+                    "is_approved": q.is_approved,
                     "marks": q.marks,
                     "image_url": q.image_url,
                     "audio_url": q.audio_url,
@@ -929,6 +942,7 @@ story_detailed_fields = {
         'live': fields.Boolean,
         'max_marks': fields.Integer,
         'question_count': fields.Integer,
+        'question_ids': fields.List(fields.Integer)
     }),
     'author': fields.Nested({
         'id': fields.Integer,
@@ -1002,6 +1016,7 @@ class StoryAPI(Resource):
                     # Add question count from concept
                     if story.concept:
                         story_data['concept']['question_count'] = len(story.concept.questions)
+                        story_data['concept']['question_ids'] = [q.id for q in story.concept.questions]
                     enriched_stories.append(story_data)
                 
                 return enriched_stories, 200
@@ -1154,6 +1169,7 @@ class QuizResource(Resource):
                             'question_statement': q.question_statement,
                             'type': q.type,
                             'age_group': q.age_group,
+                            'answers': q.answers,
                         } for q in quiz.concept.questions
                     ]
                 return quiz_data, 200

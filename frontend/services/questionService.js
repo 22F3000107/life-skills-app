@@ -135,6 +135,7 @@ export async function updateQuestion(id, data) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
       },
+      body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error("Failed to archive question");
     return res.json();

@@ -2,7 +2,7 @@ import { fetchConceptById } from "../../services/conceptService.js";
 import { fetchModules } from "../../services/moduleService.js";
 import { fetchQuestionById } from "../../services/questionService.js";
 import { fetchQuestionsByModule } from "../../services/questionService.js";
-
+import { addQuestionsToConcepts } from "../../services/conceptService.js";
 export default {
   name: "ConceptQuestionsPage",
   data() {
@@ -192,12 +192,18 @@ export default {
         this.selectedQuestionIds.push(qcode);
       }
     },
-    addSelectedQuestions() {
+    async addSelectedQuestions() {
       const toAdd = this.fetchedQuestions.filter((q) =>
         this.selectedQuestionIds.includes(q.id)
       );
       this.questions.push(...toAdd);
-      alert(`${toAdd.length} question(s) added to the concept.`);
+      try {
+        await addQuestionsToConcepts(this.conceptCode, this.questions);
+        alert(`${toAdd.length} question(s) added to the concept.`);
+      } catch (err) {
+        console.error("Error updating concept questions", err);
+        alert("Failed to update concept questions.");
+      }
       this.showAddPopup = false;
       this.fetchedQuestions = [];
       this.selectedQuestionIds = [];

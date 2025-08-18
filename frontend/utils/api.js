@@ -130,11 +130,11 @@ export async function updateGoalStatus(goalId, payload) {
 }
 
 export async function getQuizList(token) {
-  return await getData("/quizzes", token);
+  return await getData("/acad/quizzes", token);
 }
 
 export async function getQuizById(quizId, token) {
-  return await getData(`/quiz/${quizId}`, token);
+  return await getData(`/acad/quizzes/${quizId}`, token);
 }
 
 export async function submitQuiz(quizId, answers, token) {
@@ -155,12 +155,7 @@ export async function changePassword(payload, token) {
   return await putData("/change-password", payload, token);
 }
 export async function getStoriesList(token) {
-  const response = await fetch('/api/stories', {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  return response.json();
+  return await getData("/acad/stories",token);
 }
 
 

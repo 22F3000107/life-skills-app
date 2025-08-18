@@ -48,7 +48,12 @@ export default {
       questionTypes: ["MCQ", "MSQ", "True/False", "Matching"],
       moduleOptions: [],
       ageGroups: ["6-8", "9-11", "12-14", "15-18"],
-      statusOptions: ["Review", "Approved", "Rejected"],
+      statusOptions: [
+        { label: "Review", value: null },
+        { label: "Approved", value: true },
+        { label: "Rejected", value: false },
+      ],
+
       isLoading: true,
       isSaving: false,
       error: null,
@@ -123,13 +128,13 @@ export default {
         this.question = {
           qcode: res.id,
           type: res.type,
-          module: res.module_id,
+          module: Number(res.module_id),
           age: res.age_group || [],
           text: res.question_statement || "",
           imageUrl: res.image_url || "",
           audioUrl: res.audio_url || "",
           options: res.answers,
-          status: this.getStatusLabel(res.is_approved),
+          status: res.is_approved,
         };
         this.isDirty = false;
       } catch (err) {
@@ -281,7 +286,6 @@ export default {
       document.getElementById("audioInput").value = "";
     },
 
-    // Save and navigation methods
     async saveQuestion() {
       this.validateForm();
       if (!this.isValidForm) {
@@ -293,20 +297,9 @@ export default {
         this.isSaving = true;
         this.error = null;
 
-        const formData = new FormData();
-        formData.append("id", this.question.qcode);
-        formData.append("type", this.question.type);
-        formData.append("module_id", this.question.module);
-        formData.append("age_group", JSON.stringify(this.question.age));
-        formData.append("question_statement", this.question.text);
-        formData.append("is_approved", this.question.status);
-
         let cleanedAnswers = [];
         if (this.question.type === "Matching") {
           cleanedAnswers = this.question.matchPairs.map((pair) => ({
-            text: null,
-            correct: null,
-            submitted: null,
             left: pair.left || "",
             right: pair.right || "",
           }));
@@ -315,32 +308,30 @@ export default {
             text: option.text || "",
             correct: !!option.correct,
             submitted: !!option.submitted,
-            left: null,
-            right: null,
           }));
         }
 
-        formData.append("answers", JSON.stringify(cleanedAnswers));
+        const payload = {
+          id: this.question.qcode,
+          type: this.question.type,
+          module_id: Number(this.question.module), // 👈 force number
+          age_group: this.question.age,
+          question_statement: this.question.text,
+          is_approved: this.question.status,
+          answers: cleanedAnswers,
+          image_url: this.question.imageUrl || null,
+          audio_url: this.question.audioUrl || null,
+          is_archived: false,
+          marks: 5,
+        };
 
-        if (this.imageFile) {
-          formData.append("image_url", this.imageFile);
-        } else if (this.question.imageUrl) {
-          formData.append("image_url", this.question.imageUrl);
-        }
+        console.log("Sending payload:", payload);
+        await updateQuestion(this.question.qcode, payload);
 
-        if (this.audioFile) {
-          formData.append("audio_url", this.audioFile);
-        } else if (this.question.audioUrl) {
-          formData.append("audio_url", this.question.audioUrl);
-        }
-
-        await updateQuestion(this.question.qcode, formData);
         this.successMessage = "Question updated successfully!";
         this.isDirty = false;
 
-        setTimeout(() => {
-          this.successMessage = "";
-        }, 3000);
+        setTimeout(() => (this.successMessage = ""), 3000);
       } catch (err) {
         this.error = err.message;
       } finally {

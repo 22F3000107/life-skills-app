@@ -168,7 +168,9 @@ export default {
         };
 
         const result = await createQuestion(payload);
-        this.generatedQCode = result.qcode || payload.qcode;
+        console.log(result)
+        this.generatedQCode = result.id;
+        console.log("Question created with QCode:", this.generatedQCode);
         this.showSuccessPopup = true;
         console.log("saved");
       } catch (err) {
@@ -566,11 +568,16 @@ export default {
                 <button class="btn btn-outline-secondary" @click="showSaveConfirm = false">
                   <i class="fas fa-times me-2"></i>Cancel
                 </button>
-                <button type="button" class="btn btn-success"  @click.prevent="confirmSave($event)" :disabled="isLoading">
-                  <i v-if="isLoading" class="fas fa-spinner fa-spin me-2"></i>
-                  <i v-else class="fas fa-check me-2"></i>
-                  {{ isLoading ? 'Saving...' : 'Yes, Save' }}
-                </button>
+               <button 
+                type="button" 
+                class="btn btn-success"  
+                @click.prevent="confirmSave($event)" 
+                :disabled="isLoading"
+              >
+                <i v-if="isLoading" class="fas fa-spinner fa-spin me-2"></i>
+                <i v-else class="fas fa-check me-2"></i>
+                {{ isLoading ? 'Saving...' : 'Yes, Save' }}
+              </button>
               </div>
             </div>
           </div>
