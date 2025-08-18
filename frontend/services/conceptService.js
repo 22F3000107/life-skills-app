@@ -55,7 +55,7 @@ export async function patchConceptById(id, data) {
       "Content-Type": "application/json",
       Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
     },
-    body: JSON.stringify({ live: data }),
+    body: JSON.stringify(data),
   });
 
   if (!res.ok) throw new Error("Failed to update concept");
@@ -69,9 +69,26 @@ export async function addQuestionsToConcepts(id, questions) {
       "Content-Type": "application/json",
       Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
     },
-    body: JSON.stringify({ question_ids: questions.map((q) => q.id) }),
+    body: JSON.stringify({
+      flag: "add_question",
+      question_ids: questions.map((q) => q.id),
+    }),
   });
 
   if (!res.ok) throw new Error("Failed to add questions to concept");
+  return res.json();
+}
+
+export async function removeQuestionFromConcept(conceptId, questionId) {
+  const res = await fetch(`${BASE_URL}/api/concept/${conceptId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
+    },
+    body: JSON.stringify({ flag: "remove_question", question_id: questionId }),
+  });
+
+  if (!res.ok) throw new Error("Failed to remove question from concept");
   return res.json();
 }

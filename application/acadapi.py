@@ -346,23 +346,41 @@ class ConceptResource(Resource):
             return {"message": "Concept not found."}, 404
 
         data = request.json
-        live = data.get("live")
-        question_ids = data.get("question_ids")
+        flag = data.get("flag")
 
-        if live is not None:
-            concept.live = live
+        if flag == "add_question":
+            question_ids = data.get("question_ids")
+            
 
-        if question_ids is not None:
-            existing_ids = {q.id for q in concept.questions}
-            new_questions = Question.query.filter(Question.id.in_(question_ids)).all()
-            for q in new_questions:
-                if q.id not in existing_ids:
-                    # concept.questions.append(q)
-                    question = Question.query.get(q.id)
-                    question.concept_id = concept.id
+            if question_ids: 
+                new_questions = Question.query.filter(Question.id.in_(question_ids)).all()
+                if not new_questions:
+                    return {"message": "No valid questions found"}, 404
+                for q in new_questions:
+                    q.concept_id = concept.id
+
+            else:
+                return {"message": "Missing question_id(s)"}, 400
+
+        elif flag == "remove_question":
+            question_id = data.get("question_id")
+            if not question_id:
+                return {"message": "Missing question_id"}, 400
+            question = Question.query.get(question_id)
+            if not question or question.concept_id != concept.id:
+                return {"message": "Question not linked to this concept"}, 404
+            question.concept_id = None
+
+        elif flag == "toggle_live":
+            concept.live = not concept.live
+
+        else:
+            return {"message": "Invalid flag"}, 400
 
         db.session.commit()
-        return {"message": "Concept updated successfully with questions"}, 200
+        return {"message": f"Concept updated successfully with flag '{flag}'"}, 200
+
+
 
     
     @jwt_required()
@@ -1092,7 +1110,13 @@ class StoryResource(Resource):
             if not story:
                 return {"message": "Story not found."}, 404
             
+            concept = story.concept
+        
             db.session.delete(story)
+            if concept:
+                db.session.delete(concept)  
+            
+    
             db.session.commit()
             
             return {"message": "Story deleted successfully."}, 200
@@ -1220,15 +1244,19 @@ class QuizResource(Resource):
             quiz = Quiz.query.get(quiz_id)
             if not quiz:
                 return {"message": "Quiz not found."}, 404
-            
+            concept = quiz.concept   # fetch related concept
+        
             db.session.delete(quiz)
+            if concept:
+                db.session.delete(concept)   # also delete concept
+            
             db.session.commit()
             
             return {"message": "Quiz deleted successfully."}, 200
             
         except SQLAlchemyError as e:
             db.session.rollback()
-            return {"message": "Internal server error."}, 500
+            return {"message": e.message}, 500
 
 # Stories by Concept API
 class StoriesByConceptAPI(Resource):
