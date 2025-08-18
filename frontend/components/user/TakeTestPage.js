@@ -39,7 +39,8 @@ export default {
 
       // Fetch quizzes
       const quizData = await getQuizList(this.token);
-      const quizzes = Array.isArray(quizData?.quizzes) ? quizData.quizzes : [];
+      const quizzes = Array.isArray(quizData) ? quizData : [];
+      console.log(quizzes)
 
       // Fetch stories
       const storyData = await getStoriesList(this.token);
@@ -115,10 +116,16 @@ export default {
     checkAnswer() {
       if (this.selectedOption !== null) {
         const current = this.questions[this.currentQuestionIndex];
-        const isCorrect = this.selectedOption === current.correct_answer;
+        const chosen = current.answers[this.selectedOption];
+        const isCorrect = chosen.correct === true;
+
         this.correct = isCorrect;
         if (isCorrect) this.score++;
-        this.answers.push(this.selectedOption);
+        this.answers.push({
+          questionId: current.id,
+          selected: chosen.text,
+          correct: isCorrect,
+        });
         this.showFeedback = true;
       }
     },
@@ -238,19 +245,19 @@ export default {
           <div class="card-body">
             <h5 class="card-title mb-3">
               <i class="bi bi-question-circle me-2 text-dark"></i>
-              Q{{ currentQuestionIndex + 1 }}. {{ questions[currentQuestionIndex]?.question || 'Question text missing' }}
+              Q{{ currentQuestionIndex + 1 }}. {{ questions[currentQuestionIndex]?.question_statement || 'Question text missing' }}
             </h5>
 
             <ul class="list-group mb-3">
               <li
-                v-for="(option, index) in questions[currentQuestionIndex]?.options || []"
+                v-for="(answer, index) in questions[currentQuestionIndex]?.answers || []"
                 :key="index"
                 class="list-group-item"
                 :class="{ 'active': selectedOption === index }"
                 style="cursor: pointer;"
                 @click="selectOption(index)"
               >
-                {{ option }}
+                {{ answer.text }}
               </li>
             </ul>
 

@@ -96,13 +96,12 @@ export const QuestionDetailsForm = {
           <!-- Status -->
           <div class="col-md-6">
             <label class="form-label fw-semibold">Status</label>
-            <select 
-              v-model="localQuestion.status"
-              class="form-select form-select-lg"
-              style="border-radius: 12px;"
-            >
-              <option v-for="status in statusOptions" :key="status" :value="status">{{ status }}</option>
-            </select>
+            <select v-model="question.status" class="form-select">
+            <option v-for="opt in statusOptions" :key="opt.label" :value="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+
           </div>
         </div>
       </div>

@@ -585,7 +585,6 @@ class QuestionResource(Resource):
             question.question_statement = args.get('question_statement')
             question.answers = args.get('answers')
             question.is_approved = args.get('is_approved')
-            question.marks = args.get('marks')
             question.is_archived = args.get('is_archived', False)
             question.audio_url = args.get('audio_url')
             question.image_url = args.get('image_url')
@@ -670,9 +669,7 @@ class QuestionsByModuleAPI(Resource):
                     "question_statement": q.question_statement,
                     "age_group": q.age_group,
                     "answers": q.answers,
-                    "status": "Approved" if q.is_approved is True else
-                              "Rejected" if q.is_approved is False else
-                              "Pending",
+                    "is_approved": q.is_approved,
                     "marks": q.marks,
                     "image_url": q.image_url,
                     "audio_url": q.audio_url,
@@ -1172,6 +1169,7 @@ class QuizResource(Resource):
                             'question_statement': q.question_statement,
                             'type': q.type,
                             'age_group': q.age_group,
+                            'answers': q.answers,
                         } for q in quiz.concept.questions
                     ]
                 return quiz_data, 200
