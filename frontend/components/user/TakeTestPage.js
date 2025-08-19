@@ -1,10 +1,4 @@
-import {
-  getQuizList,
-  getStoriesList,
-  getQuizById,
-  submitQuiz,
-} from "../../utils/api.js";
-import { fetchQuestionById } from "../../services/questionService.js";
+import { getQuizList, getStoriesList, getQuizById, submitQuiz } from "../../utils/api.js";
 
 export default {
   name: "TakeTestPage",
@@ -20,7 +14,6 @@ export default {
       correct: false,
       score: 0,
       quizFinished: false,
-      hintUsed: false,
       coins: 10,
       feedbackCoins: 0,
       answers: [],
@@ -28,8 +21,6 @@ export default {
       token: localStorage.getItem("auth-token"),
       feedback: "",
       showResults: false,
-      currentHint: null,
-      storyQuestions: [],
     };
   },
 
@@ -39,21 +30,28 @@ export default {
 
       // Fetch quizzes
       const quizData = await getQuizList(this.token);
-      const quizzes = Array.isArray(quizData) ? quizData : [];
-      console.log(quizzes)
+      const quizzes = Array.isArray(quizData?.quizzes) ? quizData.quizzes : [];
 
       // Fetch stories
       const storyData = await getStoriesList(this.token);
-      const stories = Array.isArray(storyData) ? storyData : [];
+      const stories = Array.isArray(storyData)
+        ? storyData
+        : Array.isArray(storyData?.stories)
+          ? storyData.stories
+          : [];
 
       // Combine with type
       this.learningItems = [
-        ...quizzes.map((q) => ({
+        ...quizzes.map(q => ({
           ...q,
           type: "quiz",
-          is_flagged: q.is_flagged === true, // ensure boolean
+          is_flagged: q.flag === true // use backend "flag" field
         })),
-        ...stories.map((s) => ({ ...s, type: "story" })),
+        ...stories.map(s => ({
+          ...s,
+          type: "story",
+          is_flagged: s.flag === true
+        })),
       ];
     } catch (err) {
       console.error("Error fetching learning materials", err.message);
@@ -78,10 +76,8 @@ export default {
         this.quizFinished = false;
         this.answers = [];
         this.score = 0;
-        this.hintUsed = false;
         this.coins = 10;
         this.showResults = false;
-        this.currentHint = null;
       } catch (err) {
         console.error("Failed to fetch quiz", err.message);
       } finally {
@@ -89,24 +85,9 @@ export default {
       }
     },
 
-    async readStory(story) {
+    readStory(story) {
       this.selectedStory = story;
       this.selectedQuiz = null;
-      this.storyQuestions = [];
-
-      if (story.concept?.question_ids?.length) {
-        try {
-          this.loading = true;
-          const fetched = await Promise.all(
-            story.concept.question_ids.map((id) => fetchQuestionById(id))
-          );
-          this.storyQuestions = fetched;
-        } catch (err) {
-          console.error("Failed to fetch story questions", err.message);
-        } finally {
-          this.loading = false;
-        }
-      }
     },
 
     selectOption(index) {
@@ -116,16 +97,10 @@ export default {
     checkAnswer() {
       if (this.selectedOption !== null) {
         const current = this.questions[this.currentQuestionIndex];
-        const chosen = current.answers[this.selectedOption];
-        const isCorrect = chosen.correct === true;
-
+        const isCorrect = this.selectedOption === current.correct_answer;
         this.correct = isCorrect;
         if (isCorrect) this.score++;
-        this.answers.push({
-          questionId: current.id,
-          selected: chosen.text,
-          correct: isCorrect,
-        });
+        this.answers.push(this.selectedOption);
         this.showFeedback = true;
       }
     },
@@ -133,22 +108,10 @@ export default {
     nextQuestion() {
       this.selectedOption = null;
       this.showFeedback = false;
-      this.hintUsed = false;
-      this.currentHint = null;
       if (this.currentQuestionIndex < this.questions.length - 1) {
         this.currentQuestionIndex++;
       } else {
         this.submitQuiz();
-      }
-    },
-
-    useHint() {
-      const hintCost = 3;
-      if (this.coins >= hintCost && !this.hintUsed) {
-        this.coins -= hintCost;
-        this.hintUsed = true;
-        this.currentHint =
-          this.questions[this.currentQuestionIndex].hint || null;
       }
     },
 
@@ -166,26 +129,23 @@ export default {
       }
     },
 
-    restartQuiz() {
+    backToList() {
       this.selectedQuiz = null;
       this.selectedStory = null;
       this.questions = [];
       this.answers = [];
       this.showResults = false;
       this.score = 0;
-      this.coins = 10;
-      this.currentHint = null;
       this.currentQuestionIndex = 0;
       this.selectedOption = null;
       this.showFeedback = false;
       this.correct = false;
       this.quizFinished = false;
-      this.hintUsed = false;
       this.feedback = "";
     },
 
     closeStory() {
-      this.selectedStory = null;
+      this.backToList();
     }
   },
 
@@ -224,48 +184,43 @@ export default {
               </div>
               <div>
                 <button v-if="item.type === 'quiz'" 
-        class="btn btn-sm" 
-        :class="item.flag ? 'btn-secondary disabled' : 'btn-primary'"
-        :disabled="item.flag"
-        @click="!item.flag && startQuiz(item)">
-  {{ item.flag ? 'Locked' : 'Attempt Quiz' }}
-</button>
+                  class="btn btn-sm" 
+                  :class="item.flag ? 'btn-secondary disabled' : 'btn-primary'"
+                  :disabled="item.flag"
+                  @click="!item.flag && startQuiz(item)">
+                  {{ item.flag ? 'Locked' : 'Attempt Quiz' }}
+                </button>
 
-                <button v-else class="btn btn-sm btn-success" @click="readStory(item)">
-                  Read Story
+                <button v-else class="btn btn-sm btn-success" @click="readStory(item)" :disabled="item.is_flagged">
+                  {{ item.is_flagged ? 'Locked' : 'Read Story' }}
                 </button>
               </div>
             </li>
           </ul>
         </div>
 
-        
         <!-- Quiz Panel -->
         <div v-if="selectedQuiz && !quizFinished" class="card shadow-sm mt-4">
           <div class="card-body">
             <h5 class="card-title mb-3">
               <i class="bi bi-question-circle me-2 text-dark"></i>
-              Q{{ currentQuestionIndex + 1 }}. {{ questions[currentQuestionIndex]?.question_statement || 'Question text missing' }}
+              Q{{ currentQuestionIndex + 1 }}. {{ questions[currentQuestionIndex]?.question || 'Question text missing' }}
             </h5>
 
             <ul class="list-group mb-3">
               <li
-                v-for="(answer, index) in questions[currentQuestionIndex]?.answers || []"
+                v-for="(option, index) in questions[currentQuestionIndex]?.options || []"
                 :key="index"
                 class="list-group-item"
                 :class="{ 'active': selectedOption === index }"
                 style="cursor: pointer;"
                 @click="selectOption(index)"
               >
-                {{ answer.text }}
+                {{ option }}
               </li>
             </ul>
 
             <div class="d-flex gap-2 flex-wrap">
-              <button class="btn btn-outline-warning" @click="useHint" :disabled="hintUsed || coins < 3">
-                <i class="bi bi-lightbulb me-1"></i>Use Hint (3 Coins)
-              </button>
-
               <button class="btn btn-primary" @click="checkAnswer" :disabled="selectedOption === null || showFeedback">
                 <i class="bi bi-check-circle me-1"></i>Check Answer
               </button>
@@ -273,11 +228,10 @@ export default {
               <button class="btn btn-secondary" @click="nextQuestion" v-if="showFeedback">
                 <i class="bi bi-arrow-right-circle me-1"></i>Next
               </button>
-            </div>
 
-            <div v-if="hintUsed" class="alert mt-3" :class="currentHint ? 'alert-info' : 'alert-warning'">
-              <i class="bi bi-info-circle me-1"></i>
-              {{ currentHint || "Hint not available from backend." }}
+              <button class="btn btn-outline-secondary" @click="backToList">
+                <i class="bi bi-arrow-left-circle me-1"></i>Back
+              </button>
             </div>
 
             <div v-if="showFeedback" class="mt-3">
@@ -298,7 +252,7 @@ export default {
           <p class="text-info"><i class="bi bi-star-fill me-1"></i>{{ feedback }}</p>
           <p class="text-warning"><i class="bi bi-coin me-1"></i>Coins Earned: {{ feedbackCoins }}</p>
 
-          <button class="btn btn-success mt-3" @click="restartQuiz">
+          <button class="btn btn-success mt-3" @click="backToList">
             <i class="bi bi-arrow-repeat me-1"></i>Back to Quiz List
           </button>
         </div>
@@ -307,22 +261,17 @@ export default {
         <div v-if="selectedStory" class="card shadow-sm mt-4">
           <div class="card-body">
             <h4>{{ selectedStory.title }}</h4>
-            <div v-if="storyQuestions.length" class="mt-4">
-              <div v-for="(q, i) in storyQuestions" :key="q.id" class="mb-3">
-                <p>{{ q.question_statement }}</p>
-              </div>
-            </div>
+            <p>{{ selectedStory.content || "Story content is not available." }}</p>
 
-            <button class="btn btn-secondary mt-3" @click="closeStory">
-              Go Back
+            <button class="btn btn-secondary mt-3" @click="backToList">
+              Back to List
             </button>
           </div>
         </div>
       </div>
     </div>
   `,
-};
-
+}
 
 
 // This code defines a Vue.js component for a quiz page in a life skills application.

@@ -47,7 +47,7 @@ export default {
 
       } catch (err) {
         console.error("Login error:", err);
-        this.error = "Server error. Please try again later.";
+        this.error = err.error || "Server error. Please try again later.";
       }
     },
   },

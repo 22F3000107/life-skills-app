@@ -18,7 +18,8 @@ async function postData(url = '', data = {}, token = null) {
 
   const json = await response.json();
   if (!response.ok) {
-    throw new Error(json.error || "API error");
+    // throw new Error(json.error || "API error");
+    throw json;
   }
   return json;
 }
@@ -129,12 +130,20 @@ export async function updateGoalStatus(goalId, payload) {
   }).then(res => res.json());
 }
 
+// export async function getQuizList(token) {
+//   return await getData("/acad/quizzes", token);
+// }
+
+// export async function getQuizById(quizId, token) {
+//   return await getData(`/acad/quizzes/${quizId}`, token);
+// }
+
 export async function getQuizList(token) {
-  return await getData("/acad/quizzes", token);
+  return await getData("/quizzes", token);
 }
 
 export async function getQuizById(quizId, token) {
-  return await getData(`/acad/quizzes/${quizId}`, token);
+  return await getData(`/quiz/${quizId}`, token);
 }
 
 export async function submitQuiz(quizId, answers, token) {
@@ -154,8 +163,17 @@ export async function updateUserProfile(payload, token) {
 export async function changePassword(payload, token) {
   return await putData("/change-password", payload, token);
 }
+// export async function getStoriesList(token) {
+//   return await getData("/acad/stories",token);
+// }
+
 export async function getStoriesList(token) {
-  return await getData("/acad/stories",token);
+  const response = await fetch('/api/stories', {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return response.json();
 }
 
 
