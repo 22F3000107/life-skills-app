@@ -26,7 +26,7 @@ export default {
       filterType: "",
       filterModule: "",
       filterAge: "",
-      questionTypes: ["MCQ", "MSQ", "True/False"],
+      questionTypes: ["MCQ", "True/False"],
       allQuestions: [],
       fetchedQuestions: [],
       selectedQuestionIds: [],

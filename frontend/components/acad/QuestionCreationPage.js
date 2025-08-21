@@ -10,7 +10,7 @@ export default {
       selectedAges: [],
       moduleList: [],
       ageGroups: ["6-8", "9-11", "12-14", "15-18"],
-      questionTypes: ["MCQ", "MSQ", "True/False", "Matching"],
+      questionTypes: ["MCQ", "True/False"],
       options: [
         { text: "", correct: false, submitted: false },
         { text: "", correct: false, submitted: false },
@@ -168,7 +168,7 @@ export default {
         };
 
         const result = await createQuestion(payload);
-        console.log(result)
+        console.log(result);
         this.generatedQCode = result.id;
         console.log("Question created with QCode:", this.generatedQCode);
         this.showSuccessPopup = true;
