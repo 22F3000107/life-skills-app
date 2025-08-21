@@ -14,7 +14,7 @@ export default {
       selectedAge: "",
       currentPage: 1,
       perPage: 12,
-      questionTypes: ["MCQ", "MSQ", "True/False"],
+      questionTypes: ["MCQ", "True/False"],
       moduleList: [],
       ageGroups: ["6-8", "9-11", "12-14", "15-18"],
       questions: [],

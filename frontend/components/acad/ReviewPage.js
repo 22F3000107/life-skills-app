@@ -19,7 +19,7 @@ export default {
       selectedAge: "",
       selectedStatus: null,
 
-      questionTypes: ["MCQ", "MSQ", "True/False", "Matching"],
+      questionTypes: ["MCQ", "True/False"],
       moduleOptions: [],
       ageGroups: ["6-8", "9-11", "12-14", "15-18"],
       statusOptions: [
