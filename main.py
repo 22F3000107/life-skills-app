@@ -16,42 +16,6 @@ from application.tasks import weekly_reminder,send_reminder_to_inactive
 from application.models import ReminderSetting
 from celery.schedules import crontab
 
-def sync_questions_to_quiz_questions():
-    print("Starting sync of Question -> QuizQuestion...")
-    quizzes = Quiz.query.all()
-
-    for quiz in quizzes:
-        questions = Question.query.filter_by(concept_id=quiz.concept_id).all()
-
-        for question in questions:
-            # Check if already exists in QuizQuestion
-            exists = QuizQuestion.query.filter_by(quiz_id=quiz.id, question=question.question_statement).first()
-            if not exists:
-                options = []
-                correct_answer_index = 0
-
-                if isinstance(question.answers, list):
-                    options = [opt['text'] if isinstance(opt, dict) else str(opt) for opt in question.answers]
-
-                    # Find correct answer index
-                    for idx, opt in enumerate(question.answers):
-                        if isinstance(opt, dict) and opt.get('correct') is True:
-                            correct_answer_index = idx
-                            break
-
-                new_quiz_question = QuizQuestion(
-                    quiz_id=quiz.id,
-                    question=question.question_statement,
-                    options=options,
-                    correct_answer=correct_answer_index,
-                    hint=""  # Add hint 
-                )
-                db.session.add(new_quiz_question)
-
-    db.session.commit()
-    print("Sync complete.")
-
-
 
 def create_app():
     app = Flask(__name__, static_folder="frontend", static_url_path='') 
@@ -113,7 +77,7 @@ def create_app():
             db.session.add(rewards)
 
         # Sync Questions to QuizQuestions here
-        sync_questions_to_quiz_questions()
+        # sync_questions_to_quiz_questions()
 
         db.session.commit()
         return app

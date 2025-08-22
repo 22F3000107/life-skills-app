@@ -208,10 +208,10 @@ export default {
         </h5>
         <div class="d-flex flex-wrap gap-3">
           <router-link to="/admin/stories" class="btn btn-outline-primary">
-            <i class="bi bi-journal-plus me-1"></i> Add New Story
+            <i class="bi bi-journal-plus me-1"></i> Manage Story
           </router-link>
           <router-link to="/admin/quizzes" class="btn btn-outline-success">
-            <i class="bi bi-patch-plus-fill me-1"></i> Create Quiz
+            <i class="bi bi-patch-plus-fill me-1"></i> Manage Quiz
           </router-link>
           <router-link to="/admin/users" class="btn btn-outline-dark">
             <i class="bi bi-search me-1"></i> Manage Users
