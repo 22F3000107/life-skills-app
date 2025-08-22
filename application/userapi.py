@@ -397,7 +397,7 @@ class QuizSubmitAPI(Resource):
             if idx < len(answers) and answers[idx] == question.correct_answer:
                 correct_count += 1
 
-        marks = correct_count * 10  # 10 marks per correct answer
+        marks = (correct_count/max_score)*100  # 10 marks per correct answer
         feedback = (
             "Excellent!" if correct_count == max_score else
             "Good job!" if correct_count >= max_score // 2 else
