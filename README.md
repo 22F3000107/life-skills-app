@@ -1,212 +1,96 @@
-# Application Setup Guide
+# SmartKids: Life Skills App
 
-This guide will help you set up and run the application locally on your machine.
+A web application for children aged 8 to 14 to build learning, moral values, and healthy habits through stories, quizzes, and goal tracking. It has separate dashboards for Users (children), Academic staff, and Admins.
 
-## Prerequisites
+> **Group project** (team of 6), built for the IIT Madras Software Engineering course. Original team repository: [MagicalMe2025/soft-engg-project-may-2025-se-May-34](https://github.com/MagicalMe2025/soft-engg-project-may-2025-se-May-34).
+>
+> **My contributions:** Built the Vue.js frontend for the admin and user sections, contributed to the Flask REST API backend, and handled testing and debugging.
 
-Before getting started, make sure you have the following installed on your system:
+## Features
 
-- Node.js and npm (latest version)
+**User (child)**
+- Register and log in
+- Take tests and quizzes
+- Track personal goals
+- Learn healthy habits
+- View a progress summary
+- Manage account settings
+
+**Academic**
+- Create and manage learning modules and concepts
+- Build a question bank (MCQ, true/false, matching) with media uploads
+- Review, edit, archive, and restore questions
+
+**Admin**
+- Manage users, quizzes, and stories
+- Review flagged content
+- Configure reminders
+- View reports and analytics
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Backend | Python, Flask, SQLAlchemy |
+| Database | SQLite |
+| Frontend | Vue.js, JavaScript, HTML/CSS (no build step) |
+
+## Project Structure
+
+```
+├── main.py                 # Entry point
+├── config.py               # Configuration
+├── upload_initial_data.py  # Seeds initial data
+├── application/            # Backend: models, user/admin/academic APIs, security
+│   ├── models.py
+│   ├── userapi.py
+│   ├── adminapi.py
+│   ├── acadapi.py
+│   └── sec.py
+├── frontend/               # Vue.js app
+│   ├── components/         # acad/, admin/, user/, common/, utils/
+│   ├── services/           # API service modules
+│   └── utils/              # Router, store, API helper
+└── instance/               # SQLite database
+```
+
+## Getting Started
+
+### Prerequisites
 - Python 3
+- Node.js and npm
 
-## Installation and Setup
-
-### 1. Clone the Repository
-
-First, clone the repository to your local machine:
+### Run locally
 
 ```bash
-git clone https://github.com/MagicalMe2025/soft-engg-project-may-2025-se-May-34.git
-cd soft-engg-project-may-2025-se-May-34
-```
+git clone https://github.com/22F3000107/life-skills-app.git
+cd life-skills-app
 
-### 2. Install Dependencies
-
-Install the required Node.js dependencies:
-
-```bash
+pip install -r requirements.txt
 npm install
-```
-
-To install Python dependencies, execute the following command : 
-
-```
-pip install -r "requirements.txt"
-```
-
-### 3. Start the Servers
-
-You'll need to run the server using the following command
-
-```
 python3 main.py
 ```
 
-### 4. Access the Application
+Open http://localhost:5500/frontend/index.html in your browser.
 
-Once the server starts running, open your web browser and navigate to:
+On Windows, use `python` instead of `python3`.
 
-```
-http://localhost:5500/frontend/index.html
-```
+### Demo accounts (development only)
 
-### 5. Folder Structure
-```
-.
-├── __pycache__
-│   ├── config.cpython-310.pyc
-│   └── main.cpython-310.pyc
-├── application
-│   ├── __pycache__
-│   │   ├── acadapi.cpython-310.pyc
-│   │   ├── adminapi.cpython-310.pyc
-│   │   ├── instances.cpython-310.pyc
-│   │   ├── models.cpython-310.pyc
-│   │   ├── resources.cpython-310.pyc
-│   │   ├── sec.cpython-310.pyc
-│   │   └── userapi.cpython-310.pyc
-│   ├── acadapi.py
-│   ├── adminapi.py
-│   ├── instances.py
-│   ├── models.py
-│   ├── resources.py
-│   ├── sec.py
-│   └── userapi.py
-├── config.py
-├── frontend
-│   ├── components
-│   │   ├── acad
-│   │   │   ├── AcadDashboard.js
-│   │   │   ├── AcadHomePage.js
-│   │   │   ├── ArchivedQuestionsPage.js
-│   │   │   ├── ConceptPage.js
-│   │   │   ├── ConceptQuestionsPage.js
-│   │   │   ├── ContentManagement.js
-│   │   │   ├── EditQuestionPage.js
-│   │   │   ├── IndividualModulePage.js
-│   │   │   ├── IndividualQuestionPage.js
-│   │   │   ├── ModulesPage.js
-│   │   │   ├── NewBar.js
-│   │   │   ├── QuestionBankPage.js
-│   │   │   ├── QuestionCreationPage.js
-│   │   │   └── ReviewPage.js
-│   │   ├── admin
-│   │   │   ├── AdminDashboard.js
-│   │   │   ├── AdminNavbar.js
-│   │   │   ├── AdminSettings.js
-│   │   │   ├── FlaggedContent.js
-│   │   │   ├── ManageQuizzes.js
-│   │   │   ├── ManageStories.js
-│   │   │   ├── ManageUsers.js
-│   │   │   ├── ReminderSettings.js
-│   │   │   └── ReportsAnalytics.js
-│   │   ├── common
-│   │   │   ├── LoginPage.js
-│   │   │   ├── PublicNavbar.js
-│   │   │   └── RegistrationPage.js
-│   │   ├── user
-│   │   │   ├── GoalTrackerPage.js
-│   │   │   ├── HealthyHabitsPage.js
-│   │   │   ├── HomePage.js
-│   │   │   ├── SettingsPage.js
-│   │   │   ├── SummaryPage.js
-│   │   │   ├── TakeTestPage.js
-│   │   │   └── UserNavbar.js
-│   │   └── utils
-│   │       ├── AlertMessages.js
-│   │       ├── AnswerOptions.js
-│   │       ├── ArchivedQuestionsHeader.js
-│   │       ├── ArchivedQuestionsStats.js
-│   │       ├── ArchivedQuestionsTable.js
-│   │       ├── BulkActionsModal.js
-│   │       ├── DeleteModal.js
-│   │       ├── EditAnswerOptions.js
-│   │       ├── EditMatchingOptions.js
-│   │       ├── EditMCQOptions.js
-│   │       ├── EditQuestionHeader.js
-│   │       ├── EditTrueFalseOptions.js
-│   │       ├── ErrorState.js
-│   │       ├── ImageModel.js
-│   │       ├── LoadingState.js
-│   │       ├── MatchingOptions.js
-│   │       ├── MCQOptions.js
-│   │       ├── MediaDisplay.js
-│   │       ├── MediaUpload.js
-│   │       ├── ModuleHeader.js
-│   │       ├── QuestionContentForm.js
-│   │       ├── QuestionDetailsForm.js
-│   │       ├── QuestionFilters.js
-│   │       ├── QuestionFormHeader.js
-│   │       ├── QuestionHeader.js
-│   │       ├── QuestionMetaData.js
-│   │       ├── QuestionPagination.js
-│   │       ├── QuestionStats.js
-│   │       ├── QuestionTable.js
-│   │       ├── QuestionTableRow.js
-│   │       ├── QuestionText.js
-│   │       ├── RestoreModal.js
-│   │       ├── SaveActions.js
-│   │       └── TrueFalseOptions.js
-│   ├── css
-│   │   └── style.css
-│   ├── images
-│   │   ├── active.png
-│   │   ├── flag.png
-│   │   ├── lifeskills-logo.png
-│   │   ├── pending.png
-│   │   ├── quiz.png
-│   │   ├── story.png
-│   │   ├── teacher.png
-│   │   └── user.png
-│   ├── index.html
-│   ├── mock-data
-│   │   └── user.json
-│   ├── public
-│   │   └── mock-data
-│   │       ├── acadHomeModules.json
-│   │       ├── modules.json
-│   │       ├── questions.json
-│   │       └── questionsByModule.json
-│   ├── README.md
-│   ├── services
-│   │   ├── acadService.js
-│   │   ├── api.js
-│   │   ├── conceptService.js
-│   │   ├── moduleService.js
-│   │   ├── questionService.js
-│   │   └── storyQuizService.js
-│   ├── static
-│   │   ├── index.html
-│   │   └── index.js
-│   ├── store
-│   │   └── index.js
-│   └── utils
-│       ├── api.js
-│       ├── router.js
-│       └── store.js
-├── instance
-│   └── dev.db
-├── main.py
-├── package-lock.json
-├── package.json
-├── README.md
-├── requirements.txt
-└── upload_initial_data.py
-```
+| Role | Email | Password |
+|---|---|---|
+| Admin | admin@email.com | admin |
+| User | user@email.com | user1234 |
+| Academic | acad@email.com | acad1234 |
 
-## Test Accounts
+These are demo credentials for local use only.
 
-The application comes with pre-configured test accounts for different user roles:
+## Screenshots
 
-| Role     | Email             | Password     |
-| -------- | ----------------- | ------------ |
-| Admin    | admin@email.com | admin |
-| User     | user@email.com  | user1234 |
-| Academic | acad@email.com    | acad1234 |
+![User home](docs/user-home.png)
+![Quiz page](docs/quiz.png)
+![Admin dashboard](docs/admin-dashboard.png)
 
+## Author
 
-## Troubleshooting
-
-- **Python command not found**: Try using `python` instead of `python3` if you're on Windows
-
-
+Deepak Kumar — [GitHub](https://github.com/22F3000107) | [LinkedIn](https://www.linkedin.com/in/deepak-kumar-855999268)
