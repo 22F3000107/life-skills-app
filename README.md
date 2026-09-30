@@ -84,6 +84,10 @@ On Windows, use `python` instead of `python3`.
 | Academic | acad@email.com | acad1234 |
 
 These are demo credentials for local use only.
+## Demo
+
+▶️ [Watch the demo video](https://drive.google.com/file/d/1I-I54RrILO-MuwJ5wZWiG725tec1_Zdi/view?usp=sharing)
+
 
 ## Screenshots
 
